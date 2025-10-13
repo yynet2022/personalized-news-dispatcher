@@ -14,8 +14,7 @@ dumpdata:
 	python manage.py dumpdata --exclude auth.permission --exclude contenttypes >dumpdata.json
 
 dump_category:
-	python manage.py dumpdata --indent 2 subscriptions.LargeCate
-gory    subscriptions.MediumCategory
+	python manage.py dumpdata --indent 2 subscriptions.LargeCategory subscriptions.MediumCategory
 
 clean:
 	rm -f db.sqlite3 
