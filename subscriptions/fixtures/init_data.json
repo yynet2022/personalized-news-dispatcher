@@ -1,0 +1,77 @@
+[
+{
+  "model": "subscriptions.largecategory",
+  "pk": "1d889154-6eb8-45fd-99a7-ac34011827bc",
+  "fields": {
+    "name": "社会"
+  }
+},
+{
+  "model": "subscriptions.largecategory",
+  "pk": "425b8ce7-df32-460f-99ad-72a676a66bfe",
+  "fields": {
+    "name": "ＩＴ"
+  }
+},
+{
+  "model": "subscriptions.largecategory",
+  "pk": "5ceca96c-3d90-463f-b32a-dec64c60a3d4",
+  "fields": {
+    "name": "経済"
+  }
+},
+{
+  "model": "subscriptions.mediumcategory",
+  "pk": "3601f025-71d2-481b-8b8f-ca178dcdd98d",
+  "fields": {
+    "large_category": "1d889154-6eb8-45fd-99a7-ac34011827bc",
+    "name": "国会",
+    "is_trending": false
+  }
+},
+{
+  "model": "subscriptions.mediumcategory",
+  "pk": "5ab6afee-9221-4432-a1f2-c3e2c5a2c4ea",
+  "fields": {
+    "large_category": "425b8ce7-df32-460f-99ad-72a676a66bfe",
+    "name": "Django",
+    "is_trending": false
+  }
+},
+{
+  "model": "subscriptions.mediumcategory",
+  "pk": "641b626c-8ec7-4648-98b1-51af1026d98f",
+  "fields": {
+    "large_category": "5ceca96c-3d90-463f-b32a-dec64c60a3d4",
+    "name": "日経平均",
+    "is_trending": false
+  }
+},
+{
+  "model": "subscriptions.mediumcategory",
+  "pk": "936f3cfb-c3e4-411d-a9f8-6a525e7fd8b4",
+  "fields": {
+    "large_category": "425b8ce7-df32-460f-99ad-72a676a66bfe",
+    "name": "Python",
+    "is_trending": false
+  }
+},
+{
+  "model": "subscriptions.mediumcategory",
+  "pk": "a52f9890-21f3-4074-abfb-5e908588a01e",
+  "fields": {
+    "large_category": "5ceca96c-3d90-463f-b32a-dec64c60a3d4",
+    "name": "円安",
+    "is_trending": false
+  }
+},
+{
+  "model": "subscriptions.mediumcategory",
+  "pk": "bc80d0b5-e44e-4b6e-b812-103e564cc8b1",
+  "fields": {
+    "large_category": "1d889154-6eb8-45fd-99a7-ac34011827bc",
+    "name": "火事",
+    "is_trending": false
+  }
+}
+]
