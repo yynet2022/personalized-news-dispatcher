@@ -1,0 +1,20 @@
+{{ user.email }}様
+
+今日のニュースダイジェストをお届けします。
+
+{% for item in querysets_with_articles %}
+--- 📂 {{ item.queryset_name }} ---
+
+{% for article in item.articles %}
+- {{ article.title }}
+  {{ article.tracking_url }}
+  {% if article.published_date %}({{ article.published_date|date:"Y年n月j日" }}){% endif %}
+
+{% endfor %}
+{% endfor %}
+
+--------------------------------------
+設定の変更はこちらから:
+{{ site_url }}{% url 'subscriptions:queryset_list' %}
+
+Personalized News Dispatcher

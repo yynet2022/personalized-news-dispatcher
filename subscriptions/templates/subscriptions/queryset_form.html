@@ -1,0 +1,113 @@
+{% extends "core/base.html" %}
+
+{% block title %}{% if object %}QuerySetの編集{% else %}QuerySetの作成{% endif %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <h1>{% if object %}QuerySetの編集{% else %}QuerySetの作成{% endif %}</h1>
+    
+    <form method="post" id="queryset-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        
+        <button type="submit">{% if object %}更新する{% else %}作成する{% endif %}</button>
+        <button type="button" id="preview-button">プレビュー</button>
+        <a href="{% url 'subscriptions:queryset_list' %}" class="button-link">キャンセル</a>
+    </form>
+
+    <div id="preview-area" style="display: none;">
+        <h3>プレビュー結果</h3>
+        <div id="preview-results"></div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const largeCategorySelect = document.querySelector('#id_large_category');
+    const mediumCategoryContainer = document.querySelector('#id_medium_categories');
+    const customKeywordsContainer = document.querySelector('#id_custom_keywords');
+    const previewButton = document.querySelector('#preview-button');
+    const previewArea = document.querySelector('#preview-area');
+    const previewResults = document.querySelector('#preview-results');
+
+    // --- 1. 大分類が変更されたら、中分類を動的に読み込む ---
+    largeCategorySelect.addEventListener('change', function() {
+        const largeCategoryId = this.value;
+        mediumCategoryContainer.innerHTML = ''; 
+
+        if (!largeCategoryId) {
+            return;
+        }
+
+        fetch(`/subscriptions/api/medium-categories/?large_category_id=${largeCategoryId}`)
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(category => {
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.name = 'medium_categories';
+                    checkbox.value = category.id;
+                    checkbox.id = `id_medium_categories_${category.id}`;
+
+                    const label = document.createElement('label');
+                    label.htmlFor = checkbox.id;
+                    label.appendChild(checkbox);
+                    label.appendChild(document.createTextNode(` ${category.name}`));
+                    
+                    const wrapper = document.createElement('div');
+                    wrapper.appendChild(label);
+                    mediumCategoryContainer.appendChild(wrapper);
+                });
+            });
+    });
+
+    // --- 2. プレビューボタンが押されたら、ニュースを取得して表示 ---
+    previewButton.addEventListener('click', function() {
+        if (!largeCategorySelect.value) {
+            alert('先に大分類を選択してください。');
+            return;
+        }
+
+        const largeCategoryName = largeCategorySelect.options[largeCategorySelect.selectedIndex].text;
+        
+        const mediumCategoryNames = Array.from(document.querySelectorAll('input[name="medium_categories"]:checked'))
+            .map(cb => cb.labels[0].textContent.trim());
+
+        const customKeywords = Array.from(document.querySelectorAll('input[name="custom_keywords"]:checked'))
+            .map(cb => `(${cb.labels[0].textContent.trim()})`);
+
+        const orParts = mediumCategoryNames.concat(customKeywords);
+        const orQuery = orParts.join(' OR ');
+        const finalQuery = orQuery ? `"${largeCategoryName}" AND (${orQuery})` : `"${largeCategoryName}"`;
+
+        previewArea.style.display = 'block';
+        previewResults.innerHTML = '<p>読み込み中...</p>';
+
+        fetch(`/subscriptions/api/news-preview/?q=${encodeURIComponent(finalQuery)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length === 0) {
+                    previewResults.innerHTML = '<p>ニュースが見つかりませんでした。</p>';
+                    return;
+                }
+
+                let html = '<ul>';
+                data.forEach(article => {
+                    html += `
+                        <li>
+                            <a href="${article.link}" target="_blank" rel="noopener noreferrer">${article.title}</a><br>
+                            <small>${article.published}</small>
+                        </li>
+                    `;
+                });
+                html += '</ul>';
+                previewResults.innerHTML = html;
+            })
+            .catch(error => {
+                previewResults.innerHTML = '<p>エラーが発生しました。</p>';
+                console.error('Error:', error);
+            });
+    });
+});
+</script>
+{% endblock %}

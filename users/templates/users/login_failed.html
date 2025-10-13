@@ -1,0 +1,9 @@
+{% extends "core/base.html" %}
+
+{% block title %}ログイン失敗 - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <h1>ログインに失敗しました</h1>
+    <p>{{ message }}</p>
+    <p><a href="{% url 'users:login' %}">もう一度ログインを試す</a></p>
+{% endblock %}

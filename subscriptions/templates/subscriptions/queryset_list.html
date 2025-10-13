@@ -1,0 +1,23 @@
+{% extends "core/base.html" %}
+
+{% block title %}ダッシュボード - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <h1>あなたのQuerySet一覧</h1>
+
+    <ul>
+    {% for queryset in querysets %}
+        <li>
+            <span>{{ queryset.name }}</span>
+            <span class="actions">
+                <a href="{% url 'subscriptions:queryset_update' pk=queryset.pk %}">編集</a>
+                <a href="{% url 'subscriptions:queryset_delete' pk=queryset.pk %}">削除</a>
+            </span>
+        </li>
+    {% empty %}
+        <li>まだQuerySetが登録されていません。</li>
+    {% endfor %}
+    </ul>
+
+    <a href="{% url 'subscriptions:queryset_create' %}" class="button-link button-link-primary" style="margin-top: 1em;">新しいQuerySetを作成</a>
+{% endblock %}

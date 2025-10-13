@@ -1,0 +1,14 @@
+{% extends "core/base.html" %}
+
+{% block title %}ログイン - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <h1>ログイン / 新規登録</h1>
+    <p>ご登録のメールアドレスを入力してください。<br>ログイン用のリンクをメールでお送りします。</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">ログインリンクを送信</button>
+    </form>
+{% endblock %}

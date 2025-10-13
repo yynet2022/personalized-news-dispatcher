@@ -1,0 +1,16 @@
+{% extends "core/base.html" %}
+
+{% block title %}削除の確認 - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <h1>削除の確認</h1>
+    
+    <p>本当にQuerySet「<strong>{{ object.name }}</strong>」を削除しますか？</p>
+    <p>この操作は元に戻せません。</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" style="background-color: #dc3545; color: white; border-color: #dc3545;">はい、削除します</button>
+        <a href="{% url 'subscriptions:queryset_list' %}" class="button-link">キャンセル</a>
+    </form>
+{% endblock %}
