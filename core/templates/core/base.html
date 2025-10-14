@@ -25,7 +25,10 @@
             <span>
                 {% if user.is_authenticated %}
                     {{ user.email }} | 
-                    <a href="{% url 'users:logout' %}">ログアウト</a>
+                    <form action="{% url 'users:logout' %}" method="post" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" style="background: none; border: none; color: #007bff; cursor: pointer; padding: 0; text-decoration: underline;">ログアウト</button>
+                    </form>
                 {% else %}
                     <a href="{% url 'users:login' %}">ログイン</a>
                 {% endif %}
