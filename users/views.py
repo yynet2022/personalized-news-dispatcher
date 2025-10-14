@@ -55,8 +55,8 @@ class AuthenticateView(View):
         try:
             login_token = LoginToken.objects.get(token=token)
 
-            # トークンの有効期限（例：10分）を設定
-            expiration_limit = timedelta(minutes=10)
+            # トークンの有効期限（例：30分）を設定
+            expiration_limit = timedelta(minutes=30)
 
             # 現在時刻とトークン作成時刻を比較
             if timezone.now() - login_token.created_at > expiration_limit:

@@ -101,7 +101,6 @@ class QuerySetUpdateView(LoginRequiredMixin, UpdateView):
         self.object = self.get_object()
         form = self.get_form()
 
-        # --- ▼▼▼ こちらも同様に修正 ▼▼▼ ---
         large_category_id = form.data.get('large_category')
         if large_category_id:
             try:
@@ -110,7 +109,6 @@ class QuerySetUpdateView(LoginRequiredMixin, UpdateView):
                         large_category_id=large_category_id)
             except (ValueError, TypeError):
                 pass
-        # --- ▲▲▲ ここまで ▲▲▲ ---
 
         if form.is_valid():
             return self.form_valid(form)
@@ -162,4 +160,5 @@ class NewsPreviewApiView(LoginRequiredMixin, View):
                 'published': entry.get('published', 'N/A')
             })
 
-        return JsonResponse({'feed': feed.feed, 'articles': articles}, safe=False)
+        return JsonResponse({'feed': feed.feed, 'articles': articles},
+                            safe=False)
