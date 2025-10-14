@@ -162,4 +162,4 @@ class NewsPreviewApiView(LoginRequiredMixin, View):
                 'published': entry.get('published', 'N/A')
             })
 
-        return JsonResponse(articles, safe=False)
+        return JsonResponse({'feed': feed.feed, 'articles': articles}, safe=False)

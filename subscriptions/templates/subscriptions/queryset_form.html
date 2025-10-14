@@ -86,13 +86,13 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(`/subscriptions/api/news-preview/?q=${encodeURIComponent(finalQuery)}`)
             .then(response => response.json())
             .then(data => {
-                if (data.length === 0) {
+                if (data.articles.length === 0) {
                     previewResults.innerHTML = '<p>ニュースが見つかりませんでした。</p>';
                     return;
                 }
 
-                let html = '<ul>';
-                data.forEach(article => {
+                let html = '<h3>'+data.feed.title+'</h3><ul>';
+                data.articles.forEach(article => {
                     html += `
                         <li>
                             <a href="${article.link}" target="_blank" rel="noopener noreferrer">${article.title}</a><br>
