@@ -1,0 +1,17 @@
+asgiref==3.10.0
+certifi==2025.10.5
+charset-normalizer==3.4.3
+Django==5.2.7
+feedparser==6.0.12
+flake8==7.3.0
+idna==3.11
+mccabe==0.7.0
+pycodestyle==2.14.0
+pyflakes==3.4.0
+requests==2.32.5
+setuptools==80.9.0
+sgmllib3k==1.0.0
+sqlparse==0.5.3
+tzdata==2025.2
+urllib3==2.5.0
+wheel==0.45.1

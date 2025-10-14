@@ -3,6 +3,7 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 
+
 # ----------------------------------------------------------------------
 # 1. 専用のUserManagerを作成
 # ----------------------------------------------------------------------
@@ -32,14 +33,15 @@ class CustomUserManager(BaseUserManager):
         # 上で定義した create_user メソッドを呼び出す
         return self.create_user(email, password, **extra_fields)
 
+
 # ----------------------------------------------------------------------
 # 2. 作成したUserManagerをUserモデルに適用
 # ----------------------------------------------------------------------
 class User(AbstractUser):
-    username = None # usernameは使わない
+    username = None  # usernameは使わない
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField('メールアドレス', unique=True)
-    
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
@@ -49,13 +51,15 @@ class User(AbstractUser):
     def __str__(self):
         return self.email
 
+
 # users/models.py
 class LoginToken(models.Model):
     """
     ログイン用のワンタイムトークンを保存するモデル
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='ユーザー')
+    user = models.ForeignKey(User, on_delete=models.CASCADE,
+                             verbose_name='ユーザー')
     token = models.CharField('トークン', max_length=255, unique=True)
     created_at = models.DateTimeField('作成日時', auto_now_add=True)
 

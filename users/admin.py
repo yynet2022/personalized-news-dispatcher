@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import User
 
+
 # Userモデルに合わせたカスタムUserAdminを作成
 class CustomUserAdmin(UserAdmin):
     # UserAdminのfieldsetsからusernameを削除し、emailに置き換える
@@ -11,7 +12,9 @@ class CustomUserAdmin(UserAdmin):
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         ("Personal info", {"fields": ("first_name", "last_name")}),
-        ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
+        ("Permissions", {"fields":
+                         ("is_active", "is_staff",
+                          "is_superuser", "groups", "user_permissions")}),
         ("Important dates", {"fields": ("last_login", "date_joined")}),
     )
     # 管理画面の一覧ページに表示する項目
@@ -20,6 +23,7 @@ class CustomUserAdmin(UserAdmin):
     search_fields = ("email", "first_name", "last_name")
     # 管理画面での並び順
     ordering = ("email",)
+
 
 # 作成したカスタムUserAdminをUserモデルに適用
 admin.site.register(User, CustomUserAdmin)
