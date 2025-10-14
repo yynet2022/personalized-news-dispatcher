@@ -1,4 +1,5 @@
 import feedparser
+import requests
 from urllib.parse import quote
 from django.core.management.base import BaseCommand
 from django.core.mail import send_mail
@@ -70,7 +71,18 @@ class Command(BaseCommand):
                     "q={query}&hl=ja&gl=JP&ceid=JP:ja")
         encoded_query = quote(queryset.query_str)
         rss_url = base_url.format(query=encoded_query)
-        feed = feedparser.parse(rss_url)
+
+        try:
+            # タイムアウトを10秒に設定
+            response = requests.get(rss_url, timeout=10)
+            # ステータスコードが200番台でなければ例外を発生
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            self.stderr.write(f"  Error fetching RSS feed for "
+                              f"'{queryset.name}': {e}")
+            return []
+
+        feed = feedparser.parse(response.content)
 
         new_articles = []
         for entry in feed.entries:
