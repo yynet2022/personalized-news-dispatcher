@@ -16,6 +16,8 @@ class QuerySetForm(forms.ModelForm):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
+        self.fields['medium_categories'].label_from_instance = lambda obj: obj.name
+
         if user:
             self.fields['custom_keywords'].queryset = \
                 CustomKeywords.objects.filter(user=user)
