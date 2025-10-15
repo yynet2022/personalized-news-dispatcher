@@ -12,3 +12,5 @@ db.*
 *~
 
 !**/fixtures/*.json
+
+!data/*.json
