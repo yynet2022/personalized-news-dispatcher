@@ -1,6 +1,7 @@
 import feedparser
 import requests
 from urllib.parse import quote
+from datetime import datetime, timezone, timedelta
 from django.core.management.base import BaseCommand
 from django.core.mail import send_mail
 from django.conf import settings
@@ -10,6 +11,19 @@ from django.template.loader import render_to_string
 from users.models import User
 from news.models import Article, SentArticleLog
 from subscriptions.models import QuerySet
+
+
+def get_published_date_from_entry(entry):
+    """
+    feedparserのentryからタイムゾーン付きのdatetimeオブジェクトを取得する。
+    published_parsedがなければNoneを返す。
+    """
+    if hasattr(entry, 'published_parsed') and entry.published_parsed:
+        # time.struct_timeをdatetimeオブジェクトに変換
+        dt_naive = datetime(*entry.published_parsed[:6])
+        # UTCタイムゾーンを付与
+        return dt_naive.replace(tzinfo=timezone.utc)
+    return None
 
 
 class Command(BaseCommand):
@@ -67,8 +81,10 @@ class Command(BaseCommand):
 
     def fetch_news_for_queryset(self, user, queryset):
         """一つのQuerySetからニュースを取得する関数"""
+        two_days_ago = datetime.now() - timedelta(days=2)
+        after_date = two_days_ago.strftime('%Y-%m-%d')
         base_url = ("https://news.google.com/rss/search?"
-                    "q={query}&hl=ja&gl=JP&ceid=JP:ja")
+                    f"q={{query}}+after:{after_date}&hl=ja&gl=JP&ceid=JP:ja")
         encoded_query = quote(queryset.query_str)
         rss_url = base_url.format(query=encoded_query)
 
@@ -86,8 +102,14 @@ class Command(BaseCommand):
 
         new_articles = []
         for entry in feed.entries:
+            published_date = get_published_date_from_entry(entry)
             article, created = Article.objects.get_or_create(
-                url=entry.link, defaults={'title': entry.title})
+                url=entry.link,
+                defaults={
+                    'title': entry.title,
+                    'published_date': published_date
+                }
+            )
             is_sent = SentArticleLog.objects.filter(
                 user=user, article=article).exists()
             if not is_sent:
