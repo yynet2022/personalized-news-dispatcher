@@ -4,10 +4,33 @@
 
 {% block content %}
     <h1>{% if object %}QuerySetの編集{% else %}QuerySetの作成{% endif %}</h1>
+
+    <style>
+        /* チェックボックスのコンテナにスタイルを適用 */
+        #id_medium_categories, #id_related_keywords, #id_custom_keywords {
+            border: 1px solid #ccc;
+            padding: 0.5rem;
+            border-radius: 4px;
+            max-height: 150px;
+            overflow-y: auto;
+            list-style: none; /* Djangoが生成するulの黒丸を消す */
+            padding-left: 0.5rem; /* 左のパディングを調整 */
+        }
+
+        /* チェックボックスの各項目を横並びにする */
+        #id_medium_categories > div,
+        #id_related_keywords > div,
+        #id_custom_keywords > li {
+            display: inline-block; /* 横並びに */
+            margin-right: 1rem;   /* 右側に余白 */
+            border: none;
+            padding: 0;
+        }
+    </style>
     
     <form method="post" id="queryset-form">
         {% csrf_token %}
-        {{ form.as_p }}
+        {{ form.as_div }}
         
         <button type="submit">{% if object %}更新する{% else %}作成する{% endif %}</button>
         <button type="button" id="preview-button">プレビュー</button>
