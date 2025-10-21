@@ -25,15 +25,45 @@
 document.addEventListener('DOMContentLoaded', function() {
     const largeCategorySelect = document.querySelector('#id_large_category');
     const mediumCategoryContainer = document.querySelector('#id_medium_categories');
+    const relatedKeywordsContainer = document.querySelector('#id_related_keywords');
     const customKeywordsContainer = document.querySelector('#id_custom_keywords');
     const previewButton = document.querySelector('#preview-button');
     const previewArea = document.querySelector('#preview-area');
     const previewResults = document.querySelector('#preview-results');
 
+    // --- ヘルパー関数: チェックボックスを生成してコンテナに追加 ---
+    function createCheckboxes(container, name, data, selectedValues = []) {
+        container.innerHTML = '';
+        data.forEach(item => {
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.name = name;
+            checkbox.value = item.id;
+            checkbox.id = `id_${name}_${item.id}`;
+            if (selectedValues.includes(String(item.id))) {
+                checkbox.checked = true;
+            }
+            // RelatedKeywords の場合、medium_category_id をデータ属性として追加
+            if (name === 'related_keywords' && item.medium_category_id) {
+                checkbox.dataset.mediumCategoryId = item.medium_category_id;
+            }
+
+            const label = document.createElement('label');
+            label.htmlFor = checkbox.id;
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(` ${item.name}`));
+            
+            const wrapper = document.createElement('div');
+            wrapper.appendChild(label);
+            container.appendChild(wrapper);
+        });
+    }
+
     // --- 1. 大分類が変更されたら、中分類を動的に読み込む ---
     largeCategorySelect.addEventListener('change', function() {
         const largeCategoryId = this.value;
         mediumCategoryContainer.innerHTML = ''; 
+        relatedKeywordsContainer.innerHTML = ''; // 大分類変更時に関連キーワードもクリア
 
         if (!largeCategoryId) {
             return;
@@ -42,26 +72,43 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(`/subscriptions/api/medium-categories/?large_category_id=${largeCategoryId}`)
             .then(response => response.json())
             .then(data => {
-                data.forEach(category => {
-                    const checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.name = 'medium_categories';
-                    checkbox.value = category.id;
-                    checkbox.id = `id_medium_categories_${category.id}`;
-
-                    const label = document.createElement('label');
-                    label.htmlFor = checkbox.id;
-                    label.appendChild(checkbox);
-                    label.appendChild(document.createTextNode(` ${category.name}`));
-                    
-                    const wrapper = document.createElement('div');
-                    wrapper.appendChild(label);
-                    mediumCategoryContainer.appendChild(wrapper);
-                });
+                // 既存の選択を保持
+                const selectedMediumCategories = Array.from(document.querySelectorAll('input[name="medium_categories"]:checked')).map(cb => cb.value);
+                createCheckboxes(mediumCategoryContainer, 'medium_categories', data, selectedMediumCategories);
+                // 中分類がロードされたら、関連キーワードもロード
+                loadRelatedKeywords();
             });
     });
 
-    // --- 2. プレビューボタンが押されたら、ニュースを取得して表示 ---
+    // --- 2. 中分類が変更されたら、関連キーワードを動的に読み込む ---
+    // mediumCategoryContainer は動的に生成されるため、イベント委譲を使用
+    mediumCategoryContainer.addEventListener('change', function(event) {
+        if (event.target.name === 'medium_categories') {
+            loadRelatedKeywords();
+        }
+    });
+
+    function loadRelatedKeywords() {
+        const selectedMediumCategoryIds = Array.from(document.querySelectorAll('input[name="medium_categories"]:checked')).map(cb => cb.value);
+        relatedKeywordsContainer.innerHTML = '';
+
+        if (selectedMediumCategoryIds.length === 0) {
+            return;
+        }
+
+        const queryParams = new URLSearchParams();
+        selectedMediumCategoryIds.forEach(id => queryParams.append('medium_category_ids', id));
+
+        fetch(`/subscriptions/api/related-keywords/?${queryParams.toString()}`)
+            .then(response => response.json())
+            .then(data => {
+                // 既存の選択を保持
+                const selectedRelatedKeywords = Array.from(document.querySelectorAll('input[name="related_keywords"]:checked')).map(cb => cb.value);
+                createCheckboxes(relatedKeywordsContainer, 'related_keywords', data, selectedRelatedKeywords);
+            });
+    }
+
+    // --- 3. プレビューボタンが押されたら、ニュースを取得して表示 ---
     previewButton.addEventListener('click', function() {
         if (!largeCategorySelect.value) {
             alert('先に大分類を選択してください。');
@@ -70,15 +117,42 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const largeCategoryName = largeCategorySelect.options[largeCategorySelect.selectedIndex].text;
         
-        const mediumCategoryNames = Array.from(document.querySelectorAll('input[name="medium_categories"]:checked'))
+        // 選択されている中分類のIDと名前を取得
+        const selectedMediumCategories = Array.from(document.querySelectorAll('input[name="medium_categories"]:checked'))
+            .map(cb => ({ id: cb.value, name: cb.labels[0].textContent.trim() }));
+
+        // 選択されている関連キーワードのIDと名前、medium_category_idを取得
+        const selectedRelatedKeywords = Array.from(document.querySelectorAll('input[name="related_keywords"]:checked'))
+            .map(cb => ({ id: cb.value, name: cb.labels[0].textContent.trim(), mediumCategoryId: cb.dataset.mediumCategoryId }));
+
+        // 選択されているカスタムキーワードの名前を取得
+        const selectedCustomKeywords = Array.from(document.querySelectorAll('input[name="custom_keywords"]:checked'))
             .map(cb => cb.labels[0].textContent.trim());
 
-        const customKeywords = Array.from(document.querySelectorAll('input[name="custom_keywords"]:checked'))
-            .map(cb => `(${cb.labels[0].textContent.trim()})`);
+        const mediumCategoryQueryParts = [];
 
-        const orParts = mediumCategoryNames.concat(customKeywords);
-        const orQuery = orParts.join(' OR ');
-        const finalQuery = orQuery ? `"${largeCategoryName}" AND (${orQuery})` : `"${largeCategoryName}"`;
+        selectedMediumCategories.forEach(mediumCat => {
+            const currentMediumCatName = `"${mediumCat.name}"`;
+            const orParts = [];
+
+            // その中分類に紐づく関連キーワードを追加
+            selectedRelatedKeywords.filter(rk => rk.mediumCategoryId === mediumCat.id)
+                                   .forEach(rk => orParts.push(`"${rk.name}"`));
+
+            // カスタムキーワードは全ての中分類に適用されると仮定
+            selectedCustomKeywords.forEach(ck => orParts.push(ck));
+
+            if (orParts.length > 0) {
+                mediumCategoryQueryParts.push(`(${currentMediumCatName} AND (${orParts.join(' OR ')}))`);
+            } else {
+                mediumCategoryQueryParts.push(currentMediumCatName);
+            }
+        });
+
+        let finalQuery = `"${largeCategoryName}"`;
+        if (mediumCategoryQueryParts.length > 0) {
+            finalQuery += ` AND (${mediumCategoryQueryParts.join(' OR ')})`;
+        }
 
         previewArea.style.display = 'block';
         previewResults.innerHTML = '<p>読み込み中...</p>';
@@ -108,6 +182,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error:', error);
             });
     });
+
+    // 初期ロード時にも中分類と関連キーワードをロード
+    if (largeCategorySelect.value) {
+        // 既存の選択を保持するために、フォームの初期値から選択された中分類IDを取得
+        const initialSelectedMediumCategories = Array.from(document.querySelectorAll('input[name="medium_categories"]:checked')).map(cb => cb.value);
+        fetch(`/subscriptions/api/medium-categories/?large_category_id=${largeCategorySelect.value}`)
+            .then(response => response.json())
+            .then(data => {
+                createCheckboxes(mediumCategoryContainer, 'medium_categories', data, initialSelectedMediumCategories);
+                // 関連キーワードも初期ロード
+                loadRelatedKeywords();
+            });
+    }
+
+    // フォームの初期ロード時に既存の関連キーワードの選択状態を復元するための処理
+    // これは、loadRelatedKeywords() が呼ばれた後に実行される必要がある
+    const initialSelectedRelatedKeywords = Array.from(document.querySelectorAll('input[name="related_keywords"]:checked')).map(cb => cb.value);
+    if (initialSelectedRelatedKeywords.length > 0) {
+        // loadRelatedKeywords() が非同期なので、少し遅延させて実行
+        setTimeout(() => {
+            const currentRelatedKeywords = Array.from(relatedKeywordsContainer.querySelectorAll('input[name="related_keywords"]'));
+            currentRelatedKeywords.forEach(cb => {
+                if (initialSelectedRelatedKeywords.includes(cb.value)) {
+                    cb.checked = true;
+                }
+            });
+        }, 500); // 500ms の遅延
+    }
 });
 </script>
 {% endblock %}

@@ -101,6 +101,11 @@ class QuerySet(models.Model):
         blank=True,
         verbose_name='任意単語'
     )
+    related_keywords = models.ManyToManyField(
+        RelatedKeywords,
+        blank=True,
+        verbose_name='関連キーワード'
+    )
 
     class Meta:
         unique_together = ('user', 'name')

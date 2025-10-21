@@ -5,6 +5,7 @@ from .views import (
     QuerySetUpdateView,
     QuerySetDeleteView,
     MediumCategoryApiView,
+    RelatedKeywordsApiView,
     NewsPreviewApiView,
 )
 
@@ -22,6 +23,8 @@ urlpatterns = [
 
     path('api/medium-categories/', MediumCategoryApiView.as_view(),
          name='api_medium_categories'),
+    path('api/related-keywords/', RelatedKeywordsApiView.as_view(),
+         name='api_related_keywords'),
     path('api/news-preview/', NewsPreviewApiView.as_view(),
          name='api_news_preview'),
 ]

@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.views.generic import CreateView, UpdateView, DeleteView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
-from .models import QuerySet, MediumCategory
+from .models import QuerySet, MediumCategory, RelatedKeywords
 from .forms import QuerySetForm
 from django.http import JsonResponse
 from django.db import IntegrityError
@@ -20,14 +20,40 @@ class QuerySetListView(LoginRequiredMixin, View):
 
 def generate_query_str(form):
     large_cat_name = form.cleaned_data['large_category'].name
-    medium_cat_names = [
-        cat.name for cat in form.cleaned_data['medium_categories']]
-    custom_keys_str = [
-        f"({kw.keywords})" for kw in form.cleaned_data['custom_keywords']]
-    or_parts = medium_cat_names + custom_keys_str
-    or_query = " OR ".join(or_parts)
-    return f'"{large_cat_name}" AND ({or_query})' \
-        if or_query else f'"{large_cat_name}"'
+    
+    medium_category_parts = []
+    for medium_cat in form.cleaned_data['medium_categories']:
+        medium_cat_name = f'"{medium_cat.name}"'
+        
+        # その中分類に紐づく関連キーワード
+        related_keywords_for_medium = [
+            f'"{kw.name}"' for kw in form.cleaned_data['related_keywords']
+            if kw.medium_category == medium_cat
+        ]
+        
+        # カスタムキーワード
+        custom_keywords_for_medium = [
+            kw.keywords for kw in form.cleaned_data['custom_keywords']
+        ]
+        
+        # 中分類内のOR結合部分
+        medium_or_parts = []
+        if related_keywords_for_medium:
+            medium_or_parts.extend(related_keywords_for_medium)
+        if custom_keywords_for_medium:
+            medium_or_parts.extend(custom_keywords_for_medium)
+            
+        if medium_or_parts:
+            medium_category_parts.append(f'{medium_cat_name} AND ({ " OR ".join(medium_or_parts) })')
+        else:
+            medium_category_parts.append(medium_cat_name)
+
+    # 大分類と中分類の結合
+    if medium_category_parts:
+        print(">>>", medium_category_parts)
+        return f'"{large_cat_name}" AND ({ " OR ".join(medium_category_parts) })'
+    else:
+        return f'"{large_cat_name}"'
 
 
 class QuerySetCreateView(LoginRequiredMixin, CreateView):
@@ -136,6 +162,19 @@ class MediumCategoryApiView(LoginRequiredMixin, View):
         medium_categories = MediumCategory.objects.filter(
             large_category_id=large_category_id)
         data = list(medium_categories.values('id', 'name'))
+        return JsonResponse(data, safe=False)
+
+
+class RelatedKeywordsApiView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        medium_category_ids = request.GET.getlist('medium_category_ids')
+        if not medium_category_ids:
+            return JsonResponse({'error': 'medium_category_ids is required'},
+                                status=400)
+
+        related_keywords = RelatedKeywords.objects.filter(
+            medium_category__id__in=medium_category_ids).order_by('name')
+        data = list(related_keywords.values('id', 'name', 'medium_category_id'))
         return JsonResponse(data, safe=False)
 
 
