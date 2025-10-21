@@ -1,25 +1,69 @@
 import uuid
+import unicodedata
+import re
 from django.db import models
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 # from django.conf import settings
 from users.models import User
 
+def validate_no_forbidden_chars(value):
+    forbidden_chars = [
+        ' ', '　', # スペース
+        '・', '/', # 区切り文字
+        '(', ')', '（', '）', '[', ']', '【', '】', '{', '}', '「', '」', # 括弧
+        '+', '-', '*', '&', '|', '!', '~', # 検索演算子
+        '\\', '$', '^', '=', '<', '>', '?', '@', ':', ';', ',', '.', '"', "'" # その他
+    ]
+    for char in forbidden_chars:
+        if char in value:
+            raise ValidationError(
+                _('"%(char)s" は使用できません。複数のキーワードをまとめたり、別名を入れたりしないでください。'),
+                params={'char': char},
+            )
 
-class LargeCategory(models.Model):
+def normalize_text(text):
+    """全角英数字を半角に変換する"""
+    if not isinstance(text, str):
+        return text
+    # 全角英数字を半角に変換
+    normalized_text = unicodedata.normalize('NFKC', text)
+    return normalized_text
+
+
+class NormalizeNameMixin(models.Model):
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        self.name = normalize_text(self.name)
+        super().save(*args, **kwargs)
+
+
+class LargeCategory(NormalizeNameMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField('大分類名', max_length=50, unique=True)
+    name = models.CharField('大分類名', max_length=50, unique=True, validators=[validate_no_forbidden_chars])
 
     def __str__(self):
         return self.name
 
 
-class MediumCategory(models.Model):
+class MediumCategory(NormalizeNameMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     large_category = models.ForeignKey(LargeCategory, on_delete=models.CASCADE)
-    name = models.CharField('中分類名', max_length=50)
-    is_trending = models.BooleanField('トレンド(AI生成)', default=False)
+    name = models.CharField('中分類名', max_length=50, validators=[validate_no_forbidden_chars])
 
     def __str__(self):
         return f'{self.large_category.name} - {self.name}'
+
+
+class RelatedKeywords(NormalizeNameMixin, models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    medium_category = models.ForeignKey(MediumCategory, on_delete=models.CASCADE)
+    name = models.CharField('関連キーワード', max_length=100, unique=True, validators=[validate_no_forbidden_chars])
+
+    def __str__(self):
+        return f'{self.medium_category.name} - {self.name}'
 
 
 class CustomKeywords(models.Model):

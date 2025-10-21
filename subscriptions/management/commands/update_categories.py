@@ -1,6 +1,6 @@
 import json
 from django.core.management.base import BaseCommand
-from subscriptions.models import LargeCategory, MediumCategory
+from subscriptions.models import LargeCategory, MediumCategory, RelatedKeywords
 
 class Command(BaseCommand):
     """
@@ -30,32 +30,37 @@ class Command(BaseCommand):
             self.stderr.write(self.style.ERROR(f'Invalid JSON format in {json_file_path}'))
             return
 
-        # --- LargeCategory の登録 ---
-        large_categories = data.get('LargeCategory', [])
-        self.stdout.write('Processing LargeCategory...')
-        for name in large_categories:
-            obj, created = LargeCategory.objects.get_or_create(name=name)
-            if created:
-                self.stdout.write(self.style.SUCCESS(f'  Created LargeCategory: {name}'))
-            else:
-                self.stdout.write(f'  LargeCategory already exists: {name}')
+        # --- Category の登録 ---
+        categories_data = data.get('Category', {})
 
-        # --- MediumCategory の登録 ---
-        medium_categories_data = data.get('MediumCategory', {})
-        self.stdout.write('\nProcessing MediumCategory...')
-        for large_cat_name, medium_cat_names in medium_categories_data.items():
-            try:
-                large_cat = LargeCategory.objects.get(name=large_cat_name)
-                for name in medium_cat_names:
-                    obj, created = MediumCategory.objects.get_or_create(
-                        large_category=large_cat,
-                        name=name
+        for large_cat_name, medium_categories in categories_data.items():
+            # LargeCategory の登録
+            large_cat, created = LargeCategory.objects.get_or_create(name=large_cat_name)
+            if created:
+                self.stdout.write(self.style.SUCCESS(f'  Created LargeCategory: {large_cat_name}'))
+            else:
+                self.stdout.write(f'  LargeCategory already exists: {large_cat_name}')
+
+            for medium_cat_name, related_keywords in medium_categories.items():
+                # MediumCategory の登録
+                medium_cat, created = MediumCategory.objects.get_or_create(
+                    large_category=large_cat,
+                    name=medium_cat_name
+                )
+                if created:
+                    self.stdout.write(self.style.SUCCESS(f'    Created MediumCategory: {large_cat_name} -> {medium_cat_name}'))
+                else:
+                    self.stdout.write(f'    MediumCategory already exists: {large_cat_name} -> {medium_cat_name}')
+
+                # RelatedKeywords の登録
+                for keyword_name in related_keywords:
+                    related_keyword, created = RelatedKeywords.objects.get_or_create(
+                        medium_category=medium_cat,
+                        name=keyword_name
                     )
                     if created:
-                        self.stdout.write(self.style.SUCCESS(f'  Created MediumCategory: {large_cat_name} -> {name}'))
+                        self.stdout.write(self.style.SUCCESS(f'      Created RelatedKeyword: {medium_cat_name} -> {keyword_name}'))
                     else:
-                        self.stdout.write(f'  MediumCategory already exists: {large_cat_name} -> {name}')
-            except LargeCategory.DoesNotExist:
-                self.stderr.write(self.style.WARNING(f'  LargeCategory not found, skipping: {large_cat_name}'))
+                        self.stdout.write(f'      RelatedKeyword already exists: {medium_cat_name} -> {keyword_name}')
 
         self.stdout.write(self.style.SUCCESS('\nSuccessfully finished updating categories.'))
