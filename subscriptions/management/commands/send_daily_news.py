@@ -30,7 +30,24 @@ class Command(BaseCommand):
     help = ('Fetches news based on QuerySets '
             'and sends them to users as HTML email.')
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--dry-run',
+            action='store_true',
+            help='Simulate the process without sending emails or writing to the database.',
+        )
+        parser.add_argument(
+            '--after-days',
+            type=int,
+            default=2,
+            help='Fetch articles published within the last N days. Set to 0 or less for no date limit.',
+        )
+
     def handle(self, *args, **options):
+        dry_run = options['dry_run']
+        if dry_run:
+            self.stdout.write(self.style.WARNING("[DRY RUN] Running in dry-run mode."))
+
         self.stdout.write("Starting the news fetching batch process...")
 
         current_site = Site.objects.get_current()
@@ -38,11 +55,11 @@ class Command(BaseCommand):
         active_users = User.objects.filter(is_active=True)
 
         for user in active_users:
-            self.process_user(user, site_url)
+            self.process_user(user, site_url, dry_run, options)
 
         self.stdout.write("Batch process finished.")
 
-    def process_user(self, user, site_url):
+    def process_user(self, user, site_url, dry_run, options):
         """一人のユーザーに対する処理をまとめた関数"""
         self.stdout.write(f"Processing user: {user.email}")
 
@@ -51,15 +68,19 @@ class Command(BaseCommand):
             return
 
         querysets_with_articles, all_new_articles = \
-            self.fetch_all_news(user, user_querysets)
+            self.fetch_all_news(user, user_querysets, dry_run, options)
 
         if querysets_with_articles:
-            self.send_digest_email(user, querysets_with_articles, site_url)
-            self.log_sent_articles(user, all_new_articles)
+            if dry_run:
+                self.stdout.write(f"  [DRY RUN] Would send digest email to {user.email}.")
+                self.stdout.write(f"  [DRY RUN] Would log {len(all_new_articles)} articles as sent for {user.email}.")
+            else:
+                self.send_digest_email(user, querysets_with_articles, site_url)
+                self.log_sent_articles(user, all_new_articles)
         else:
             self.stdout.write(f"  No new articles found for {user.email}.")
 
-    def fetch_all_news(self, user, user_querysets):
+    def fetch_all_news(self, user, user_querysets, dry_run, options):
         """ユーザーの全QuerySetから新しいニュースを取得する関数"""
         querysets_with_articles = []
         all_new_articles = []
@@ -68,7 +89,7 @@ class Command(BaseCommand):
             self.stdout.write(f"  Processing queryset: {queryset.name}")
 
             new_articles_for_queryset = \
-                self.fetch_news_for_queryset(user, queryset)
+                self.fetch_news_for_queryset(user, queryset, dry_run, options)
 
             if new_articles_for_queryset:
                 querysets_with_articles.append({
@@ -79,14 +100,22 @@ class Command(BaseCommand):
 
         return querysets_with_articles, all_new_articles
 
-    def fetch_news_for_queryset(self, user, queryset):
+    def fetch_news_for_queryset(self, user, queryset, dry_run, options):
         """一つのQuerySetからニュースを取得する関数"""
-        two_days_ago = datetime.now() - timedelta(days=2)
-        after_date = two_days_ago.strftime('%Y-%m-%d')
+        after_days = options['after_days']
+        date_query_param = ""
+        if after_days > 0:
+            two_days_ago = datetime.now() - timedelta(days=after_days)
+            after_date = two_days_ago.strftime('%Y-%m-%d')
+            date_query_param = f"after:{after_date}"
+
         base_url = ("https://news.google.com/rss/search?"
-                    f"q={{query}}+after:{after_date}&hl=ja&gl=JP&ceid=JP:ja")
+                    f"q={{query}}+{date_query_param}&hl=ja&gl=JP&ceid=JP:ja")
         encoded_query = quote(queryset.query_str)
         rss_url = base_url.format(query=encoded_query)
+
+        if options['verbosity'] >= 1:
+            self.stdout.write(f"    Fetching RSS from: {rss_url}")
 
         try:
             # タイムアウトを10秒に設定
@@ -100,16 +129,47 @@ class Command(BaseCommand):
 
         feed = feedparser.parse(response.content)
 
+        if options['verbosity'] >= 1:
+            self.stdout.write(f"    Found {len(feed.entries)} entries in RSS feed.")
+
         new_articles = []
         for entry in feed.entries:
             published_date = get_published_date_from_entry(entry)
-            article, created = Article.objects.get_or_create(
-                url=entry.link,
-                defaults={
-                    'title': entry.title,
-                    'published_date': published_date
-                }
-            )
+
+            # after_days が 0 より大きい場合のみ、日付フィルタリングを適用
+            if after_days > 0 and published_date:
+                # 現在時刻から after_days 日前を計算
+                threshold_date = datetime.now(timezone.utc) - timedelta(days=after_days)
+                if published_date < threshold_date:
+                    if options['verbosity'] >= 1:
+                        self.stdout.write(
+                            f"    [SKIPPED] Article too old: "
+                            f"\"{entry.title[:50]}...\" (Published: {published_date})")
+                    continue # この記事はスキップ
+
+            article = None
+            created = False
+            if dry_run:
+                article = Article.objects.filter(url=entry.link).first()
+                if not article:
+                    article = Article(
+                        url=entry.link,
+                        title=entry.title,
+                        published_date=published_date
+                    )
+                    created = True
+                    self.stdout.write(
+                        f'  [DRY RUN] Would create new article: "{article.title[:50]}..." (Published: {article.published_date})'
+                    )
+            else:
+                article, created = Article.objects.get_or_create(
+                    url=entry.link,
+                    defaults={
+                        'title': entry.title,
+                        'published_date': published_date
+                    }
+                )
+
             is_sent = SentArticleLog.objects.filter(
                 user=user, article=article).exists()
             if not is_sent:
