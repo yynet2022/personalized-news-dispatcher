@@ -33,9 +33,10 @@
 *   **ユーザー認証**: メールアドレスとワンタイムトークンを用いたパスワードレス認証を提供します。
 *   **QuerySet**: ユーザーはニュース収集の条件を「QuerySet」として複数登録できます。QuerySet は以下の要素から構成されます。
     *   大分類 (例: 経済, IT)
-    *   中分類 (例: 金融政策, ソフトウェア)
+    *   普遍キーワード (例: 金融政策, ソフトウェア)
+    *   時事キーワード (例: 日銀会合, WWDC)
     *   関連キーワード
-    *   任意キーワード
+    *   任意単語
 *   **ニュース収集**: `send_daily_news.py` 管理コマンドが、各ユーザーの QuerySet に基づき Google News の RSS からニュースを収集します。
 *   **メール配信**: 収集したニュースをまとめ、HTML 形式のダイジェストメールをユーザーに配信します。
 *   **クリック追跡**: メール内のニュースリンクには追跡用の URL が付与され、ユーザーのクリックを記録します。
@@ -44,8 +45,8 @@
 
 *   `users.User`: ユーザー情報を格納します。
 *   `users.LoginToken`: パスワードレス認証用のワンタイムトークンを格納します。
-*   `subscriptions.LargeCategory`, `MediumCategory`, `RelatedKeywords`: ニュースの分類カテゴリを定義します。
-*   `subscriptions.CustomKeywords`: ユーザーが任意に設定するキーワードを格納します。
+*   `subscriptions.LargeCategory`, `UniversalKeywords`, `CurrentKeywords`, `RelatedKeywords`: ニュースの分類カテゴリを定義します。
+*   `subscriptions.CustomKeywords`: ユーザーが任意に設定する単語を格納します。
 *   `subscriptions.QuerySet`: ユーザーが作成したニュース収集条件のセットです。
 *   `news.Article`: 収集したニュース記事の情報を格納します。
 *   `news.SentArticleLog`: どの記事をどのユーザーに配信したかを記録します。

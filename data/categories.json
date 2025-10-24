@@ -1,27 +1,204 @@
-{
-  "Category": {
-    "経済": {
-      "景気動向": ["GDP", "消費者物価指数", "雇用統計", "景気ウォッチャー調査"],
-      "金融政策": ["日銀", "FRB", "金利", "量的緩和", "テーパリング"],
-      "株式市場": ["日経平均", "TOPIX", "ダウ平均", "S&P500", "ナスダック", "為替"],
-      "国際経済": ["米中貿易摩擦", "EU経済", "新興国市場", "原油価格"]
-    },
-    "IT": {
-      "ソフトウェア": ["プログラミング言語", "OS", "クラウド", "SaaS", "AI開発"],
-      "インターネット": ["Webサービス", "SNS", "サイバーセキュリティ", "5G", "IoT"],
-      "ハードウェア": ["半導体", "PC", "スマートフォン", "データセンター"],
-      "AI機械学習": ["ディープラーニング", "自然言語処理", "画像認識", "ロボット"]
-    },
-    "科学": {
-      "宇宙": ["NASA", "JAXA", "宇宙開発", "天文学", "惑星探査"],
-      "医療健康": ["新薬開発", "ゲノム編集", "再生医療", "感染症", "健康寿命"],
-      "環境エネルギー": ["再生可能エネルギー", "気候変動", "脱炭素", "SDGs", "原子力"]
-    },
-    "社会": {
-      "政治": ["国会", "選挙", "外交", "憲法改正", "地方自治"],
-      "教育": ["大学入試", "GIGAスクール", "幼児教育", "リカレント教育"],
-      "文化芸術": ["映画", "音楽", "美術", "演劇", "伝統文化"],
-      "スポーツ": ["野球", "サッカー", "オリンピック", "eスポーツ"]
-    }
+[
+  {
+    "name": "経済",
+    "universal": [
+      {"name": "GDP", "description": "国内総生産"},
+      {"name": "CPI", "description": "消費者物価指数"},
+      {"name": "失業率", "description": "労働力人口に占める失業者の割合"},
+      {"name": "金利", "description": "貸借される資金の利子率"},
+      {"name": "為替", "description": "異種通貨間の交換比率"},
+      {"name": "株価", "description": "株式市場での株式の価格"},
+      {"name": "貿易収支", "description": "輸出額と輸入額の差額"},
+      {"name": "インフレ", "description": "物価水準が持続的に上昇する現象"},
+      {"name": "デフレ", "description": "物価水準が持続的に下落する現象"},
+      {"name": "財政政策", "description": "政府による歳出や税制を通じた経済政策"}
+    ],
+    "current": [
+      {"name": "テーパリング", "description": "量的緩和策の段階的縮小"},
+      {"name": "スタグフレーション", "description": "景気後退と物価上昇の同時進行"},
+      {"name": "サプライチェーン", "description": "製品が消費者に届くまでの供給網"},
+      {"name": "半導体不足", "description": "世界的な半導体の供給不足問題"},
+      {"name": "円安", "description": "円の対外価値が下落する現象"},
+      {"name": "資源高", "description": "原油や天然ガスなどのエネルギー資源価格の高騰"},
+      {"name": "DX", "description": "デジタルトランスフォーメーション"},
+      {"name": "GX", "description": "グリーントランスフォーメーション"},
+      {"name": "リスキリング", "description": "新しい職業やスキルを学ぶための再教育"},
+      {"name": "Web3", "description": "ブロックチェーン技術を基盤とする次世代インターネット"}
+    ],
+    "related": [
+      {"name": "日銀", "description": "日本銀行"},
+      {"name": "FRB", "description": "米連邦準備制度理事会"},
+      {"name": "ECB", "description": "欧州中央銀行"},
+      {"name": "景気動向指数", "description": "景気の現状把握・将来予測のための指標"},
+      {"name": "鉱工業生産指数", "description": "鉱業・製造業の生産活動を示す指標"},
+      {"name": "設備投資", "description": "企業が事業拡大のために行う投資"},
+      {"name": "個人消費", "description": "家計による財やサービスの消費支出"},
+      {"name": "住宅着工", "description": "新たに建設が始まった住宅の戸数"},
+      {"name": "財政赤字", "description": "政府の歳入が歳出を下回る状態"},
+      {"name": "国債", "description": "国が発行する債券"},
+      {"name": "新興国", "description": "経済が急成長している国々"},
+      {"name": "地政学リスク", "description": "地理的な位置関係がもたらす政治的・軍事的な緊張"},
+      {"name": "OPEC", "description": "石油輸出国機構"},
+      {"name": "TPP", "description": "環太平洋パートナーシップ協定"},
+      {"name": "RCEP", "description": "地域的な包括的経済連携協定"},
+      {"name": "フィンテック", "description": "金融とITの融合"},
+      {"name": "空売り", "description": "株価が下がると利益が出る取引"},
+      {"name": "配当", "description": "企業が株主に利益を分配すること"},
+      {"name": "ベンチャーキャピタル", "description": "スタートアップに投資する会社"},
+      {"name": "ユニコーン企業", "description": "評価額10億ドル以上の未上場企業"}
+    ]
+  },
+  {
+    "name": "社会",
+    "universal": [
+      {"name": "少子高齢化", "description": "出生率の低下と平均寿命の伸長による人口構成の変化"},
+      {"name": "格差社会", "description": "経済的な格差が拡大している社会"},
+      {"name": "労働問題", "description": "雇用や賃金に関する問題"},
+      {"name": "社会保障", "description": "年金、医療、介護などの制度"},
+      {"name": "防災", "description": "自然災害による被害を防ぐための対策"},
+      {"name": "ジェンダー", "description": "社会的・文化的に作られた性別"},
+      {"name": "国会", "description": "日本の立法機関"},
+      {"name": "内閣", "description": "日本の行政機関"},
+      {"name": "選挙", "description": "代表者などを選ぶための投票"},
+      {"name": "外交", "description": "国家間の関係を処理する活動"}
+    ],
+    "current": [
+      {"name": "SDGs", "description": "持続可能な開発目標"},
+      {"name": "コロナ禍", "description": "新型コロナ感染症の流行による社会への影響"},
+      {"name": "リモートワーク", "description": "遠隔地で勤務する働き方"},
+      {"name": "ヤングケアラー", "description": "家族の介護を担う18歳未満の子ども"},
+      {"name": "孤独・孤立", "description": "社会的なつながりが希薄な状態"},
+      {"name": "防衛費増額", "description": "日本の防衛予算の増額"},
+      {"name": "異次元の少子化対策", "description": "政府が掲げる少子化対策"},
+      {"name": "憲法改正", "description": "日本国憲法を改正する議論"},
+      {"name": "政治資金", "description": "政治活動に必要な資金"},
+      {"name": "LGBT法", "description": "性的少数者の理解増進を図る法律"}
+    ],
+    "related": [
+      {"name": "貧困問題", "description": "最低限の生活水準を維持できない人々"},
+      {"name": "過労死", "description": "働きすぎによる死亡"},
+      {"name": "ハラスメント", "description": "嫌がらせ"},
+      {"name": "非正規雇用", "description": "正社員以外の雇用形態"},
+      {"name": "生活保護", "description": "困窮する国民に国が最低限度の生活を保障する制度"},
+      {"name": "待機児童", "description": "保育所に入れない子ども"},
+      {"name": "空き家問題", "description": "居住者のいない住宅が増加する問題"},
+      {"name": "児童虐待", "description": "保護者による子どもへの暴力やネグレクト"},
+      {"name": "インフラ老朽化", "description": "社会基盤が古くなり機能不全に陥る問題"},
+      {"name": "デジタルデバイド", "description": "情報格差"},
+      {"name": "情報リテラシー", "description": "情報を正しく活用する能力"},
+      {"name": "クラウドファンディング", "description": "インターネットで資金を調達する仕組み"},
+      {"name": "ベーシックインカム", "description": "政府が国民に最低限の所得を保障する制度"},
+      {"name": "ウェルビーイング", "description": "身体的・精神的・社会的に良好な状態"},
+      {"name": "ワークライフバランス", "description": "仕事と生活の調和"},
+      {"name": "8050問題", "description": "80代の親が50代の子の生活を支える問題"},
+      {"name": "与党", "description": "政権を担当している政党"},
+      {"name": "野党", "description": "政権を担当していない政党"},
+      {"name": "衆議院", "description": "日本の国会の下院"},
+      {"name": "参議院", "description": "日本の国会の上院"},
+      {"name": "首相", "description": "内閣総理大臣"},
+      {"name": "支持率", "description": "内閣や政党の支持の割合"},
+      {"name": "法案", "description": "国会に提出される法律の案"},
+      {"name": "安全保障", "description": "国家の安全を保障すること"},
+      {"name": "派閥", "description": "政党内の政策集団"},
+      {"name": "一票の格差", "description": "選挙区間の議員一人当たりの有権者数の差"}
+    ]
+  },
+  {
+    "name": "IT",
+    "universal": [
+      {"name": "AI", "description": "人工知能"},
+      {"name": "IoT", "description": "モノのインターネット"},
+      {"name": "5G", "description": "第5世代移動通信システム"},
+      {"name": "クラウド", "description": "インターネット経由で提供されるコンピューティングサービス"},
+      {"name": "SaaS", "description": "サービスとしてのソフトウェア"},
+      {"name": "セキュリティ", "description": "情報資産を保護すること"},
+      {"name": "プログラミング", "description": "コンピュータに指示を与えるための言語"},
+      {"name": "OS", "description": "オペレーティングシステム"},
+      {"name": "データベース", "description": "整理された情報の集まり"},
+      {"name": "UI/UX", "description": "ユーザーインターフェース/ユーザーエクスペリエンス"}
+    ],
+    "current": [
+      {"name": "生成AI", "description": "文章や画像などを生成するAI"},
+      {"name": "ChatGPT", "description": "OpenAIが開発した対話型AI"},
+      {"name": "メタバース", "description": "インターネット上の仮想空間"},
+      {"name": "Web3", "description": "ブロックチェーン技術を基盤とする次世代インターネット"},
+      {"name": "xR", "description": "VR, AR, MRなどの総称"},
+      {"name": "ノーコード", "description": "ソースコードを書かずにアプリなどを開発する手法"},
+      {"name": "ローコード", "description": "最小限のソースコードでアプリなどを開発する手法"},
+      {"name": "量子コンピュータ", "description": "量子力学の原理を応用したコンピュータ"},
+      {"name": "エッジコンピューティング", "description": "利用者の近くでデータを処理する技術"},
+      {"name": "デジタルツイン", "description": "現実空間の情報を仮想空間に再現する技術"}
+    ],
+    "related": [
+      {"name": "API", "description": "ソフトウェア間で情報をやり取りする仕組み"},
+      {"name": "コンテナ", "description": "アプリケーションの実行環境を仮想化する技術"},
+      {"name": "Docker", "description": "コンテナ型仮想化プラットフォーム"},
+      {"name": "Kubernetes", "description": "コンテナオーケストレーションツール"},
+      {"name": "マイクロサービス", "description": "小さなサービスの集合体としてアプリケーションを構築する手法"},
+      {"name": "サーバーレス", "description": "サーバー管理が不要なクラウドコンピューティング"},
+      {"name": "DevOps", "description": "開発と運用が連携・協力する開発手法"},
+      {"name": "CI/CD", "description": "継続的インテグレーション/継続的デリバリー"},
+      {"name": "アジャイル開発", "description": "反復的な短い期間で開発を進める手法"},
+      {"name": "OSS", "description": "オープンソースソフトウェア"},
+      {"name": "GitHub", "description": "ソフトウェア開発のプラットフォーム"},
+      {"name": "Python", "description": "プログラミング言語の一つ"},
+      {"name": "JavaScript", "description": "プログラミング言語の一つ"},
+      {"name": "TypeScript", "description": "JavaScriptを拡張したプログラミング言語"},
+      {"name": "SQL", "description": "データベースを操作するための言語"},
+      {"name": "NoSQL", "description": "SQL以外のデータベース"},
+      {"name": "機械学習", "description": "コンピュータがデータから学習する技術"},
+      {"name": "ディープラーニング", "description": "深層学習"},
+      {"name": "自然言語処理", "description": "人間の言葉をコンピュータで処理する技術"},
+      {"name": "画像認識", "description": "画像の内容をコンピュータが認識する技術"}
+    ]
+  },
+  {
+    "name": "テクノロジー",
+    "universal": [
+      {"name": "半導体", "description": "電気を通す導体と通さない絶縁体の中間の性質を持つ物質"},
+      {"name": "バッテリー", "description": "電池"},
+      {"name": "センサー", "description": "物理量や化学量を検知する装置"},
+      {"name": "モーター", "description": "電気エネルギーを運動エネルギーに変換する装置"},
+      {"name": "ロボット", "description": "自動的に作業を行う機械"},
+      {"name": "ドローン", "description": "無人航空機"},
+      {"name": "3Dプリンター", "description": "3次元のデータをもとに立体物を造形する装置"},
+      {"name": "物理学", "description": "自然界の基本的な法則を探求する学問"},
+      {"name": "化学", "description": "物質の性質や変化を研究する学問"},
+      {"name": "生物学", "description": "生命現象を研究する学問"}
+    ],
+    "current": [
+      {"name": "EV", "description": "電気自動車"},
+      {"name": "自動運転", "description": "自動車が自動で走行する技術"},
+      {"name": "MaaS", "description": "サービスとしてのモビリティ"},
+      {"name": "スマートシティ", "description": "ICT技術を活用した都市"},
+      {"name": "ゲノム編集", "description": "遺伝子の情報を書き換える技術"},
+      {"name": "CRISPR", "description": "ゲノム編集技術の一つ (クリスパー)"},
+      {"name": "iPS細胞", "description": "人工多能性幹細胞"},
+      {"name": "再生医療", "description": "失われた組織や臓器を再生させる医療"},
+      {"name": "核融合", "description": "軽い原子核が融合して重い原子核になる反応"},
+      {"name": "量子技術", "description": "量子力学の原理を応用した技術の総称"}
+    ],
+    "related": [
+      {"name": "リチウムイオン電池", "description": "充電可能な二次電池"},
+      {"name": "全固体電池", "description": "次世代の電池技術"},
+      {"name": "MEMS", "description": "微小電気機械システム"},
+      {"name": "アクチュエーター", "description": "エネルギーを物理的な動きに変換する装置"},
+      {"name": "産業用ロボット", "description": "工場などで使用されるロボット"},
+      {"name": "サービスロボット", "description": "医療や介護などで使用されるロボット"},
+      {"name": "材料科学", "description": "新しい材料を研究・開発する学問"},
+      {"name": "ナノテクノロジー", "description": "ナノメートル単位の物質を扱う技術"},
+      {"name": "バイオテクノロジー", "description": "生物の機能を応用する技術"},
+      {"name": "宇宙開発", "description": "宇宙空間を探査・利用する活動"},
+      {"name": "JAXA", "description": "宇宙航空研究開発機構"},
+      {"name": "NASA", "description": "アメリカ航空宇宙局"},
+      {"name": "SpaceX", "description": "米国の宇宙開発企業"},
+      {"name": "素粒子物理学", "description": "物質の最小単位を研究する物理学"},
+      {"name": "CERN", "description": "欧州原子核研究機構"},
+      {"name": "超伝導", "description": "特定の物質が極低温で電気抵抗がゼロになる現象"},
+      {"name": "レーザー", "description": "指向性の高い強力な光"},
+      {"name": "AI創薬", "description": "AIを活用した医薬品開発"},
+      {"name": "プレシジョンメディシン", "description": "個別化医療"},
+      {"name": "はやぶさ2", "description": "日本の小惑星探査機"}
+    ]
   }
-}
+]
