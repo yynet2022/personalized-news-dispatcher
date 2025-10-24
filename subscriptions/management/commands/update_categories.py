@@ -1,12 +1,13 @@
 import json
 from django.core.management.base import BaseCommand
-from subscriptions.models import LargeCategory, MediumCategory, RelatedKeywords
+from subscriptions.models import LargeCategory, UniversalKeywords, CurrentKeywords, RelatedKeywords
+from django.db import transaction
 
 class Command(BaseCommand):
     """
-    JSONファイルから大分類・中分類を登録するコマンド
+    JSONファイルからカテゴリとキーワードを登録するコマンド
     """
-    help = 'Create LargeCategory and MediumCategory from a JSON file.'
+    help = 'Create or update categories and keywords from a JSON file.'
 
     def add_arguments(self, parser):
         """
@@ -14,6 +15,22 @@ class Command(BaseCommand):
         """
         parser.add_argument('json_file', type=str, help='Path to the JSON file')
 
+    def _update_keywords(self, large_cat, keyword_data_list, KeywordModel, keyword_type_name):
+        for keyword_data in keyword_data_list:
+            keyword_name = keyword_data.get('name')
+            if not keyword_name:
+                continue
+            _, created = KeywordModel.objects.update_or_create(
+                large_category=large_cat,
+                name=keyword_name,
+                defaults={'description': keyword_data.get('description')}
+            )
+            if created:
+                self.stdout.write(self.style.SUCCESS(f'    Created {keyword_type_name}: {large_cat.name} -> {keyword_name}'))
+            else:
+                self.stdout.write(f'    Updated {keyword_type_name}: {large_cat.name} -> {keyword_name}')
+
+    @transaction.atomic
     def handle(self, *args, **options):
         """
         コマンドのメインロジック
@@ -30,10 +47,13 @@ class Command(BaseCommand):
             self.stderr.write(self.style.ERROR(f'Invalid JSON format in {json_file_path}'))
             return
 
-        # --- Category の登録 ---
-        categories_data = data.get('Category', {})
+        self.stdout.write(self.style.SUCCESS('Start updating categories...'))
 
-        for large_cat_name, medium_categories in categories_data.items():
+        for category_data in data:
+            large_cat_name = category_data.get('name')
+            if not large_cat_name:
+                continue
+
             # LargeCategory の登録
             large_cat, created = LargeCategory.objects.get_or_create(name=large_cat_name)
             if created:
@@ -41,26 +61,8 @@ class Command(BaseCommand):
             else:
                 self.stdout.write(f'  LargeCategory already exists: {large_cat_name}')
 
-            for medium_cat_name, related_keywords in medium_categories.items():
-                # MediumCategory の登録
-                medium_cat, created = MediumCategory.objects.get_or_create(
-                    large_category=large_cat,
-                    name=medium_cat_name
-                )
-                if created:
-                    self.stdout.write(self.style.SUCCESS(f'    Created MediumCategory: {large_cat_name} -> {medium_cat_name}'))
-                else:
-                    self.stdout.write(f'    MediumCategory already exists: {large_cat_name} -> {medium_cat_name}')
-
-                # RelatedKeywords の登録
-                for keyword_name in related_keywords:
-                    related_keyword, created = RelatedKeywords.objects.get_or_create(
-                        medium_category=medium_cat,
-                        name=keyword_name
-                    )
-                    if created:
-                        self.stdout.write(self.style.SUCCESS(f'      Created RelatedKeyword: {medium_cat_name} -> {keyword_name}'))
-                    else:
-                        self.stdout.write(f'      RelatedKeyword already exists: {medium_cat_name} -> {keyword_name}')
+            self._update_keywords(large_cat, category_data.get('universal', []), UniversalKeywords, 'UniversalKeyword')
+            self._update_keywords(large_cat, category_data.get('current', []), CurrentKeywords, 'CurrentKeyword')
+            self._update_keywords(large_cat, category_data.get('related', []), RelatedKeywords, 'RelatedKeyword')
 
         self.stdout.write(self.style.SUCCESS('\nSuccessfully finished updating categories.'))

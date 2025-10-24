@@ -1,10 +1,8 @@
 import uuid
 import unicodedata
-import re
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-# from django.conf import settings
 from users.models import User
 
 def validate_no_forbidden_chars(value):
@@ -48,10 +46,21 @@ class LargeCategory(NormalizeNameMixin, models.Model):
         return self.name
 
 
-class MediumCategory(NormalizeNameMixin, models.Model):
+class UniversalKeywords(NormalizeNameMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     large_category = models.ForeignKey(LargeCategory, on_delete=models.CASCADE)
-    name = models.CharField('中分類名', max_length=50, validators=[validate_no_forbidden_chars])
+    name = models.CharField('普遍キーワード', max_length=50, validators=[validate_no_forbidden_chars])
+    description = models.CharField('説明', max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return f'{self.large_category.name} - {self.name}'
+
+
+class CurrentKeywords(NormalizeNameMixin, models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    large_category = models.ForeignKey(LargeCategory, on_delete=models.CASCADE)
+    name = models.CharField('時事キーワード', max_length=50, validators=[validate_no_forbidden_chars])
+    description = models.CharField('説明', max_length=255, blank=True, null=True)
 
     def __str__(self):
         return f'{self.large_category.name} - {self.name}'
@@ -59,11 +68,12 @@ class MediumCategory(NormalizeNameMixin, models.Model):
 
 class RelatedKeywords(NormalizeNameMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    medium_category = models.ForeignKey(MediumCategory, on_delete=models.CASCADE)
+    large_category = models.ForeignKey(LargeCategory, on_delete=models.CASCADE)
     name = models.CharField('関連キーワード', max_length=100, unique=True, validators=[validate_no_forbidden_chars])
+    description = models.CharField('説明', max_length=255, blank=True, null=True)
 
     def __str__(self):
-        return f'{self.medium_category.name} - {self.name}'
+        return f'{self.large_category.name} - {self.name}'
 
 
 class CustomKeywords(models.Model):
@@ -84,27 +94,34 @@ class QuerySet(models.Model):
     query_str = models.TextField('クエリ文字列', editable=False,
                                  help_text='ユーザ選択により自動生成')
 
-    # null=True, blank=True を削除し、on_delete を PROTECT に変更
     large_category = models.ForeignKey(
         LargeCategory,
-        on_delete=models.PROTECT,  # 関連する大分類が削除されるのを防ぐ
+        on_delete=models.PROTECT,
         verbose_name='大分類'
     )
 
-    medium_categories = models.ManyToManyField(
-        MediumCategory,
+    universal_keywords = models.ManyToManyField(
+        UniversalKeywords,
         blank=True,
-        verbose_name='中分類'
+        verbose_name='普遍キーワード'
     )
-    custom_keywords = models.ManyToManyField(
-        CustomKeywords,
+
+    current_keywords = models.ManyToManyField(
+        CurrentKeywords,
         blank=True,
-        verbose_name='任意単語'
+        verbose_name='時事キーワード'
     )
+
     related_keywords = models.ManyToManyField(
         RelatedKeywords,
         blank=True,
         verbose_name='関連キーワード'
+    )
+
+    custom_keywords = models.ManyToManyField(
+        CustomKeywords,
+        blank=True,
+        verbose_name='任意単語'
     )
 
     class Meta:

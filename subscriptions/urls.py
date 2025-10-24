@@ -4,7 +4,8 @@ from .views import (
     QuerySetCreateView,
     QuerySetUpdateView,
     QuerySetDeleteView,
-    MediumCategoryApiView,
+    UniversalKeywordsApiView,
+    CurrentKeywordsApiView,
     RelatedKeywordsApiView,
     NewsPreviewApiView,
 )
@@ -21,8 +22,10 @@ urlpatterns = [
     path('<uuid:pk>/delete/', QuerySetDeleteView.as_view(),
          name='queryset_delete'),
 
-    path('api/medium-categories/', MediumCategoryApiView.as_view(),
-         name='api_medium_categories'),
+    path('api/universal-keywords/', UniversalKeywordsApiView.as_view(),
+         name='api_universal_keywords'),
+    path('api/current-keywords/', CurrentKeywordsApiView.as_view(),
+         name='api_current_keywords'),
     path('api/related-keywords/', RelatedKeywordsApiView.as_view(),
          name='api_related_keywords'),
     path('api/news-preview/', NewsPreviewApiView.as_view(),

@@ -7,7 +7,7 @@
 
     <style>
         /* チェックボックスのコンテナにスタイルを適用 */
-        #id_medium_categories, #id_related_keywords, #id_custom_keywords {
+        #id_universal_keywords, #id_current_keywords, #id_related_keywords, #id_custom_keywords {
             border: 1px solid #ccc;
             padding: 0.5rem;
             border-radius: 4px;
@@ -18,7 +18,8 @@
         }
 
         /* チェックボックスの各項目を横並びにする */
-        #id_medium_categories > div,
+        #id_universal_keywords > div,
+        #id_current_keywords > div,
         #id_related_keywords > div,
         #id_custom_keywords > li {
             display: inline-block; /* 横並びに */
@@ -47,9 +48,9 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const largeCategorySelect = document.querySelector('#id_large_category');
-    const mediumCategoryContainer = document.querySelector('#id_medium_categories');
+    const universalKeywordsContainer = document.querySelector('#id_universal_keywords');
+    const currentKeywordsContainer = document.querySelector('#id_current_keywords');
     const relatedKeywordsContainer = document.querySelector('#id_related_keywords');
-    const customKeywordsContainer = document.querySelector('#id_custom_keywords');
     const previewButton = document.querySelector('#preview-button');
     const previewArea = document.querySelector('#preview-area');
     const previewResults = document.querySelector('#preview-results');
@@ -66,13 +67,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (selectedValues.includes(String(item.id))) {
                 checkbox.checked = true;
             }
-            // RelatedKeywords の場合、medium_category_id をデータ属性として追加
-            if (name === 'related_keywords' && item.medium_category_id) {
-                checkbox.dataset.mediumCategoryId = item.medium_category_id;
-            }
 
             const label = document.createElement('label');
             label.htmlFor = checkbox.id;
+            label.title = item.description || ''; // ホバーで説明を表示
             label.appendChild(checkbox);
             label.appendChild(document.createTextNode(` ${item.name}`));
             
@@ -82,100 +80,75 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- 1. 大分類が変更されたら、中分類を動的に読み込む ---
+    // --- 1. 大分類が変更されたら、各キーワードを動的に読み込む ---
     largeCategorySelect.addEventListener('change', function() {
-        const largeCategoryId = this.value;
-        mediumCategoryContainer.innerHTML = ''; 
-        relatedKeywordsContainer.innerHTML = ''; // 大分類変更時に関連キーワードもクリア
+        loadAllKeywords();
+    });
+
+    function loadAllKeywords() {
+        const largeCategoryId = largeCategorySelect.value;
+
+        // Get selected values before clearing the containers
+        const selectedUniversal = getSelectedValues('universal_keywords');
+        const selectedCurrent = getSelectedValues('current_keywords');
+        const selectedRelated = getSelectedValues('related_keywords');
+        
+        universalKeywordsContainer.innerHTML = ''; 
+        currentKeywordsContainer.innerHTML = '';
+        relatedKeywordsContainer.innerHTML = '';
 
         if (!largeCategoryId) {
             return;
         }
 
-        fetch(`/subscriptions/api/medium-categories/?large_category_id=${largeCategoryId}`)
+        // Universal Keywords
+        fetch(`/subscriptions/api/universal-keywords/?large_category_id=${largeCategoryId}`)
             .then(response => response.json())
             .then(data => {
-                // 既存の選択を保持
-                const selectedMediumCategories = Array.from(document.querySelectorAll('input[name="medium_categories"]:checked')).map(cb => cb.value);
-                createCheckboxes(mediumCategoryContainer, 'medium_categories', data, selectedMediumCategories);
-                // 中分類がロードされたら、関連キーワードもロード
-                loadRelatedKeywords();
+                createCheckboxes(universalKeywordsContainer, 'universal_keywords', data, selectedUniversal);
             });
-    });
 
-    // --- 2. 中分類が変更されたら、関連キーワードを動的に読み込む ---
-    // mediumCategoryContainer は動的に生成されるため、イベント委譲を使用
-    mediumCategoryContainer.addEventListener('change', function(event) {
-        if (event.target.name === 'medium_categories') {
-            loadRelatedKeywords();
-        }
-    });
-
-    function loadRelatedKeywords() {
-        const selectedMediumCategoryIds = Array.from(document.querySelectorAll('input[name="medium_categories"]:checked')).map(cb => cb.value);
-        relatedKeywordsContainer.innerHTML = '';
-
-        if (selectedMediumCategoryIds.length === 0) {
-            return;
-        }
-
-        const queryParams = new URLSearchParams();
-        selectedMediumCategoryIds.forEach(id => queryParams.append('medium_category_ids', id));
-
-        fetch(`/subscriptions/api/related-keywords/?${queryParams.toString()}`)
+        // Current Keywords
+        fetch(`/subscriptions/api/current-keywords/?large_category_id=${largeCategoryId}`)
             .then(response => response.json())
             .then(data => {
-                // 既存の選択を保持
-                const selectedRelatedKeywords = Array.from(document.querySelectorAll('input[name="related_keywords"]:checked')).map(cb => cb.value);
-                createCheckboxes(relatedKeywordsContainer, 'related_keywords', data, selectedRelatedKeywords);
+                createCheckboxes(currentKeywordsContainer, 'current_keywords', data, selectedCurrent);
+            });
+
+        // Related Keywords
+        fetch(`/subscriptions/api/related-keywords/?large_category_id=${largeCategoryId}`)
+            .then(response => response.json())
+            .then(data => {
+                createCheckboxes(relatedKeywordsContainer, 'related_keywords', data, selectedRelated);
             });
     }
+    
+    function getSelectedValues(name) {
+        return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(cb => cb.value);
+    }
 
-    // --- 3. プレビューボタンが押されたら、ニュースを取得して表示 ---
+    // --- 2. プレビューボタンが押されたら、ニュースを取得して表示 ---
     previewButton.addEventListener('click', function() {
         if (!largeCategorySelect.value) {
             alert('先に大分類を選択してください。');
             return;
         }
 
+        const parts = [];
         const largeCategoryName = largeCategorySelect.options[largeCategorySelect.selectedIndex].text;
-        
-        // 選択されている中分類のIDと名前を取得
-        const selectedMediumCategories = Array.from(document.querySelectorAll('input[name="medium_categories"]:checked'))
-            .map(cb => ({ id: cb.value, name: cb.labels[0].textContent.trim() }));
+        parts.push(largeCategoryName);
 
-        // 選択されている関連キーワードのIDと名前、medium_category_idを取得
-        const selectedRelatedKeywords = Array.from(document.querySelectorAll('input[name="related_keywords"]:checked'))
-            .map(cb => ({ id: cb.value, name: cb.labels[0].textContent.trim(), mediumCategoryId: cb.dataset.mediumCategoryId }));
-
-        // 選択されているカスタムキーワードの名前を取得
-        const selectedCustomKeywords = Array.from(document.querySelectorAll('input[name="custom_keywords"]:checked'))
-            .map(cb => cb.labels[0].textContent.trim());
-
-        const mediumCategoryQueryParts = [];
-
-        selectedMediumCategories.forEach(mediumCat => {
-            const currentMediumCatName = `"${mediumCat.name}"`;
-            const orParts = [];
-
-            // その中分類に紐づく関連キーワードを追加
-            selectedRelatedKeywords.filter(rk => rk.mediumCategoryId === mediumCat.id)
-                                   .forEach(rk => orParts.push(`"${rk.name}"`));
-
-            // カスタムキーワードは全ての中分類に適用されると仮定
-            selectedCustomKeywords.forEach(ck => orParts.push(ck));
-
-            if (orParts.length > 0) {
-                mediumCategoryQueryParts.push(`(${currentMediumCatName} AND (${orParts.join(' OR ')}))`);
-            } else {
-                mediumCategoryQueryParts.push(currentMediumCatName);
-            }
+        document.querySelectorAll('input[name="universal_keywords"]:checked').forEach(cb => {
+            parts.push(cb.labels[0].textContent.trim());
+        });
+        document.querySelectorAll('input[name="current_keywords"]:checked').forEach(cb => {
+            parts.push(cb.labels[0].textContent.trim());
+        });
+        document.querySelectorAll('input[name="related_keywords"]:checked').forEach(cb => {
+            parts.push(cb.labels[0].textContent.trim());
         });
 
-        let finalQuery = `"${largeCategoryName}"`;
-        if (mediumCategoryQueryParts.length > 0) {
-            finalQuery += ` AND (${mediumCategoryQueryParts.join(' OR ')})`;
-        }
+        const finalQuery = parts.join(' OR ');
 
         previewArea.style.display = 'block';
         previewResults.innerHTML = '<p>読み込み中...</p>';
@@ -183,12 +156,16 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(`/subscriptions/api/news-preview/?q=${encodeURIComponent(finalQuery)}`)
             .then(response => response.json())
             .then(data => {
+                if (data.error) {
+                    previewResults.innerHTML = `<p>エラー: ${data.error}</p>`;
+                    return;
+                }
                 if (data.articles.length === 0) {
                     previewResults.innerHTML = '<p>ニュースが見つかりませんでした。</p>';
                     return;
                 }
 
-                let html = '<h3>'+data.feed.title+'</h3><ul>';
+                let html = `<h3>${data.feed.title || 'ニュースフィード'}</h3><ul>`;
                 data.articles.forEach(article => {
                     html += `
                         <li>
@@ -201,38 +178,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 previewResults.innerHTML = html;
             })
             .catch(error => {
-                previewResults.innerHTML = '<p>エラーが発生しました。</p>';
+                previewResults.innerHTML = '<p>プレビューの取得中にエラーが発生しました。</p>';
                 console.error('Error:', error);
             });
     });
 
-    // 初期ロード時にも中分類と関連キーワードをロード
-    if (largeCategorySelect.value) {
-        // 既存の選択を保持するために、フォームの初期値から選択された中分類IDを取得
-        const initialSelectedMediumCategories = Array.from(document.querySelectorAll('input[name="medium_categories"]:checked')).map(cb => cb.value);
-        fetch(`/subscriptions/api/medium-categories/?large_category_id=${largeCategorySelect.value}`)
-            .then(response => response.json())
-            .then(data => {
-                createCheckboxes(mediumCategoryContainer, 'medium_categories', data, initialSelectedMediumCategories);
-                // 関連キーワードも初期ロード
-                loadRelatedKeywords();
-            });
-    }
 
-    // フォームの初期ロード時に既存の関連キーワードの選択状態を復元するための処理
-    // これは、loadRelatedKeywords() が呼ばれた後に実行される必要がある
-    const initialSelectedRelatedKeywords = Array.from(document.querySelectorAll('input[name="related_keywords"]:checked')).map(cb => cb.value);
-    if (initialSelectedRelatedKeywords.length > 0) {
-        // loadRelatedKeywords() が非同期なので、少し遅延させて実行
-        setTimeout(() => {
-            const currentRelatedKeywords = Array.from(relatedKeywordsContainer.querySelectorAll('input[name="related_keywords"]'));
-            currentRelatedKeywords.forEach(cb => {
-                if (initialSelectedRelatedKeywords.includes(cb.value)) {
-                    cb.checked = true;
-                }
-            });
-        }, 500); // 500ms の遅延
-    }
 });
 </script>
 {% endblock %}

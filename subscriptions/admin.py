@@ -1,10 +1,18 @@
 from django.contrib import admin
 
-# Register your models here.
-from .models import LargeCategory, MediumCategory, CustomKeywords, QuerySet
+from .models import (
+    LargeCategory,
+    UniversalKeywords,
+    CurrentKeywords,
+    RelatedKeywords,
+    CustomKeywords,
+    QuerySet
+)
 
 # モデルをAdminサイトに登録
 admin.site.register(LargeCategory)
-admin.site.register(MediumCategory)
+admin.site.register(UniversalKeywords)
+admin.site.register(CurrentKeywords)
+admin.site.register(RelatedKeywords)
 admin.site.register(CustomKeywords)
 admin.site.register(QuerySet)
