@@ -6,7 +6,7 @@ class QuerySetForm(forms.ModelForm):
     class Meta:
         model = QuerySet
         fields = ['name', 'large_category', 'medium_categories',
-                  'custom_keywords', 'related_keywords']
+                  'related_keywords', 'custom_keywords']
         widgets = {
             'medium_categories': forms.CheckboxSelectMultiple,
             'custom_keywords': forms.CheckboxSelectMultiple,
