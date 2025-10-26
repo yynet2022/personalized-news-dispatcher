@@ -1,17 +1,17 @@
 from django import forms
-from .models import QuerySet, UniversalKeywords, CurrentKeywords, RelatedKeywords, CustomKeywords
+from .models import QuerySet, UniversalKeywords, CurrentKeywords, RelatedKeywords
 
 
 class QuerySetForm(forms.ModelForm):
     class Meta:
         model = QuerySet
         fields = ['name', 'large_category', 'universal_keywords',
-                  'current_keywords', 'related_keywords', 'custom_keywords']
+                  'current_keywords', 'related_keywords',
+                  'additional_or_keywords', 'refinement_keywords']
         widgets = {
             'universal_keywords': forms.CheckboxSelectMultiple,
             'current_keywords': forms.CheckboxSelectMultiple,
             'related_keywords': forms.CheckboxSelectMultiple,
-            'custom_keywords': forms.CheckboxSelectMultiple,
         }
 
     def __init__(self, *args, **kwargs):
@@ -21,9 +21,6 @@ class QuerySetForm(forms.ModelForm):
         self.fields['universal_keywords'].label_from_instance = lambda obj: obj.name
         self.fields['current_keywords'].label_from_instance = lambda obj: obj.name
         self.fields['related_keywords'].label_from_instance = lambda obj: obj.name
-
-        if user:
-            self.fields['custom_keywords'].queryset = CustomKeywords.objects.filter(user=user)
 
         self.fields['universal_keywords'].queryset = UniversalKeywords.objects.none()
         self.fields['current_keywords'].queryset = CurrentKeywords.objects.none()

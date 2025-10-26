@@ -5,7 +5,6 @@ from .models import (
     UniversalKeywords,
     CurrentKeywords,
     RelatedKeywords,
-    CustomKeywords,
     QuerySet
 )
 
@@ -14,5 +13,4 @@ admin.site.register(LargeCategory)
 admin.site.register(UniversalKeywords)
 admin.site.register(CurrentKeywords)
 admin.site.register(RelatedKeywords)
-admin.site.register(CustomKeywords)
 admin.site.register(QuerySet)

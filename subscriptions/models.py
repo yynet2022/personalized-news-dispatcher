@@ -85,17 +85,6 @@ class RelatedKeywords(NormalizeNameMixin, models.Model):
         return f'{self.large_category.name} - {self.name}'
 
 
-class CustomKeywords(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    keywords = models.TextField(
-        '任意単語',
-        help_text='Google検索と同じ形式で入力 (例: "Python" -Django)')
-
-    def __str__(self):
-        return self.keywords
-
-
 class QuerySet(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -127,10 +116,20 @@ class QuerySet(models.Model):
         verbose_name='関連キーワード'
     )
 
-    custom_keywords = models.ManyToManyField(
-        CustomKeywords,
+    additional_or_keywords = models.CharField(
+        'OR追加キーワード',
+        max_length=255,
         blank=True,
-        verbose_name='任意単語'
+        default='',
+        help_text='OR条件で追加したいキーワードをスペース区切りで入力します (例: AI 機械学習)'
+    )
+
+    refinement_keywords = models.CharField(
+        '絞り込みキーワード',
+        max_length=255,
+        blank=True,
+        default='',
+        help_text='さらにキーワードで絞り込む場合に入力します (例: "Python" -Django)'
     )
 
     class Meta:

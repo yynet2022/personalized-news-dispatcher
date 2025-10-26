@@ -38,7 +38,23 @@ def generate_query_str(form):
     for keyword in form.cleaned_data.get('related_keywords', []):
         parts.append(keyword.name)
 
-    return " OR ".join(parts)
+    # OR追加キーワード
+    additional_or_keywords = form.cleaned_data.get('additional_or_keywords', '')
+    if additional_or_keywords:
+        parts.extend(additional_or_keywords.split())
+
+    or_part = " OR ".join(parts)
+    if or_part:
+        or_part = f"({or_part})"
+
+    refinement_part = form.cleaned_data.get('refinement_keywords', '')
+    if not refinement_part:
+        return or_part
+
+    if not or_part:
+        return refinement_part
+    
+    return f"{or_part} {refinement_part}"
 
 
 class QuerySetCreateView(LoginRequiredMixin, CreateView):
