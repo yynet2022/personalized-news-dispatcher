@@ -1,7 +1,7 @@
 import json
 from django.core.management.base import BaseCommand
 from subscriptions.models import LargeCategory, UniversalKeywords, CurrentKeywords, RelatedKeywords
-from django.db import transaction
+from django.db import transaction, IntegrityError
 
 class Command(BaseCommand):
     """
@@ -20,15 +20,18 @@ class Command(BaseCommand):
             keyword_name = keyword_data.get('name')
             if not keyword_name:
                 continue
-            _, created = KeywordModel.objects.update_or_create(
-                large_category=large_cat,
-                name=keyword_name,
-                defaults={'description': keyword_data.get('description')}
-            )
-            if created:
-                self.stdout.write(self.style.SUCCESS(f'    Created {keyword_type_name}: {large_cat.name} -> {keyword_name}'))
-            else:
-                self.stdout.write(f'    Updated {keyword_type_name}: {large_cat.name} -> {keyword_name}')
+            try:
+                _, created = KeywordModel.objects.update_or_create(
+                    large_category=large_cat,
+                    name=keyword_name,
+                    defaults={'description': keyword_data.get('description')}
+                )
+                if created:
+                    self.stdout.write(self.style.SUCCESS(f'    Created {keyword_type_name}: {large_cat.name} -> {keyword_name}'))
+                else:
+                    self.stdout.write(f'    Updated {keyword_type_name}: {large_cat.name} -> {keyword_name}')
+            except IntegrityError:
+                self.stderr.write(self.style.ERROR(f'    Error: Duplicate {keyword_type_name} found for "{large_cat.name}": {keyword_name}'))
 
     @transaction.atomic
     def handle(self, *args, **options):

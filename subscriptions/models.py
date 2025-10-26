@@ -52,6 +52,9 @@ class UniversalKeywords(NormalizeNameMixin, models.Model):
     name = models.CharField('普遍キーワード', max_length=50, validators=[validate_no_forbidden_chars])
     description = models.CharField('説明', max_length=255, blank=True, null=True)
 
+    class Meta:
+        unique_together = ('large_category', 'name')
+
     def __str__(self):
         return f'{self.large_category.name} - {self.name}'
 
@@ -62,6 +65,9 @@ class CurrentKeywords(NormalizeNameMixin, models.Model):
     name = models.CharField('時事キーワード', max_length=50, validators=[validate_no_forbidden_chars])
     description = models.CharField('説明', max_length=255, blank=True, null=True)
 
+    class Meta:
+        unique_together = ('large_category', 'name')
+
     def __str__(self):
         return f'{self.large_category.name} - {self.name}'
 
@@ -69,8 +75,11 @@ class CurrentKeywords(NormalizeNameMixin, models.Model):
 class RelatedKeywords(NormalizeNameMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     large_category = models.ForeignKey(LargeCategory, on_delete=models.CASCADE)
-    name = models.CharField('関連キーワード', max_length=100, unique=True, validators=[validate_no_forbidden_chars])
+    name = models.CharField('関連キーワード', max_length=100, validators=[validate_no_forbidden_chars])
     description = models.CharField('説明', max_length=255, blank=True, null=True)
+
+    class Meta:
+        unique_together = ('large_category', 'name')
 
     def __str__(self):
         return f'{self.large_category.name} - {self.name}'

@@ -1,204 +1,2082 @@
 [
   {
-    "name": "経済",
     "universal": [
-      {"name": "GDP", "description": "国内総生産"},
-      {"name": "CPI", "description": "消費者物価指数"},
-      {"name": "失業率", "description": "労働力人口に占める失業者の割合"},
-      {"name": "金利", "description": "貸借される資金の利子率"},
-      {"name": "為替", "description": "異種通貨間の交換比率"},
-      {"name": "株価", "description": "株式市場での株式の価格"},
-      {"name": "貿易収支", "description": "輸出額と輸入額の差額"},
-      {"name": "インフレ", "description": "物価水準が持続的に上昇する現象"},
-      {"name": "デフレ", "description": "物価水準が持続的に下落する現象"},
-      {"name": "財政政策", "description": "政府による歳出や税制を通じた経済政策"}
+      {
+        "name": "GDP",
+        "description": "国内総生産（経済規模の指標）"
+      },
+      {
+        "name": "インフレ",
+        "description": "物価が継続的に上昇すること（インフレーション）"
+      },
+      {
+        "name": "金融政策",
+        "description": "中央銀行が行う金融市場への介入策"
+      },
+      {
+        "name": "財政政策",
+        "description": "政府が行う税制や公共支出による経済調整策"
+      },
+      {
+        "name": "金利",
+        "description": "資金の貸借にかかるコスト（利子率）"
+      },
+      {
+        "name": "為替",
+        "description": "外国通貨との交換比率（為替レート）"
+      },
+      {
+        "name": "景気循環",
+        "description": "経済活動における好景気と不況の繰り返し"
+      },
+      {
+        "name": "雇用統計",
+        "description": "労働市場の状況を示す指標（失業率など）"
+      },
+      {
+        "name": "貿易収支",
+        "description": "輸出額と輸入額の差額"
+      }
     ],
     "current": [
-      {"name": "テーパリング", "description": "量的緩和策の段階的縮小"},
-      {"name": "スタグフレーション", "description": "景気後退と物価上昇の同時進行"},
-      {"name": "サプライチェーン", "description": "製品が消費者に届くまでの供給網"},
-      {"name": "半導体不足", "description": "世界的な半導体の供給不足問題"},
-      {"name": "円安", "description": "円の対外価値が下落する現象"},
-      {"name": "資源高", "description": "原油や天然ガスなどのエネルギー資源価格の高騰"},
-      {"name": "DX", "description": "デジタルトランスフォーメーション"},
-      {"name": "GX", "description": "グリーントランスフォーメーション"},
-      {"name": "リスキリング", "description": "新しい職業やスキルを学ぶための再教育"},
-      {"name": "Web3", "description": "ブロックチェーン技術を基盤とする次世代インターネット"}
+      {
+        "name": "円安",
+        "description": "日本円の対外的な価値が下落している状態"
+      },
+      {
+        "name": "賃上げ",
+        "description": "労働者の賃金上昇（デフレ脱却の鍵）"
+      },
+      {
+        "name": "地政学リスク",
+        "description": "国際政治的な不安定さによる経済への影響"
+      },
+      {
+        "name": "インフレ抑制",
+        "description": "各国中央銀行による物価高騰を抑えるための金融引き締め策"
+      },
+      {
+        "name": "AI",
+        "description": "人工知能（生産性向上や産業構造変革のドライバー）"
+      },
+      {
+        "name": "半導体",
+        "description": "技術覇権やサプライチェーンの鍵となる重要部品"
+      },
+      {
+        "name": "GX",
+        "description": "グリーントランスフォーメーション（脱炭素社会への変革）"
+      }
     ],
     "related": [
-      {"name": "日銀", "description": "日本銀行"},
-      {"name": "FRB", "description": "米連邦準備制度理事会"},
-      {"name": "ECB", "description": "欧州中央銀行"},
-      {"name": "景気動向指数", "description": "景気の現状把握・将来予測のための指標"},
-      {"name": "鉱工業生産指数", "description": "鉱業・製造業の生産活動を示す指標"},
-      {"name": "設備投資", "description": "企業が事業拡大のために行う投資"},
-      {"name": "個人消費", "description": "家計による財やサービスの消費支出"},
-      {"name": "住宅着工", "description": "新たに建設が始まった住宅の戸数"},
-      {"name": "財政赤字", "description": "政府の歳入が歳出を下回る状態"},
-      {"name": "国債", "description": "国が発行する債券"},
-      {"name": "新興国", "description": "経済が急成長している国々"},
-      {"name": "地政学リスク", "description": "地理的な位置関係がもたらす政治的・軍事的な緊張"},
-      {"name": "OPEC", "description": "石油輸出国機構"},
-      {"name": "TPP", "description": "環太平洋パートナーシップ協定"},
-      {"name": "RCEP", "description": "地域的な包括的経済連携協定"},
-      {"name": "フィンテック", "description": "金融とITの融合"},
-      {"name": "空売り", "description": "株価が下がると利益が出る取引"},
-      {"name": "配当", "description": "企業が株主に利益を分配すること"},
-      {"name": "ベンチャーキャピタル", "description": "スタートアップに投資する会社"},
-      {"name": "ユニコーン企業", "description": "評価額10億ドル以上の未上場企業"}
-    ]
+      {
+        "name": "QE",
+        "description": "量的緩和（Quantitative Easing）"
+      },
+      {
+        "name": "CPI",
+        "description": "消費者物価指数"
+      },
+      {
+        "name": "FFレート",
+        "description": "フェデラルファンド金利（米国の政策金利）"
+      },
+      {
+        "name": "新NISA",
+        "description": "日本の少額投資非課税制度"
+      },
+      {
+        "name": "デフレ",
+        "description": "物価が継続的に下落すること"
+      },
+      {
+        "name": "リセッション",
+        "description": "景気後退"
+      },
+      {
+        "name": "DX",
+        "description": "デジタルトランスフォーメーション"
+      },
+      {
+        "name": "経済安保",
+        "description": "経済安全保障"
+      },
+      {
+        "name": "実質賃金",
+        "description": "物価変動を考慮した賃金"
+      },
+      {
+        "name": "ESG投資",
+        "description": "環境・社会・ガバナンスを考慮した投資"
+      },
+      {
+        "name": "債務上限",
+        "description": "米国政府の借り入れ制限枠"
+      },
+      {
+        "name": "サプライチェーン",
+        "description": "製品やサービスの供給網"
+      },
+      {
+        "name": "財政規律",
+        "description": "財政の健全性を保つためのルール"
+      },
+      {
+        "name": "構造改革",
+        "description": "経済の非効率な部分を変革すること"
+      },
+      {
+        "name": "金融緩和",
+        "description": "金利を下げて資金供給を増やす政策"
+      },
+      {
+        "name": "金融引き締め",
+        "description": "金利を上げて資金供給を抑える政策"
+      },
+      {
+        "name": "ゼロゼロ融資",
+        "description": "コロナ禍における実質無利子・無担保融資"
+      },
+      {
+        "name": "PBR",
+        "description": "株価純資産倍率"
+      },
+      {
+        "name": "株価指数",
+        "description": "株式市場全体の動向を示す指標"
+      },
+      {
+        "name": "インバウンド",
+        "description": "訪日外国人による消費"
+      },
+      {
+        "name": "生成AI",
+        "description": "テキストや画像を生成する人工知能"
+      },
+      {
+        "name": "少子高齢化",
+        "description": "日本の構造的な人口動態問題"
+      },
+      {
+        "name": "EVシフト",
+        "description": "自動車産業における電気自動車への移行"
+      },
+      {
+        "name": "OECD",
+        "description": "経済協力開発機構"
+      },
+      {
+        "name": "G7",
+        "description": "主要7カ国首脳会議"
+      }
+    ],
+    "name": "経済"
   },
   {
-    "name": "社会",
     "universal": [
-      {"name": "少子高齢化", "description": "出生率の低下と平均寿命の伸長による人口構成の変化"},
-      {"name": "格差社会", "description": "経済的な格差が拡大している社会"},
-      {"name": "労働問題", "description": "雇用や賃金に関する問題"},
-      {"name": "社会保障", "description": "年金、医療、介護などの制度"},
-      {"name": "防災", "description": "自然災害による被害を防ぐための対策"},
-      {"name": "ジェンダー", "description": "社会的・文化的に作られた性別"},
-      {"name": "国会", "description": "日本の立法機関"},
-      {"name": "内閣", "description": "日本の行政機関"},
-      {"name": "選挙", "description": "代表者などを選ぶための投票"},
-      {"name": "外交", "description": "国家間の関係を処理する活動"}
+      {
+        "name": "銀行",
+        "description": "預金、融資、為替などの基本業務を行う金融機関"
+      },
+      {
+        "name": "証券",
+        "description": "株式や債券などの有価証券の売買や引受を行う業態"
+      },
+      {
+        "name": "保険",
+        "description": "リスクをヘッジするための契約に基づく金融商品"
+      },
+      {
+        "name": "金利",
+        "description": "資金の貸し借りに対して支払われる対価（利子率）"
+      },
+      {
+        "name": "為替",
+        "description": "異なる通貨を交換する取引（外国為替）"
+      },
+      {
+        "name": "日銀",
+        "description": "日本銀行。金融政策を担う中央銀行"
+      },
+      {
+        "name": "景気",
+        "description": "経済活動の総合的な状態や動向"
+      },
+      {
+        "name": "マクロ経済",
+        "description": "国全体の経済活動を扱う分野"
+      }
     ],
     "current": [
-      {"name": "SDGs", "description": "持続可能な開発目標"},
-      {"name": "コロナ禍", "description": "新型コロナ感染症の流行による社会への影響"},
-      {"name": "リモートワーク", "description": "遠隔地で勤務する働き方"},
-      {"name": "ヤングケアラー", "description": "家族の介護を担う18歳未満の子ども"},
-      {"name": "孤独・孤立", "description": "社会的なつながりが希薄な状態"},
-      {"name": "防衛費増額", "description": "日本の防衛予算の増額"},
-      {"name": "異次元の少子化対策", "description": "政府が掲げる少子化対策"},
-      {"name": "憲法改正", "description": "日本国憲法を改正する議論"},
-      {"name": "政治資金", "description": "政治活動に必要な資金"},
-      {"name": "LGBT法", "description": "性的少数者の理解増進を図る法律"}
+      {
+        "name": "新NISA",
+        "description": "2024年1月に始まった、税制優遇のある少額投資非課税制度"
+      },
+      {
+        "name": "マイナス金利解除",
+        "description": "日本銀行が2024年3月に実施した、マイナス金利政策の終了"
+      },
+      {
+        "name": "インフレ",
+        "description": "物価が継続的に上昇する経済状態（インフレーション）"
+      },
+      {
+        "name": "フィンテック",
+        "description": "金融サービスと情報技術を組み合わせた革新的なサービス (FinTech)"
+      },
+      {
+        "name": "サステナブルファイナンス",
+        "description": "持続可能性を考慮した投融資（ESG投資を含む）"
+      },
+      {
+        "name": "DX",
+        "description": "デジタル技術を活用した業務やビジネスモデルの変革"
+      },
+      {
+        "name": "暗号資産",
+        "description": "ブロックチェーン技術を用いたデジタルアセット（仮想通貨）"
+      },
+      {
+        "name": "賃上げ",
+        "description": "インフレ下での企業による給与水準の引き上げ動向"
+      }
     ],
     "related": [
-      {"name": "貧困問題", "description": "最低限の生活水準を維持できない人々"},
-      {"name": "過労死", "description": "働きすぎによる死亡"},
-      {"name": "ハラスメント", "description": "嫌がらせ"},
-      {"name": "非正規雇用", "description": "正社員以外の雇用形態"},
-      {"name": "生活保護", "description": "困窮する国民に国が最低限度の生活を保障する制度"},
-      {"name": "待機児童", "description": "保育所に入れない子ども"},
-      {"name": "空き家問題", "description": "居住者のいない住宅が増加する問題"},
-      {"name": "児童虐待", "description": "保護者による子どもへの暴力やネグレクト"},
-      {"name": "インフラ老朽化", "description": "社会基盤が古くなり機能不全に陥る問題"},
-      {"name": "デジタルデバイド", "description": "情報格差"},
-      {"name": "情報リテラシー", "description": "情報を正しく活用する能力"},
-      {"name": "クラウドファンディング", "description": "インターネットで資金を調達する仕組み"},
-      {"name": "ベーシックインカム", "description": "政府が国民に最低限の所得を保障する制度"},
-      {"name": "ウェルビーイング", "description": "身体的・精神的・社会的に良好な状態"},
-      {"name": "ワークライフバランス", "description": "仕事と生活の調和"},
-      {"name": "8050問題", "description": "80代の親が50代の子の生活を支える問題"},
-      {"name": "与党", "description": "政権を担当している政党"},
-      {"name": "野党", "description": "政権を担当していない政党"},
-      {"name": "衆議院", "description": "日本の国会の下院"},
-      {"name": "参議院", "description": "日本の国会の上院"},
-      {"name": "首相", "description": "内閣総理大臣"},
-      {"name": "支持率", "description": "内閣や政党の支持の割合"},
-      {"name": "法案", "description": "国会に提出される法律の案"},
-      {"name": "安全保障", "description": "国家の安全を保障すること"},
-      {"name": "派閥", "description": "政党内の政策集団"},
-      {"name": "一票の格差", "description": "選挙区間の議員一人当たりの有権者数の差"}
-    ]
+      {
+        "name": "資産運用",
+        "description": "資金を効率的に増やし、管理する行為"
+      },
+      {
+        "name": "ESG投資",
+        "description": "環境、社会、ガバナンス要素を考慮した投資"
+      },
+      {
+        "name": "M&A",
+        "description": "企業の合併・買収（Mergers and Acquisitions）"
+      },
+      {
+        "name": "債券",
+        "description": "国や企業が資金調達のために発行する借用証書"
+      },
+      {
+        "name": "株",
+        "description": "株式会社の所有権を示す証券（株式）"
+      },
+      {
+        "name": "FX",
+        "description": "外国為替証拠金取引（Foreign Exchange）"
+      },
+      {
+        "name": "決済",
+        "description": "取引の対価として金銭の授受を行う行為"
+      },
+      {
+        "name": "CBDC",
+        "description": "中央銀行デジタル通貨（Central Bank Digital Currency）"
+      },
+      {
+        "name": "シャドーバンキング",
+        "description": "銀行規制の枠外で行われる金融仲介活動"
+      },
+      {
+        "name": "地方銀行",
+        "description": "特定の地域を主要な営業基盤とする銀行"
+      },
+      {
+        "name": "金融庁",
+        "description": "日本の金融システムを監督する行政機関"
+      },
+      {
+        "name": "FinTech企業",
+        "description": "ITを活用した金融サービスを提供する企業"
+      },
+      {
+        "name": "PBR",
+        "description": "株価純資産倍率（Price Book-value Ratio）"
+      },
+      {
+        "name": "信用創造",
+        "description": "銀行の預金と融資を通じて新たなマネーが生み出される仕組み"
+      },
+      {
+        "name": "スタートアップ",
+        "description": "急速な成長を目指す新興企業への投融資"
+      },
+      {
+        "name": "VC",
+        "description": "未上場企業に投資するベンチャーキャピタル"
+      },
+      {
+        "name": "金融リテラシー",
+        "description": "金融に関する知識や判断能力"
+      },
+      {
+        "name": "グローバル金融",
+        "description": "国境を越えた大規模な金融取引や市場"
+      },
+      {
+        "name": "信用格付け",
+        "description": "債務者が支払能力を持つ確実性の評価"
+      },
+      {
+        "name": "リスク管理",
+        "description": "金融機関が保有するリスクを特定、評価、制御するプロセス"
+      }
+    ],
+    "name": "金融"
   },
   {
-    "name": "IT",
     "universal": [
-      {"name": "AI", "description": "人工知能"},
-      {"name": "IoT", "description": "モノのインターネット"},
-      {"name": "5G", "description": "第5世代移動通信システム"},
-      {"name": "クラウド", "description": "インターネット経由で提供されるコンピューティングサービス"},
-      {"name": "SaaS", "description": "サービスとしてのソフトウェア"},
-      {"name": "セキュリティ", "description": "情報資産を保護すること"},
-      {"name": "プログラミング", "description": "コンピュータに指示を与えるための言語"},
-      {"name": "OS", "description": "オペレーティングシステム"},
-      {"name": "データベース", "description": "整理された情報の集まり"},
-      {"name": "UI/UX", "description": "ユーザーインターフェース/ユーザーエクスペリエンス"}
+      {
+        "name": "憲法",
+        "description": "国家の基本法、国民の権利義務を定める。"
+      },
+      {
+        "name": "民主主義",
+        "description": "国民が主権を持ち、多数決で意思決定を行う政治体制。"
+      },
+      {
+        "name": "GDP",
+        "description": "国内総生産。経済規模を示す基本指標。"
+      },
+      {
+        "name": "福祉",
+        "description": "社会保障制度（医療、年金、介護など）。"
+      },
+      {
+        "name": "世論",
+        "description": "国民の集合的な意見や社会的な意識。"
+      },
+      {
+        "name": "格差",
+        "description": "経済的、社会的、教育的な不平等の状態。"
+      },
+      {
+        "name": "選挙",
+        "description": "国民が代表者を選出する仕組み。"
+      },
+      {
+        "name": "外交",
+        "description": "国家間の交渉や国際関係。"
+      },
+      {
+        "name": "人権",
+        "description": "すべての人々が生まれながらに持つ基本的な権利。"
+      },
+      {
+        "name": "地方自治",
+        "description": "国から独立した地方公共団体による政治運営。"
+      }
     ],
     "current": [
-      {"name": "生成AI", "description": "文章や画像などを生成するAI"},
-      {"name": "ChatGPT", "description": "OpenAIが開発した対話型AI"},
-      {"name": "メタバース", "description": "インターネット上の仮想空間"},
-      {"name": "Web3", "description": "ブロックチェーン技術を基盤とする次世代インターネット"},
-      {"name": "xR", "description": "VR, AR, MRなどの総称"},
-      {"name": "ノーコード", "description": "ソースコードを書かずにアプリなどを開発する手法"},
-      {"name": "ローコード", "description": "最小限のソースコードでアプリなどを開発する手法"},
-      {"name": "量子コンピュータ", "description": "量子力学の原理を応用したコンピュータ"},
-      {"name": "エッジコンピューティング", "description": "利用者の近くでデータを処理する技術"},
-      {"name": "デジタルツイン", "description": "現実空間の情報を仮想空間に再現する技術"}
+      {
+        "name": "少子化",
+        "description": "出生率の低下による人口構成の変化。日本の最大課題。"
+      },
+      {
+        "name": "AI規制",
+        "description": "人工知能（AI）の利用に関する倫理的・法的ルール作り。"
+      },
+      {
+        "name": "GX",
+        "description": "グリーン・トランスフォーメーション。脱炭素社会に向けた経済・社会変革。"
+      },
+      {
+        "name": "インフレ",
+        "description": "物価が継続的に上昇し、貨幣価値が下がる状態。"
+      },
+      {
+        "name": "地政学",
+        "description": "地理的条件が国際政治や軍事戦略に与える影響。"
+      },
+      {
+        "name": "サイバー攻撃",
+        "description": "国家や重要インフラを標的としたインターネットを通じた攻撃。"
+      },
+      {
+        "name": "LGBTQ",
+        "description": "性的マイノリティ（レズビアン、ゲイ、バイセクシュアル、トランスジェンダー、クィアなど）の権利と多様性。"
+      },
+      {
+        "name": "防衛費",
+        "description": "安全保障環境の変化に伴う国防予算の議論。"
+      },
+      {
+        "name": "SNS政治",
+        "description": "ソーシャルメディアが政治活動や世論形成に与える影響。"
+      },
+      {
+        "name": "生成AI",
+        "description": "大規模言語モデルなど、テキストや画像を生成する人工知能技術。"
+      }
     ],
     "related": [
-      {"name": "API", "description": "ソフトウェア間で情報をやり取りする仕組み"},
-      {"name": "コンテナ", "description": "アプリケーションの実行環境を仮想化する技術"},
-      {"name": "Docker", "description": "コンテナ型仮想化プラットフォーム"},
-      {"name": "Kubernetes", "description": "コンテナオーケストレーションツール"},
-      {"name": "マイクロサービス", "description": "小さなサービスの集合体としてアプリケーションを構築する手法"},
-      {"name": "サーバーレス", "description": "サーバー管理が不要なクラウドコンピューティング"},
-      {"name": "DevOps", "description": "開発と運用が連携・協力する開発手法"},
-      {"name": "CI/CD", "description": "継続的インテグレーション/継続的デリバリー"},
-      {"name": "アジャイル開発", "description": "反復的な短い期間で開発を進める手法"},
-      {"name": "OSS", "description": "オープンソースソフトウェア"},
-      {"name": "GitHub", "description": "ソフトウェア開発のプラットフォーム"},
-      {"name": "Python", "description": "プログラミング言語の一つ"},
-      {"name": "JavaScript", "description": "プログラミング言語の一つ"},
-      {"name": "TypeScript", "description": "JavaScriptを拡張したプログラミング言語"},
-      {"name": "SQL", "description": "データベースを操作するための言語"},
-      {"name": "NoSQL", "description": "SQL以外のデータベース"},
-      {"name": "機械学習", "description": "コンピュータがデータから学習する技術"},
-      {"name": "ディープラーニング", "description": "深層学習"},
-      {"name": "自然言語処理", "description": "人間の言葉をコンピュータで処理する技術"},
-      {"name": "画像認識", "description": "画像の内容をコンピュータが認識する技術"}
-    ]
+      {
+        "name": "三権分立",
+        "description": "立法・行政・司法が互いを抑制し均衡を保つ仕組み。"
+      },
+      {
+        "name": "財政",
+        "description": "国家の歳入（税金など）と歳出（予算）。"
+      },
+      {
+        "name": "公文書",
+        "description": "政府・官庁が作成する文書。政治の透明性の鍵。"
+      },
+      {
+        "name": "教育格差",
+        "description": "家庭の経済状況などが教育機会の差を生むこと。"
+      },
+      {
+        "name": "年金制度",
+        "description": "高齢期における所得保障制度。"
+      },
+      {
+        "name": "資本主義",
+        "description": "生産手段の私有と市場メカニズムを基本とする経済体制。"
+      },
+      {
+        "name": "ODA",
+        "description": "政府開発援助。発展途上国への経済協力。"
+      },
+      {
+        "name": "移民",
+        "description": "国際的な人口移動、および受け入れ政策。"
+      },
+      {
+        "name": "マニフェスト",
+        "description": "選挙時に政党や候補者が掲げる政策公約。"
+      },
+      {
+        "name": "環境問題",
+        "description": "地球温暖化や自然破壊など、普遍的な地球規模の課題。"
+      },
+      {
+        "name": "スタートアップ",
+        "description": "新しい技術やビジネスモデルで急成長を目指す企業。"
+      },
+      {
+        "name": "NISA",
+        "description": "少額投資非課税制度。資産形成を促す国の政策。"
+      },
+      {
+        "name": "サプライチェーン",
+        "description": "原材料調達から最終製品までの供給網。国際情勢に影響されやすい。"
+      },
+      {
+        "name": "パワハラ",
+        "description": "パワーハラスメント。職場における優位性を利用した嫌がらせ。"
+      },
+      {
+        "name": "デジタル庁",
+        "description": "日本の行政・社会全体のデジタル化推進を担う官庁。"
+      },
+      {
+        "name": "デカップリング",
+        "description": "米中など特定国間の経済的な分離・切り離し。"
+      },
+      {
+        "name": "テロリズム",
+        "description": "政治的な目的を達成するための暴力行為。"
+      },
+      {
+        "name": "カーボンニュートラル",
+        "description": "温室効果ガスの排出量と吸収量を均衡させること。"
+      },
+      {
+        "name": "物価高",
+        "description": "食料品やエネルギー価格などの高騰。"
+      },
+      {
+        "name": "ハラスメント",
+        "description": "職場や学校における様々な形態の嫌がらせ行為の総称。"
+      },
+      {
+        "name": "高齢化",
+        "description": "社会の人口に占める高齢者の割合が増加すること。"
+      },
+      {
+        "name": "憲法改正",
+        "description": "憲法の内容を変更する政治的な議論。"
+      },
+      {
+        "name": "パンデミック",
+        "description": "感染症の世界的・歴史的な大流行。"
+      },
+      {
+        "name": "気候変動",
+        "description": "地球の気候が長期的に変化する現象。国際的な重要課題。"
+      },
+      {
+        "name": "マイナ保険証",
+        "description": "マイナンバーカードと一体化された健康保険証の運用。"
+      }
+    ],
+    "name": "社会"
   },
   {
-    "name": "テクノロジー",
     "universal": [
-      {"name": "半導体", "description": "電気を通す導体と通さない絶縁体の中間の性質を持つ物質"},
-      {"name": "バッテリー", "description": "電池"},
-      {"name": "センサー", "description": "物理量や化学量を検知する装置"},
-      {"name": "モーター", "description": "電気エネルギーを運動エネルギーに変換する装置"},
-      {"name": "ロボット", "description": "自動的に作業を行う機械"},
-      {"name": "ドローン", "description": "無人航空機"},
-      {"name": "3Dプリンター", "description": "3次元のデータをもとに立体物を造形する装置"},
-      {"name": "物理学", "description": "自然界の基本的な法則を探求する学問"},
-      {"name": "化学", "description": "物質の性質や変化を研究する学問"},
-      {"name": "生物学", "description": "生命現象を研究する学問"}
+      {
+        "name": "国連",
+        "description": "国際連合 (United Nations)。世界の平和と安全維持、経済・社会・人権分野での国際協力を行う"
+      },
+      {
+        "name": "外交",
+        "description": "国家間の交渉や関係構築、政策実行"
+      },
+      {
+        "name": "地政学",
+        "description": "地理的要因が国際政治や外交に与える影響を分析する学問"
+      },
+      {
+        "name": "国際法",
+        "description": "国家間の関係を律する法規範"
+      },
+      {
+        "name": "安全保障",
+        "description": "国家の平和と独立を守るための政策や体制"
+      },
+      {
+        "name": "貿易",
+        "description": "国際間のモノやサービスの交換"
+      },
+      {
+        "name": "開発途上国",
+        "description": "経済発展の途上にある国々"
+      },
+      {
+        "name": "グローバリゼーション",
+        "description": "経済、文化、情報などが国境を超えて一体化していく現象"
+      }
     ],
     "current": [
-      {"name": "EV", "description": "電気自動車"},
-      {"name": "自動運転", "description": "自動車が自動で走行する技術"},
-      {"name": "MaaS", "description": "サービスとしてのモビリティ"},
-      {"name": "スマートシティ", "description": "ICT技術を活用した都市"},
-      {"name": "ゲノム編集", "description": "遺伝子の情報を書き換える技術"},
-      {"name": "CRISPR", "description": "ゲノム編集技術の一つ (クリスパー)"},
-      {"name": "iPS細胞", "description": "人工多能性幹細胞"},
-      {"name": "再生医療", "description": "失われた組織や臓器を再生させる医療"},
-      {"name": "核融合", "description": "軽い原子核が融合して重い原子核になる反応"},
-      {"name": "量子技術", "description": "量子力学の原理を応用した技術の総称"}
+      {
+        "name": "米中対立",
+        "description": "アメリカ合衆国と中華人民共和国間の経済・安全保障上の競争および覇権争い"
+      },
+      {
+        "name": "ウクライナ侵攻",
+        "description": "2022年以降のロシアによるウクライナへの軍事侵攻と国際秩序への影響"
+      },
+      {
+        "name": "サプライチェーン",
+        "description": "製品の供給網。経済安全保障上の脆弱性が注目されている"
+      },
+      {
+        "name": "BRICS",
+        "description": "ブラジル、ロシア、インド、中国、南アフリカなどが構成する新興経済国の枠組み"
+      },
+      {
+        "name": "AIガバナンス",
+        "description": "人工知能の国際的な規制や規範、倫理的利用の枠組み作り"
+      },
+      {
+        "name": "GX",
+        "description": "グリーントランスフォーメーション。地球温暖化対策に向けた国際的な取り組み"
+      },
+      {
+        "name": "グローバルサウス",
+        "description": "冷戦後の世界において、開発途上国や新興国の多くを指す用語"
+      },
+      {
+        "name": "核拡散",
+        "description": "核兵器や関連技術が非核保有国に広がる脅威"
+      }
     ],
     "related": [
-      {"name": "リチウムイオン電池", "description": "充電可能な二次電池"},
-      {"name": "全固体電池", "description": "次世代の電池技術"},
-      {"name": "MEMS", "description": "微小電気機械システム"},
-      {"name": "アクチュエーター", "description": "エネルギーを物理的な動きに変換する装置"},
-      {"name": "産業用ロボット", "description": "工場などで使用されるロボット"},
-      {"name": "サービスロボット", "description": "医療や介護などで使用されるロボット"},
-      {"name": "材料科学", "description": "新しい材料を研究・開発する学問"},
-      {"name": "ナノテクノロジー", "description": "ナノメートル単位の物質を扱う技術"},
-      {"name": "バイオテクノロジー", "description": "生物の機能を応用する技術"},
-      {"name": "宇宙開発", "description": "宇宙空間を探査・利用する活動"},
-      {"name": "JAXA", "description": "宇宙航空研究開発機構"},
-      {"name": "NASA", "description": "アメリカ航空宇宙局"},
-      {"name": "SpaceX", "description": "米国の宇宙開発企業"},
-      {"name": "素粒子物理学", "description": "物質の最小単位を研究する物理学"},
-      {"name": "CERN", "description": "欧州原子核研究機構"},
-      {"name": "超伝導", "description": "特定の物質が極低温で電気抵抗がゼロになる現象"},
-      {"name": "レーザー", "description": "指向性の高い強力な光"},
-      {"name": "AI創薬", "description": "AIを活用した医薬品開発"},
-      {"name": "プレシジョンメディシン", "description": "個別化医療"},
-      {"name": "はやぶさ2", "description": "日本の小惑星探査機"}
-    ]
+      {
+        "name": "WTO",
+        "description": "世界貿易機関 (World Trade Organization)"
+      },
+      {
+        "name": "IMF",
+        "description": "国際通貨基金 (International Monetary Fund)"
+      },
+      {
+        "name": "G7",
+        "description": "主要先進国首脳会議"
+      },
+      {
+        "name": "G20",
+        "description": "主要20カ国・地域首脳会議"
+      },
+      {
+        "name": "ODA",
+        "description": "政府開発援助 (Official Development Assistance)"
+      },
+      {
+        "name": "FDI",
+        "description": "海外直接投資 (Foreign Direct Investment)"
+      },
+      {
+        "name": "FTA/EPA",
+        "description": "自由貿易協定/経済連携協定"
+      },
+      {
+        "name": "NATO",
+        "description": "北大西洋条約機構 (North Atlantic Treaty Organization)"
+      },
+      {
+        "name": "ASEAN",
+        "description": "東南アジア諸国連合"
+      },
+      {
+        "name": "EU",
+        "description": "欧州連合"
+      },
+      {
+        "name": "PKO",
+        "description": "国連平和維持活動"
+      },
+      {
+        "name": "難民",
+        "description": "迫害や紛争などから逃れた人々"
+      },
+      {
+        "name": "インド太平洋",
+        "description": "地政学的に重要なインド洋と太平洋を含む広域の概念"
+      },
+      {
+        "name": "クアッド",
+        "description": "日米豪印による協力枠組み (Quad)"
+      },
+      {
+        "name": "台湾有事",
+        "description": "台湾海峡での軍事衝突の可能性"
+      },
+      {
+        "name": "経済安全保障",
+        "description": "基幹技術、重要物資、インフラなどの安全を確保するための政策"
+      },
+      {
+        "name": "デジタル外交",
+        "description": "デジタル技術を活用した外交活動や、国際的なデジタル規範作り"
+      },
+      {
+        "name": "人権問題",
+        "description": "国際社会で取り上げられる人権侵害（ウイグル、香港など）"
+      },
+      {
+        "name": "気候変動",
+        "description": "地球規模での気象パターンの変化と国際的な対応"
+      },
+      {
+        "name": "サイバー攻撃",
+        "description": "国家レベルで行われる情報戦やインフラへの攻撃"
+      },
+      {
+        "name": "専制主義",
+        "description": "民主主義に対抗する独裁的な政治体制"
+      },
+      {
+        "name": "ポピュリズム",
+        "description": "既存エリートに対抗し、大衆の感情に訴えかける政治手法"
+      },
+      {
+        "name": "軍拡競争",
+        "description": "国家間での兵器や軍事力の増強競争"
+      },
+      {
+        "name": "テロリズム",
+        "description": "政治的な目的を達成するための非合法な暴力行為"
+      }
+    ],
+    "name": "国際"
+  },
+  {
+    "universal": [
+      {
+        "name": "OS",
+        "description": "オペレーティングシステム。コンピュータの基本動作を制御するソフトウェア。"
+      },
+      {
+        "name": "ネットワーク",
+        "description": "コンピュータ間の通信を可能にする基盤技術。"
+      },
+      {
+        "name": "セキュリティ",
+        "description": "情報資産を脅威から保護するための技術および対策。"
+      },
+      {
+        "name": "データベース",
+        "description": "大量のデータを効率的に管理・検索するためのシステム（DB）。"
+      },
+      {
+        "name": "プログラミング",
+        "description": "コンピュータに実行させる処理を記述する行為。"
+      },
+      {
+        "name": "サーバー",
+        "description": "ネットワーク上でサービスやデータを提供するコンピュータ。"
+      },
+      {
+        "name": "クラウド",
+        "description": "インターネット経由で提供されるコンピューティングリソースやサービス。"
+      },
+      {
+        "name": "ハードウェア",
+        "description": "CPUやメモリ、ストレージなど、コンピュータの物理的な構成要素。"
+      },
+      {
+        "name": "ソフトウェア",
+        "description": "プログラムとデータの総称。タスクを実行するためにハードウェア上で動作する。"
+      },
+      {
+        "name": "アルゴリズム",
+        "description": "特定の課題を解決するための明確な手順や計算方法。"
+      }
+    ],
+    "current": [
+      {
+        "name": "AI",
+        "description": "人工知能（Artificial Intelligence）。機械学習や深層学習を活用した技術。"
+      },
+      {
+        "name": "DX",
+        "description": "デジタルトランスフォーメーション。デジタル技術を活用した業務や組織の変革。"
+      },
+      {
+        "name": "生成AI",
+        "description": "テキスト、画像などを新しく生成できるタイプのAI（例: ChatGPT, Midjourney）。"
+      },
+      {
+        "name": "半導体",
+        "description": "集積回路やトランジスタ。先端IT機器の性能を左右する主要部品であり、地政学的な重要性が高い。"
+      },
+      {
+        "name": "Web3",
+        "description": "ブロックチェーン技術を基盤とする、分散型の次世代インターネット構想。"
+      },
+      {
+        "name": "量子コンピュータ",
+        "description": "量子力学的な現象を利用した、従来型コンピュータを遥かに超える計算能力を持つ次世代計算機。"
+      },
+      {
+        "name": "ローコード",
+        "description": "プログラミングの記述を最小限に抑え、迅速にアプリケーションを開発する手法。"
+      },
+      {
+        "name": "GX",
+        "description": "グリーン・トランスフォーメーション。IT技術などを活用した産業構造の変革による脱炭素化。"
+      },
+      {
+        "name": "ゼロトラスト",
+        "description": "ネットワークの内外を問わず、すべてのアクセスを信頼しないことを前提とするセキュリティモデル。"
+      },
+      {
+        "name": "SaaS",
+        "description": "Software as a Service。クラウド上で提供されるソフトウェアの利用形態。"
+      }
+    ],
+    "related": [
+      {
+        "name": "IoT",
+        "description": "Internet of Things。モノのインターネット。"
+      },
+      {
+        "name": "ビッグデータ",
+        "description": "従来の手法では分析が困難なほど巨大で複雑なデータ群。"
+      },
+      {
+        "name": "インフラ",
+        "description": "ITシステムを稼働させるための基盤（ネットワーク、サーバーなど）。"
+      },
+      {
+        "name": "仮想化",
+        "description": "物理的なリソースをソフトウェア的に抽象化し、効率的に利用する技術。"
+      },
+      {
+        "name": "DevOps",
+        "description": "開発（Development）と運用（Operations）が連携する開発文化・手法。"
+      },
+      {
+        "name": "アジャイル",
+        "description": "計画・設計・実装・テストを短期間で繰り返すソフトウェア開発手法。"
+      },
+      {
+        "name": "ブロックチェーン",
+        "description": "暗号技術と分散処理によりデータを改ざんが困難な形で記録する技術。"
+      },
+      {
+        "name": "5G",
+        "description": "第5世代移動通信システム。高速大容量、低遅延を実現。"
+      },
+      {
+        "name": "メタバース",
+        "description": "インターネット上に構築された、人々が交流できる仮想空間。"
+      },
+      {
+        "name": "エッジコンピューティング",
+        "description": "デバイスの近く（エッジ）でデータ処理を行う分散処理形態。"
+      },
+      {
+        "name": "FinTech",
+        "description": "金融（Finance）と技術（Technology）を融合させたサービス。"
+      },
+      {
+        "name": "データサイエンティスト",
+        "description": "ビッグデータから価値を引き出す分析専門家。"
+      },
+      {
+        "name": "ガバナンス",
+        "description": "組織やシステムを適正に管理・統制するための仕組み。"
+      },
+      {
+        "name": "PM",
+        "description": "プロジェクトマネージャー（Project Manager）。ITプロジェクトの責任者。"
+      },
+      {
+        "name": "内製化",
+        "description": "外部に依存せず、システム開発や運用を自社のリソースで行うこと。"
+      },
+      {
+        "name": "クラウドネイティブ",
+        "description": "クラウド環境の特性を最大限に活かすように設計されたシステムやアーキテクチャ。"
+      },
+      {
+        "name": "AI倫理",
+        "description": "人工知能の公平性や透明性、社会的影響に関する規範。"
+      },
+      {
+        "name": "サイバー攻撃",
+        "description": "コンピュータシステムやネットワークに対する悪意ある攻撃行為。"
+      },
+      {
+        "name": "IaaS",
+        "description": "Infrastructure as a Service。サーバーやストレージなどのインフラを提供するクラウド形態。"
+      },
+      {
+        "name": "BtoB",
+        "description": "企業間取引（Business to Business）。"
+      }
+    ],
+    "name": "IT"
+  },
+  {
+    "universal": [
+      {
+        "name": "物理学",
+        "description": "自然界の基本法則を扱う科学の基礎分野"
+      },
+      {
+        "name": "化学",
+        "description": "物質の構成、性質、反応を扱う科学"
+      },
+      {
+        "name": "材料科学",
+        "description": "新素材、高機能材料の研究開発"
+      },
+      {
+        "name": "エネルギー",
+        "description": "発電、送電、貯蔵など、動力源に関する技術全般"
+      },
+      {
+        "name": "ロボティクス",
+        "description": "ロボットの設計、製造、応用に関する工学分野"
+      },
+      {
+        "name": "ナノテクノロジー",
+        "description": "ナノメートルスケール（10億分の1メートル）での物質制御技術"
+      },
+      {
+        "name": "バイオテクノロジー",
+        "description": "生命体や生物学的プロセスを利用した技術（生物工学）"
+      },
+      {
+        "name": "宇宙開発",
+        "description": "宇宙飛行、探査、利用に関する技術とプロジェクト"
+      }
+    ],
+    "current": [
+      {
+        "name": "GX",
+        "description": "グリーントランスフォーメーション。産業構造を環境配慮型へ変革する動き"
+      },
+      {
+        "name": "カーボンニュートラル",
+        "description": "温室効果ガス排出量を実質ゼロにする目標と技術"
+      },
+      {
+        "name": "量子技術",
+        "description": "量子の特性を利用したセンシング、計測、通信、マテリアル技術"
+      },
+      {
+        "name": "再生医療",
+        "description": "損傷した組織や臓器を再生させる医療技術（iPS細胞など）"
+      },
+      {
+        "name": "EV/HV",
+        "description": "電気自動車（Electric Vehicle）やハイブリッド車の開発競争"
+      },
+      {
+        "name": "宇宙ビジネス",
+        "description": "民間企業が主導する衛星打ち上げ、データ利用、月面探査などの商業化"
+      },
+      {
+        "name": "核融合",
+        "description": "次世代のクリーンエネルギーとして各国が研究を加速させている技術"
+      }
+    ],
+    "related": [
+      {
+        "name": "半導体",
+        "description": "電子部品の基礎となるデバイスおよびその製造技術"
+      },
+      {
+        "name": "超伝導",
+        "description": "特定の物質が電気抵抗ゼロになる現象と応用技術"
+      },
+      {
+        "name": "触媒",
+        "description": "化学反応を促進する物質（環境浄化、化学工業などで重要）"
+      },
+      {
+        "name": "計測技術",
+        "description": "物理量や化学量を正確に測定する技術"
+      },
+      {
+        "name": "特許",
+        "description": "技術的アイデアや発明の権利保護"
+      },
+      {
+        "name": "アディティブ・マニュファクチャリング",
+        "description": "積層造形技術（3Dプリンティング）"
+      },
+      {
+        "name": "センシング",
+        "description": "光、音、温度、化学物質などを検出する技術"
+      },
+      {
+        "name": "構造工学",
+        "description": "建築物やインフラの強度・安定性を確保する技術"
+      },
+      {
+        "name": "ゲノム編集",
+        "description": "生物のDNA配列をピンポイントで改変する技術（CRISPRなど）"
+      },
+      {
+        "name": "バッテリー",
+        "description": "二次電池や蓄電システム（リチウムイオン、全固体電池など）"
+      },
+      {
+        "name": "AMR",
+        "description": "自律移動ロボット（Autonomous Mobile Robot）"
+      },
+      {
+        "name": "ドローン",
+        "description": "無人航空機（UAV）およびその応用技術"
+      },
+      {
+        "name": "メタマテリアル",
+        "description": "自然界にはない特性を持つように人工的に設計された材料"
+      },
+      {
+        "name": "バイオ燃料",
+        "description": "生物資源から作られる代替エネルギー（例：エタノール、SAF）"
+      },
+      {
+        "name": "SMR",
+        "description": "小型モジュール炉（Small Modular Reactor）。次世代原子力技術"
+      },
+      {
+        "name": "深海探査",
+        "description": "海底資源、深海生物、地質調査などに関する技術"
+      },
+      {
+        "name": "グリーン水素",
+        "description": "再生可能エネルギーを利用して製造されるCO2フリーの水素"
+      },
+      {
+        "name": "OLED",
+        "description": "有機EL（有機エレクトロルミネッセンス）。ディスプレイ技術"
+      },
+      {
+        "name": "創薬",
+        "description": "新しい医薬品の開発プロセス"
+      },
+      {
+        "name": "SDGs",
+        "description": "持続可能な開発目標と、それを達成するための技術革新"
+      },
+      {
+        "name": "月面基地",
+        "description": "月面での長期滞在や資源利用を目指す拠点計画"
+      },
+      {
+        "name": "サプライチェーン",
+        "description": "原材料調達から製品が消費者に届くまでの供給網"
+      },
+      {
+        "name": "マイクロ流体",
+        "description": "微小な空間で流体を扱う技術（例: ラボ・オン・ア・チップ）"
+      }
+    ],
+    "name": "テクノロジー"
+  },
+  {
+    "universal": [
+      {
+        "name": "経営戦略",
+        "description": "企業が目標達成のために策定する長期的な計画や方針。"
+      },
+      {
+        "name": "市場調査",
+        "description": "顧客ニーズ、競合、市場規模などを分析すること。"
+      },
+      {
+        "name": "財務諸表",
+        "description": "企業の財政状態と経営成績を示す計算書類（BS, PLなど）。"
+      },
+      {
+        "name": "マーケティング",
+        "description": "商品やサービスを顧客に届けるための一連の活動。"
+      },
+      {
+        "name": "SCM",
+        "description": "サプライチェーン・マネジメント（調達から販売までの一連の流れの最適化）。"
+      },
+      {
+        "name": "イノベーション",
+        "description": "技術やビジネスモデルにおける革新。"
+      },
+      {
+        "name": "M&A",
+        "description": "企業の合併・買収。"
+      },
+      {
+        "name": "コーポレートガバナンス",
+        "description": "企業統治。企業の健全性を保つための仕組み。"
+      }
+    ],
+    "current": [
+      {
+        "name": "DX",
+        "description": "デジタルトランスフォーメーション。ITを活用したビジネス変革。"
+      },
+      {
+        "name": "生成AI",
+        "description": "テキストや画像を自動生成する人工知能技術（例：ChatGPT）。"
+      },
+      {
+        "name": "GX",
+        "description": "グリーン・トランスフォーメーション。脱炭素社会への移行に向けた取り組み。"
+      },
+      {
+        "name": "リスキリング",
+        "description": "新しい業務や技術に対応するための知識・スキル習得。"
+      },
+      {
+        "name": "地政学リスク",
+        "description": "国際的な政治・地理的要因に起因するビジネス上の不安定要因。"
+      },
+      {
+        "name": "インフレ",
+        "description": "物価上昇が継続する経済状況。"
+      },
+      {
+        "name": "スタートアップ",
+        "description": "革新的なビジネスモデルを持つ新興企業。"
+      },
+      {
+        "name": "Web3",
+        "description": "ブロックチェーン技術を基盤とした次世代インターネット概念。"
+      }
+    ],
+    "related": [
+      {
+        "name": "KPI",
+        "description": "Key Performance Indicator。重要業績評価指標。"
+      },
+      {
+        "name": "PDCA",
+        "description": "Plan-Do-Check-Actionの業務改善サイクル。"
+      },
+      {
+        "name": "SWOT分析",
+        "description": "強み(Strength)・弱み(Weakness)・機会(Opportunity)・脅威(Threat)の分析。"
+      },
+      {
+        "name": "BtoB",
+        "description": "企業間取引（Business to Business）。"
+      },
+      {
+        "name": "アライアンス",
+        "description": "企業間の業務提携。"
+      },
+      {
+        "name": "ナレッジマネジメント",
+        "description": "組織内の知識や経験を共有し活用する活動。"
+      },
+      {
+        "name": "ベンチマーク",
+        "description": "自社の事業や製品を他社の優良事例と比較評価すること。"
+      },
+      {
+        "name": "ESG投資",
+        "description": "環境・社会・企業統治を考慮した投資。"
+      },
+      {
+        "name": "カーボンニュートラル",
+        "description": "温室効果ガス排出量と吸収量を均衡させること。"
+      },
+      {
+        "name": "テレワーク",
+        "description": "情報通信技術を活用した場所や時間にとらわれない働き方。"
+      },
+      {
+        "name": "クラウドコンピューティング",
+        "description": "インターネット経由でITリソースを利用する形態。"
+      },
+      {
+        "name": "データサイエンス",
+        "description": "データ分析に基づき意思決定や予測を行う手法。"
+      },
+      {
+        "name": "半導体",
+        "description": "電子機器の基幹部品であり、国際的なサプライチェーンの重要課題。"
+      },
+      {
+        "name": "サステナビリティ",
+        "description": "環境・社会・経済の持続可能性。"
+      },
+      {
+        "name": "SaaS",
+        "description": "Software as a Service。クラウド経由で提供されるソフトウェア。"
+      },
+      {
+        "name": "UX/UI",
+        "description": "ユーザー体験とユーザーインターフェース。"
+      },
+      {
+        "name": "DAO",
+        "description": "分散型自律組織（Decentralized Autonomous Organization）。"
+      },
+      {
+        "name": "PBR",
+        "description": "株価純資産倍率。東証の市場改革に関連して注目されている指標。"
+      },
+      {
+        "name": "シェアリングエコノミー",
+        "description": "個人間で物や場所、スキルなどを共有する経済形態。"
+      },
+      {
+        "name": "OODAループ",
+        "description": "観察・方向づけ・決定・実行の意思決定サイクル。"
+      },
+      {
+        "name": "人的資本",
+        "description": "人材をコストではなく投資対象（資本）として捉える考え方。"
+      },
+      {
+        "name": "インサイドセールス",
+        "description": "電話やメールなど非対面で行う営業活動。"
+      },
+      {
+        "name": "PMI",
+        "description": "ポスト・マージャー・インテグレーション（M&A後の統合プロセス）。"
+      },
+      {
+        "name": "リーン生産方式",
+        "description": "ムダを徹底的に排除する生産管理手法。"
+      },
+      {
+        "name": "BCP",
+        "description": "事業継続計画（Business Continuity Plan）。"
+      }
+    ],
+    "name": "ビジネス"
+  },
+  {
+    "universal": [
+      {
+        "name": "予防",
+        "description": "病気になる前の健康維持活動、一次予防、二次予防など"
+      },
+      {
+        "name": "治療",
+        "description": "疾患に対する医学的介入、手術や投薬など"
+      },
+      {
+        "name": "診断",
+        "description": "検査や診察に基づく病状の特定"
+      },
+      {
+        "name": "薬剤",
+        "description": "医薬品、薬物治療"
+      },
+      {
+        "name": "栄養",
+        "description": "食事と健康の関係、食生活改善"
+      },
+      {
+        "name": "医学",
+        "description": "医療を支える学問分野、基礎医学、臨床医学"
+      },
+      {
+        "name": "公衆衛生",
+        "description": "社会全体での健康水準の維持・向上"
+      },
+      {
+        "name": "保険",
+        "description": "医療費の負担を軽減する公的制度（医療保険制度）"
+      }
+    ],
+    "current": [
+      {
+        "name": "DX",
+        "description": "医療分野のデジタルトランスフォーメーション"
+      },
+      {
+        "name": "AI",
+        "description": "人工知能による画像診断支援や新薬開発"
+      },
+      {
+        "name": "オンライン診療",
+        "description": "遠隔地からの診療サービス、規制緩和"
+      },
+      {
+        "name": "ゲノム医療",
+        "description": "遺伝子情報に基づいた個別化医療"
+      },
+      {
+        "name": "ワクチン",
+        "description": "感染症対策のための予防接種、メッセンジャーRNA技術など"
+      },
+      {
+        "name": "地域包括ケア",
+        "description": "高齢化社会における住み慣れた地域での医療・介護連携"
+      },
+      {
+        "name": "パンデミック",
+        "description": "世界的な感染症拡大への対応と備え"
+      },
+      {
+        "name": "バイオテック",
+        "description": "生物工学を活用した創薬や治療法の開発"
+      }
+    ],
+    "related": [
+      {
+        "name": "介護",
+        "description": "高齢者や障害者に対する生活支援サービス"
+      },
+      {
+        "name": "看護",
+        "description": "医療現場における患者のケアと補助"
+      },
+      {
+        "name": "メンタルヘルス",
+        "description": "精神的健康、心理的ケア"
+      },
+      {
+        "name": "PHR",
+        "description": "パーソナル・ヘルス・レコード（個人健康情報管理）"
+      },
+      {
+        "name": "再生医療",
+        "description": "iPS細胞、幹細胞などを用いた損傷組織の修復"
+      },
+      {
+        "name": "創薬",
+        "description": "新しい医薬品の研究開発プロセス"
+      },
+      {
+        "name": "医療費",
+        "description": "医療にかかる費用、国の財政問題"
+      },
+      {
+        "name": "ジェネリック",
+        "description": "後発医薬品"
+      },
+      {
+        "name": "運動",
+        "description": "身体活動と健康増進"
+      },
+      {
+        "name": "睡眠",
+        "description": "睡眠の質と健康の関係"
+      },
+      {
+        "name": "未病",
+        "description": "病気になる前の状態、健康と病気の中間"
+      },
+      {
+        "name": "遠隔モニタリング",
+        "description": "IoTやウェアラブルデバイスを用いた生体データの遠隔監視"
+      },
+      {
+        "name": "医療倫理",
+        "description": "生命倫理、医療行為における倫理的な問題"
+      },
+      {
+        "name": "臨床試験",
+        "description": "新しい治療法や薬剤の有効性と安全性を確認する試験（治験）"
+      },
+      {
+        "name": "予防接種",
+        "description": "予防のためのワクチン接種制度"
+      },
+      {
+        "name": "厚生労働省",
+        "description": "日本の医療・労働・福祉を管轄する中央省庁"
+      },
+      {
+        "name": "健康寿命",
+        "description": "健康上の問題で日常生活が制限されずに送れる期間"
+      },
+      {
+        "name": "救急",
+        "description": "救命医療体制、ER"
+      },
+      {
+        "name": "緩和ケア",
+        "description": "重い病を持つ患者の痛みや苦痛を和らげるケア"
+      },
+      {
+        "name": "医療データ",
+        "description": "ビッグデータとしての医療情報の活用"
+      },
+      {
+        "name": "ヘルスケア",
+        "description": "健康維持・増進に関連する広範なサービスや産業"
+      },
+      {
+        "name": "EBM",
+        "description": "根拠に基づく医療（Evidence-Based Medicine）"
+      },
+      {
+        "name": "健康経営",
+        "description": "企業が従業員の健康管理を経営的視点から行うこと"
+      },
+      {
+        "name": "働き方改革",
+        "description": "医師や看護師の長時間労働是正"
+      }
+    ],
+    "name": "医療健康"
+  },
+  {
+    "universal": [
+      {
+        "name": "学習指導要領",
+        "description": "学校で教える教育内容や水準を定めた国の基準"
+      },
+      {
+        "name": "教員免許",
+        "description": "教職に就くために必要な資格"
+      },
+      {
+        "name": "初等教育",
+        "description": "小学校（6年間）を中心とした基礎的な教育段階"
+      },
+      {
+        "name": "高等教育",
+        "description": "大学や大学院など、中等教育の後の専門的な教育段階"
+      },
+      {
+        "name": "教育哲学",
+        "description": "教育の目的、理念、価値について考察する学問"
+      },
+      {
+        "name": "アクティブラーニング",
+        "description": "学生が能動的に学習に参加する指導方法（AL）"
+      },
+      {
+        "name": "PISA",
+        "description": "OECDによる生徒の学習到達度調査（Programme for International Student Assessment）"
+      },
+      {
+        "name": "カリキュラム",
+        "description": "教育課程や授業内容の計画"
+      }
+    ],
+    "current": [
+      {
+        "name": "GIGAスクール構想",
+        "description": "児童生徒一人一台端末と高速ネットワーク環境の整備政策"
+      },
+      {
+        "name": "生成AI",
+        "description": "ChatGPTなどに代表される、教育現場での活用が議論される人工知能技術"
+      },
+      {
+        "name": "STEAM教育",
+        "description": "科学、技術、工学、芸術、数学を統合的に学ぶ教育アプローチ"
+      },
+      {
+        "name": "不登校",
+        "description": "病気や経済的な理由以外で年間30日以上学校を欠席する状況（社会課題）"
+      },
+      {
+        "name": "教員不足",
+        "description": "公立学校における教職員の採用難や欠員問題"
+      },
+      {
+        "name": "リスキリング",
+        "description": "社会人が新しいスキルや知識を習得し直すこと（学び直し）"
+      },
+      {
+        "name": "探究学習",
+        "description": "自ら課題を設定し情報を収集・分析し、解決を図る学習（高校で必修化）"
+      },
+      {
+        "name": "個別最適な学び",
+        "description": "児童生徒の特性や進度に応じた指導を行う教育目標"
+      }
+    ],
+    "related": [
+      {
+        "name": "中等教育",
+        "description": "中学校・高等学校を中心とした教育段階"
+      },
+      {
+        "name": "特別支援教育",
+        "description": "障害のある児童生徒への教育"
+      },
+      {
+        "name": "私学",
+        "description": "私立学校（学校種別）"
+      },
+      {
+        "name": "公教育",
+        "description": "国や地方公共団体が運営する教育制度"
+      },
+      {
+        "name": "教育委員会",
+        "description": "地方公共団体の教育行政組織"
+      },
+      {
+        "name": "教職課程",
+        "description": "教員養成のための大学などのプログラム"
+      },
+      {
+        "name": "文部科学省",
+        "description": "教育、科学技術、文化、スポーツを所管する中央官庁"
+      },
+      {
+        "name": "EdTech",
+        "description": "教育（Education）とテクノロジー（Technology）の融合"
+      },
+      {
+        "name": "オンライン授業",
+        "description": "インターネットを利用した遠隔での授業配信"
+      },
+      {
+        "name": "MOOCs",
+        "description": "大規模公開オンライン講座（Massive Open Online Courses）"
+      },
+      {
+        "name": "反転授業",
+        "description": "自宅で講義動画を視聴し、教室で演習を行う指導形態"
+      },
+      {
+        "name": "プログラミング教育",
+        "description": "論理的思考力を育むことを目的とした教育内容"
+      },
+      {
+        "name": "デジタル教科書",
+        "description": "タブレット端末等で利用する教科書"
+      },
+      {
+        "name": "教員の働き方改革",
+        "description": "長時間労働解消を目指す勤務環境改善の取り組み"
+      },
+      {
+        "name": "スクールカウンセラー",
+        "description": "学校における生徒や教員の心理的支援を行う専門家"
+      },
+      {
+        "name": "教育格差",
+        "description": "家庭の経済状況などにより生じる学力や機会の差"
+      },
+      {
+        "name": "いじめ",
+        "description": "児童生徒間の心身の苦痛を与える行為"
+      },
+      {
+        "name": "ピアサポート",
+        "description": "仲間同士による支え合い活動"
+      },
+      {
+        "name": "非認知能力",
+        "description": "目標達成力、協調性、粘り強さなど、テストで測れない能力"
+      },
+      {
+        "name": "メンタルヘルス",
+        "description": "教職員や児童生徒の精神的な健康"
+      },
+      {
+        "name": "Society 5.0",
+        "description": "AIやIoTを活用した超スマート社会（教育の目標の一つ）"
+      },
+      {
+        "name": "キャリア教育",
+        "description": "将来の職業選択や生き方を考える教育"
+      },
+      {
+        "name": "生涯学習",
+        "description": "学校教育終了後も継続して学習する活動"
+      },
+      {
+        "name": "SDGs",
+        "description": "持続可能な開発目標（教育目標と関連）"
+      },
+      {
+        "name": "幼児教育無償化",
+        "description": "3歳から5歳児クラスの幼稚園・保育所などの利用料を無料にする政策"
+      },
+      {
+        "name": "OECD",
+        "description": "経済協力開発機構（国際教育指標を策定）"
+      },
+      {
+        "name": "インクルーシブ教育",
+        "description": "すべての子どもたちが共に学ぶことを目指す教育のあり方"
+      },
+      {
+        "name": "発達心理学",
+        "description": "ヒトの認知や行動が年齢とともに変化する過程を研究する学問"
+      },
+      {
+        "name": "教職の魅力向上",
+        "description": "教員の志望者を増やすための政策的取り組み"
+      },
+      {
+        "name": "DX",
+        "description": "教育分野におけるデジタル技術を活用した変革（デジタルトランスフォーメーション）"
+      }
+    ],
+    "name": "教育"
+  },
+  {
+    "universal": [
+      {
+        "name": "伝統工芸",
+        "description": "日本の美術や技術の歴史、およびその製品。"
+      },
+      {
+        "name": "祭り",
+        "description": "地域社会の伝統的な年中行事や神事。"
+      },
+      {
+        "name": "食文化",
+        "description": "各地域や民族における食の歴史や習慣。"
+      },
+      {
+        "name": "民俗学",
+        "description": "庶民の生活様式、伝承、風俗の研究。"
+      },
+      {
+        "name": "古典芸能",
+        "description": "能、狂言、歌舞伎など伝統的な舞台芸術。"
+      },
+      {
+        "name": "スポーツ史",
+        "description": "各競技の成り立ちや変遷の歴史。"
+      },
+      {
+        "name": "ライフスタイル",
+        "description": "暮らし方、生き方、価値観。"
+      },
+      {
+        "name": "郷土料理",
+        "description": "地域に根ざした独自の食材や調理法を持つ料理。"
+      }
+    ],
+    "current": [
+      {
+        "name": "インバウンド",
+        "description": "訪日外国人観光客による文化体験や消費。"
+      },
+      {
+        "name": "eスポーツ",
+        "description": "エレクトロニック・スポーツ（対戦型ビデオゲーム競技）。"
+      },
+      {
+        "name": "推し活",
+        "description": "特定のアイドルやコンテンツを応援するファン活動。"
+      },
+      {
+        "name": "SDGs",
+        "description": "持続可能な開発目標と、暮らしや消費への影響。"
+      },
+      {
+        "name": "メタバース",
+        "description": "仮想空間（Virtual World）での文化活動やエンタメ。"
+      },
+      {
+        "name": "地方創生",
+        "description": "地域固有の文化資源を活用した経済活性化。"
+      },
+      {
+        "name": "ウェルビーイング",
+        "description": "心身の健康と生活の質（Well-being）。"
+      },
+      {
+        "name": "Vチューバー",
+        "description": "仮想アバターを用いた配信者（Virtual YouTuber）。"
+      }
+    ],
+    "related": [
+      {
+        "name": "ジェンダー",
+        "description": "社会的・文化的な性差や役割。"
+      },
+      {
+        "name": "ダイバーシティ",
+        "description": "多様性の尊重と受容。"
+      },
+      {
+        "name": "ハラスメント",
+        "description": "人権侵害や不快な行為に関する問題。"
+      },
+      {
+        "name": "デジタルアーカイブ",
+        "description": "文化財や記録の電子的な保存と公開。"
+      },
+      {
+        "name": "博物館",
+        "description": "資料や文化財の収集・展示施設。"
+      },
+      {
+        "name": "アート思考",
+        "description": "創造性や感性を重視した発想方法。"
+      },
+      {
+        "name": "サステナブル",
+        "description": "持続可能な消費や生産活動。"
+      },
+      {
+        "name": "ジェネレーションZ",
+        "description": "Z世代（1990年代中盤から2010年代初頭生まれ）。"
+      },
+      {
+        "name": "ワーケーション",
+        "description": "休暇と仕事を両立させる働き方（Workation）。"
+      },
+      {
+        "name": "ミニマリスト",
+        "description": "必要最小限のもので暮らす生活様式。"
+      },
+      {
+        "name": "OTT",
+        "description": "インターネット経由のコンテンツ配信（Over The Top）。"
+      },
+      {
+        "name": "K-POP",
+        "description": "韓国の大衆音楽。"
+      },
+      {
+        "name": "アニメツーリズム",
+        "description": "アニメ作品の舞台となった場所を巡る観光。"
+      },
+      {
+        "name": "聖地巡礼",
+        "description": "作品のロケ地や舞台への訪問。"
+      },
+      {
+        "name": "VOD",
+        "description": "ビデオ・オン・デマンド。"
+      },
+      {
+        "name": "ストリーミング",
+        "description": "データを受信しながら再生する形式。"
+      },
+      {
+        "name": "NFT",
+        "description": "非代替性トークン。デジタルコンテンツの所有証明。"
+      },
+      {
+        "name": "コミケ",
+        "description": "コミックマーケット。大規模な同人誌即売会。"
+      },
+      {
+        "name": "アスリート",
+        "description": "競技者、プロスポーツ選手。"
+      },
+      {
+        "name": "スポーツビジネス",
+        "description": "興行やマーケティングを含むスポーツ産業。"
+      },
+      {
+        "name": "ファンタジースポーツ",
+        "description": "選手の成績を予測し、架空のチームを編成するゲーム。"
+      },
+      {
+        "name": "体育会",
+        "description": "大学などの運動部組織。"
+      },
+      {
+        "name": "部活動改革",
+        "description": "学校の部活動における環境改善。"
+      },
+      {
+        "name": "Bリーグ",
+        "description": "プロバスケットボールリーグ。"
+      },
+      {
+        "name": "プロ野球",
+        "description": "日本のプロフェッショナルベースボール。"
+      },
+      {
+        "name": "Jリーグ",
+        "description": "日本のプロサッカーリーグ。"
+      },
+      {
+        "name": "フードテック",
+        "description": "食品技術のイノベーション（Food Tech）。"
+      },
+      {
+        "name": "プラントベース",
+        "description": "植物由来の食材や食品。"
+      },
+      {
+        "name": "グルメサイト",
+        "description": "飲食店情報を提供するウェブサイト。"
+      },
+      {
+        "name": "ミシュラン",
+        "description": "レストランガイドブック。"
+      },
+      {
+        "name": "地産地消",
+        "description": "地域で生産されたものを地域で消費すること。"
+      },
+      {
+        "name": "クラフトビール",
+        "description": "小規模な醸造所で作られる個性的なビール。"
+      },
+      {
+        "name": "スイーツ",
+        "description": "菓子、デザート全般。"
+      },
+      {
+        "name": "食品ロス",
+        "description": "食べられるのに捨てられる食品。"
+      }
+    ],
+    "name": "文化"
+  },
+  {
+    "universal": [
+      {
+        "name": "地球温暖化",
+        "description": "地球全体の平均気温が上昇する現象。気候変動の主要因。"
+      },
+      {
+        "name": "生態系",
+        "description": "生物群集とその環境要因との相互作用のシステム。"
+      },
+      {
+        "name": "大気汚染",
+        "description": "工場や自動車の排出ガスなどにより大気が汚染されること。"
+      },
+      {
+        "name": "異常気象",
+        "description": "過去の記録と比較して著しく偏った天候や気象現象。"
+      },
+      {
+        "name": "生物多様性",
+        "description": "地球上の様々な生物の個性とそれを取り巻く環境の多様性。"
+      },
+      {
+        "name": "再生可能エネルギー",
+        "description": "太陽光、風力、水力など、資源が枯渇せず繰り返し使えるエネルギー。"
+      },
+      {
+        "name": "水資源",
+        "description": "生活や産業に利用できる水（河川水、地下水など）。"
+      },
+      {
+        "name": "CO2",
+        "description": "二酸化炭素。最も主要な温室効果ガス。"
+      },
+      {
+        "name": "砂漠化",
+        "description": "乾燥地域における土地の劣化現象。"
+      },
+      {
+        "name": "オゾン層",
+        "description": "地球を紫外線から守る大気の層。"
+      }
+    ],
+    "current": [
+      {
+        "name": "GX",
+        "description": "グリーン・トランスフォーメーション。脱炭素社会の実現に向けた経済社会システム全体の変革。"
+      },
+      {
+        "name": "カーボンニュートラル",
+        "description": "温室効果ガスの排出量と吸収量を均衡させること。日本は2050年目標。"
+      },
+      {
+        "name": "パリ協定",
+        "description": "2020年以降の気候変動対策の国際的な枠組み。"
+      },
+      {
+        "name": "SDGs",
+        "description": "持続可能な開発目標。2030年までに達成を目指す国際目標。"
+      },
+      {
+        "name": "気候変動適応策",
+        "description": "気候変動の影響を回避・軽減するための対策（インフラ整備や予測技術など）。"
+      },
+      {
+        "name": "脱炭素化",
+        "description": "社会全体でCO2排出量をゼロにするための具体的な取り組み。"
+      },
+      {
+        "name": "サーキュラーエコノミー",
+        "description": "製品を循環利用させ、資源投入量と廃棄物発生量を最小限にする経済モデル。"
+      },
+      {
+        "name": "EV",
+        "description": "電気自動車 (Electric Vehicle)。自動車産業の脱炭素化の主軸。"
+      },
+      {
+        "name": "COP",
+        "description": "国連気候変動枠組条約締約国会議。毎年開催される国際交渉の場。"
+      },
+      {
+        "name": "猛暑日",
+        "description": "最高気温が35℃以上となる日。近年の温暖化により増加傾向。"
+      }
+    ],
+    "related": [
+      {
+        "name": "メタン",
+        "description": "CO2に次いで影響力の大きい温室効果ガス。"
+      },
+      {
+        "name": "ESG",
+        "description": "環境(E)、社会(S)、ガバナンス(G)を考慮する投資基準。"
+      },
+      {
+        "name": "アセスメント",
+        "description": "環境影響評価（EIA）。開発事業が環境に及ぼす影響を予測・評価すること。"
+      },
+      {
+        "name": "洋上風力",
+        "description": "海上に設置される風力発電。日本の主力再エネとして注目。"
+      },
+      {
+        "name": "ヒートアイランド",
+        "description": "都市部の気温が郊外に比べて高くなる現象。"
+      },
+      {
+        "name": "リサイクル",
+        "description": "廃棄物を再資源化すること。"
+      },
+      {
+        "name": "LCA",
+        "description": "ライフサイクルアセスメント。製品の生涯にわたる環境負荷を評価する手法。"
+      },
+      {
+        "name": "ハザードマップ",
+        "description": "災害による被害予測範囲や避難場所を示した地図。"
+      },
+      {
+        "name": "グリーンボンド",
+        "description": "環境改善効果のある事業に資金調達するために発行される債券。"
+      },
+      {
+        "name": "森林破壊",
+        "description": "熱帯林などの大規模な伐採や消失。"
+      },
+      {
+        "name": "IPCC",
+        "description": "気候変動に関する政府間パネル。気候変動に関する科学的評価を行う国際機関。"
+      },
+      {
+        "name": "ゼロエミッション",
+        "description": "廃棄物を排出しない生産・消費システムを目指す概念。"
+      },
+      {
+        "name": "環境税",
+        "description": "環境への負荷を軽減するために課税される税金。"
+      },
+      {
+        "name": "豪雨災害",
+        "description": "短時間で大量に降る雨が引き起こす水害や土砂災害。"
+      },
+      {
+        "name": "SBT",
+        "description": "Science Based Targets。科学的根拠に基づいた企業の温室効果ガス削減目標。"
+      },
+      {
+        "name": "バイオマス",
+        "description": "生物由来の有機性資源をエネルギーとして利用すること。"
+      },
+      {
+        "name": "プラスチック汚染",
+        "description": "海洋や土壌に蓄積する使い捨てプラスチックによる環境被害。"
+      },
+      {
+        "name": "ネイチャーポジティブ",
+        "description": "自然を回復軌道に乗せるという国際的な目標。"
+      },
+      {
+        "name": "TCFD",
+        "description": "気候関連財務情報開示タスクフォース。企業に気候変動リスクの開示を推奨。"
+      },
+      {
+        "name": "VPP",
+        "description": "バーチャルパワープラント。分散電源をIoT技術で統合制御するシステム。"
+      }
+    ],
+    "name": "環境"
+  },
+  {
+    "universal": [
+      {
+        "name": "トランジスタ",
+        "description": "半導体の基本となるスイッチング素子"
+      },
+      {
+        "name": "IC",
+        "description": "集積回路（Integrated Circuit）。複数の素子をまとめたもの"
+      },
+      {
+        "name": "ウェハー",
+        "description": "半導体チップの基材となる薄い円盤（主にシリコン製）"
+      },
+      {
+        "name": "リソグラフィ",
+        "description": "回路パターンをウェハーに焼き付ける露光技術"
+      },
+      {
+        "name": "CMOS",
+        "description": "相補型金属酸化膜半導体。低消費電力で広く使われる回路形式"
+      },
+      {
+        "name": "ファウンドリ",
+        "description": "半導体の製造を専門に受託する企業"
+      },
+      {
+        "name": "ムーアの法則",
+        "description": "集積回路の集積密度が18〜24ヶ月で倍増するという経験則"
+      },
+      {
+        "name": "歩留まり",
+        "description": "製造された製品のうち、良品として完成した割合"
+      }
+    ],
+    "current": [
+      {
+        "name": "AIチップ",
+        "description": "人工知能の処理に特化した半導体（GPU、ASICなど）"
+      },
+      {
+        "name": "EUV",
+        "description": "極端紫外線露光技術。最先端プロセスに必須"
+      },
+      {
+        "name": "Chiplet",
+        "description": "複数の小型チップを統合し、一つのパッケージとして機能させる設計技術"
+      },
+      {
+        "name": "サプライチェーン",
+        "description": "原材料調達から製造、供給に至る経路の安定性や再編"
+      },
+      {
+        "name": "TSMC",
+        "description": "台湾積体電路製造。世界最大のファウンドリ企業"
+      },
+      {
+        "name": "地政学リスク",
+        "description": "米中対立など国際情勢が半導体産業に及ぼす影響"
+      },
+      {
+        "name": "先端プロセス",
+        "description": "2nm、3nmといった微細化された最新の製造技術"
+      },
+      {
+        "name": "HBM",
+        "description": "High Bandwidth Memory。AI処理に使われる広帯域メモリ"
+      }
+    ],
+    "related": [
+      {
+        "name": "パワー半導体",
+        "description": "電力制御に使われる半導体。SiCやGaNが注目される"
+      },
+      {
+        "name": "車載半導体",
+        "description": "自動車の電装化、自動運転に使われる半導体"
+      },
+      {
+        "name": "SiC",
+        "description": "炭化ケイ素。次世代パワー半導体材料"
+      },
+      {
+        "name": "GaN",
+        "description": "窒化ガリウム。次世代パワー半導体材料"
+      },
+      {
+        "name": "EDA",
+        "description": "電子設計自動化（Electronic Design Automation）ソフトウェア"
+      },
+      {
+        "name": "ASML",
+        "description": "オランダの主要な半導体製造装置メーカー"
+      },
+      {
+        "name": "Rapidus",
+        "description": "日本の次世代半導体の研究開発・量産化を目指す企業"
+      },
+      {
+        "name": "DRAM",
+        "description": "ダイナミック・ランダム・アクセス・メモリ（揮発性メモリ）"
+      },
+      {
+        "name": "NAND",
+        "description": "フラッシュメモリの一種（不揮発性メモリ）"
+      },
+      {
+        "name": "FinFET",
+        "description": "3次元構造を持つトランジスタ技術"
+      },
+      {
+        "name": "RISC-V",
+        "description": "オープンソースの命令セットアーキテクチャ"
+      },
+      {
+        "name": "IDM",
+        "description": "垂直統合型デバイスメーカー（設計、製造、販売を一貫）"
+      },
+      {
+        "name": "パッケージング",
+        "description": "半導体製造の後工程。チップを保護し電気的に接続する"
+      },
+      {
+        "name": "フォトマスク",
+        "description": "リソグラフィ工程で回路パターンが描かれる原版"
+      },
+      {
+        "name": "レジスト",
+        "description": "リソグラフィで使用される感光性材料"
+      },
+      {
+        "name": "補助金",
+        "description": "各国政府による半導体工場建設や研究開発への財政支援"
+      },
+      {
+        "name": "MEMS",
+        "description": "微小電気機械システム"
+      },
+      {
+        "name": "NVIDIA",
+        "description": "AI/データセンター向けGPUの大手メーカー"
+      },
+      {
+        "name": "Intel",
+        "description": "米国の主要な半導体メーカー"
+      },
+      {
+        "name": "ヘテロジニアス統合",
+        "description": "異なる種類のチップを組み合わせて性能を向上させる技術"
+      }
+    ],
+    "name": "半導体"
   }
 ]
