@@ -3,21 +3,42 @@
 {% block title %}ダッシュボード - {{ block.super }}{% endblock %}
 
 {% block content %}
+    <style>
+        .table th, .table td {
+            text-align: left;
+            vertical-align: top;
+        }
+        .table .no-wrap {
+            white-space: nowrap;
+            width: 1%;
+        }
+    </style>
     <h1>あなたのQuerySet一覧</h1>
 
-    <ul>
-    {% for queryset in querysets %}
-        <li>
-            <span>{{ queryset.name }}</span>
-            <span class="actions">
-                <a href="{% url 'subscriptions:queryset_update' pk=queryset.pk %}">編集</a>
-                <a href="{% url 'subscriptions:queryset_delete' pk=queryset.pk %}">削除</a>
-            </span>
-        </li>
-    {% empty %}
-        <li>まだQuerySetが登録されていません。</li>
-    {% endfor %}
-    </ul>
+    <table class="table">
+        <thead>
+            <tr>
+                <th class="no-wrap">名前</th>
+                <th>クエリ文字列</th>
+                <th class="no-wrap">編集</th>
+                <th class="no-wrap">削除</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for queryset in querysets %}
+            <tr>
+                <td class="no-wrap">{{ queryset.name }}</td>
+                <td>{{ queryset.query_str }}</td>
+                <td class="no-wrap"><a href="{% url 'subscriptions:queryset_update' pk=queryset.pk %}">編集</a></td>
+                <td class="no-wrap"><a href="{% url 'subscriptions:queryset_delete' pk=queryset.pk %}">削除</a></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">まだQuerySetが登録されていません。</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
     <a href="{% url 'subscriptions:queryset_create' %}" class="button-link button-link-primary" style="margin-top: 1em;">新しいQuerySetを作成</a>
 {% endblock %}

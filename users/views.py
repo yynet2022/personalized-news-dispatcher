@@ -21,6 +21,13 @@ class LoginView(View):
         return render(request, 'users/login.html', {'form': form})
 
     def post(self, request, *args, **kwargs):
+        next_url = request.GET.get('next')
+        if next_url:
+            request.session['next'] = next_url
+        else:
+            # Ensure 'next' is not carried over from a previous login
+            request.session.pop('next', None)
+
         form = EmailLoginForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
@@ -81,7 +88,11 @@ class AuthenticateView(View):
 
         login_token.delete()
 
-        return redirect('subscriptions:queryset_list')
+        next_url = request.session.pop('next', None)
+        if next_url:
+            return redirect(next_url)
+        else:
+            return redirect('subscriptions:queryset_list')
 
 
 class LogoutView(AuthLogoutView):
