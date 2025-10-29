@@ -4,6 +4,7 @@ from .views import (
     QuerySetCreateView,
     QuerySetUpdateView,
     QuerySetDeleteView,
+    send_manual_email,
     UniversalKeywordsApiView,
     CurrentKeywordsApiView,
     RelatedKeywordsApiView,
@@ -21,6 +22,9 @@ urlpatterns = [
          name='queryset_update'),
     path('<uuid:pk>/delete/', QuerySetDeleteView.as_view(),
          name='queryset_delete'),
+
+    # 手動メール送信用のURLパターン
+    path('<uuid:pk>/send/', send_manual_email, name='queryset_send'),
 
     path('api/universal-keywords/', UniversalKeywordsApiView.as_view(),
          name='api_universal_keywords'),

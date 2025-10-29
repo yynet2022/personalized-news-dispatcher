@@ -1,7 +1,11 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import CreateView, UpdateView, DeleteView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+from django.contrib import messages
+
 from .models import QuerySet, UniversalKeywords, CurrentKeywords, RelatedKeywords
 from .forms import QuerySetForm
 from django.http import JsonResponse
@@ -9,6 +13,8 @@ from django.db import IntegrityError
 import feedparser
 import requests
 from urllib.parse import quote
+
+from .services import fetch_articles_for_queryset, send_digest_email, log_sent_articles
 
 
 class QuerySetListView(LoginRequiredMixin, View):
@@ -118,6 +124,37 @@ class QuerySetDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_queryset(self):
         return QuerySet.objects.filter(user=self.request.user)
+
+
+@login_required
+@require_POST
+def send_manual_email(request, pk):
+    """
+    指定されたQuerySetに基づいてニュースダイジェストを手動で送信するビュー
+    """
+    queryset = get_object_or_404(QuerySet, pk=pk, user=request.user)
+    
+    # コマンドと同じ2日以内の記事を取得
+    new_articles = fetch_articles_for_queryset(queryset, request.user, after_days=2)
+
+    if new_articles:
+        querysets_with_articles = [{
+            'queryset_name': queryset.name,
+            'articles': new_articles,
+        }]
+        
+        try:
+            send_digest_email(request.user, querysets_with_articles)
+            log_sent_articles(request.user, new_articles)
+            messages.success(request, f'「{queryset.name}」のニュース（{len(new_articles)}件）を {request.user.email} に送信しました。')
+        
+        except Exception as e:
+            messages.error(request, f'メールの送信中にエラーが発生しました: {e}')
+            
+    else:
+        messages.info(request, f'「{queryset.name}」に関する新しい記事は見つかりませんでした。')
+
+    return redirect('subscriptions:queryset_list')
 
 
 class UniversalKeywordsApiView(LoginRequiredMixin, View):

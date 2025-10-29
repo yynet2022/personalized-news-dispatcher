@@ -4,6 +4,11 @@ all:
 	python manage.py makemigrations --no-color 
 	python manage.py migrate --no-color
 
+init: all
+	echo "ex# python manage.py update_categories data/categories.json"
+	echo "ex# python manage.py update_site --name NAME --domain DOMAIN"
+	echo "ex# python manage.py createsuperuser --no-input --email EMAIL"
+
 check:
 	flake8 --exclude migrations user/ || true
 	flake8 --exclude migrations subscriptions/ || true

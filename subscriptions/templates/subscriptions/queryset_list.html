@@ -3,14 +3,50 @@
 {% block title %}ダッシュボード - {{ block.super }}{% endblock %}
 
 {% block content %}
+    {# メッセージ表示エリアを追加 #}
+    {% if messages %}
+        <div class="messages" style="margin-bottom: 1em;">
+            {% for message in messages %}
+                <div class="message message-{{ message.tags }}" style="padding: 0.75em 1.25em; border: 1px solid; border-radius: 4px; margin-bottom: 0.5em;
+                    {% if message.tags == 'success' %} border-color: #28a745; color: #155724; background-color: #d4edda;
+                    {% elif message.tags == 'info' %} border-color: #17a2b8; color: #0c5460; background-color: #d1ecf1;
+                    {% elif message.tags == 'warning' %} border-color: #ffc107; color: #856404; background-color: #fff3cd;
+                    {% elif message.tags == 'error' %} border-color: #dc3545; color: #721c24; background-color: #f8d7da;
+                    {% else %} border-color: #ccc; color: #333; background-color: #f0f0f0;
+                    {% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     <style>
+        .table { width: 100%; border-collapse: collapse; }
         .table th, .table td {
             text-align: left;
-            vertical-align: top;
+            vertical-align: middle;
+            padding: 0.75em;
+            border-bottom: 1px solid #eee;
         }
+        .table th { font-weight: bold; }
         .table .no-wrap {
             white-space: nowrap;
             width: 1%;
+        }
+        .action-form {
+            display: inline; /* フォームをインライン表示 */
+            margin: 0;
+        }
+        .action-button {
+            padding: 0.3em 0.8em; /* 少し小さめのボタン */
+            font-size: 0.9em;
+            margin-left: 0.5em;
+            border-radius: 4px;
+            text-decoration: none;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            background-color: #f0f0f0;
+            color: #333;
         }
     </style>
     <h1>あなたのQuerySet一覧</h1>
@@ -20,19 +56,25 @@
             <tr>
                 <th class="no-wrap">名前</th>
                 <th>クエリ文字列</th>
-                <th class="no-wrap">削除</th>
+                <th class="no-wrap">操作</th>
             </tr>
         </thead>
         <tbody>
             {% for queryset in querysets %}
             <tr>
-                <td class="no-wrap"><a href="{% url 'subscriptions:queryset_update' pk=queryset.pk %}">{{ queryset.name }}</a></td>
+                <td><a href="{% url 'subscriptions:queryset_update' pk=queryset.pk %}">{{ queryset.name }}</a></td>
                 <td>{{ queryset.query_str }}</td>
-                <td class="no-wrap"><a href="{% url 'subscriptions:queryset_delete' pk=queryset.pk %}">削除</a></td>
+                <td class="no-wrap">
+                    <form action="{% url 'subscriptions:queryset_send' pk=queryset.pk %}" method="post" class="action-form">
+                        {% csrf_token %}
+                        <button type="submit" class="action-button">メール送信</button>
+                    </form>
+                    <a href="{% url 'subscriptions:queryset_delete' pk=queryset.pk %}" class="action-button" style="background-color: #dc3545; color: white; border-color: #dc3545;">削除</a>
+                </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="4">まだQuerySetが登録されていません。</td>
+                <td colspan="3">まだQuerySetが登録されていません。</td>
             </tr>
             {% endfor %}
         </tbody>
