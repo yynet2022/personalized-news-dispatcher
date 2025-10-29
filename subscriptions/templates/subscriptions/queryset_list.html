@@ -20,16 +20,14 @@
             <tr>
                 <th class="no-wrap">名前</th>
                 <th>クエリ文字列</th>
-                <th class="no-wrap">編集</th>
                 <th class="no-wrap">削除</th>
             </tr>
         </thead>
         <tbody>
             {% for queryset in querysets %}
             <tr>
-                <td class="no-wrap">{{ queryset.name }}</td>
+                <td class="no-wrap"><a href="{% url 'subscriptions:queryset_update' pk=queryset.pk %}">{{ queryset.name }}</a></td>
                 <td>{{ queryset.query_str }}</td>
-                <td class="no-wrap"><a href="{% url 'subscriptions:queryset_update' pk=queryset.pk %}">編集</a></td>
                 <td class="no-wrap"><a href="{% url 'subscriptions:queryset_delete' pk=queryset.pk %}">削除</a></td>
             </tr>
             {% empty %}
