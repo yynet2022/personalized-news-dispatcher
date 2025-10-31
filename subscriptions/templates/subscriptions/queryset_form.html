@@ -26,6 +26,18 @@
             border: none;
             padding: 0;
         }
+
+        /* プレビュー結果のリストスタイルを上書き */
+        #preview-results ol {
+            list-style: decimal;
+            padding-left: 2rem; /* 字下げを調整 */
+        }
+        #preview-results li {
+            display: list-item; /* li要素のデフォルト表示に戻す */
+            background: none;
+            border: none;
+            padding: 0.25em 0;
+        }
     </style>
     
     <form method="post" id="queryset-form">
