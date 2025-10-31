@@ -10,11 +10,11 @@ from .models import QuerySet, UniversalKeywords, CurrentKeywords, RelatedKeyword
 from .forms import QuerySetForm
 from django.http import JsonResponse
 from django.db import IntegrityError
-import feedparser
-import requests
-from urllib.parse import quote
 
-from .services import fetch_articles_for_queryset, send_digest_email, log_sent_articles, fetch_rss_feed
+from .services import (
+    fetch_articles_for_queryset, send_digest_email, log_sent_articles,
+    fetch_articles_for_preview
+)
 
 
 class QuerySetListView(LoginRequiredMixin, View):
@@ -134,8 +134,8 @@ def send_manual_email(request, pk):
     """
     queryset = get_object_or_404(QuerySet, pk=pk, user=request.user)
     
-    # コマンドと同じ2日以内の記事を取得
-    new_articles = fetch_articles_for_queryset(queryset, request.user, after_days=2)
+    # querysetに設定された値で記事を取得
+    new_articles = fetch_articles_for_queryset(queryset, request.user)
 
     if new_articles:
         querysets_with_articles = [{
@@ -196,23 +196,27 @@ class NewsPreviewApiView(LoginRequiredMixin, View):
         if not query:
             return JsonResponse({'error': 'Query parameter "q" is required'},
                                 status=400)
+        
+        try:
+            after_days = int(request.GET.get('after_days', 2))
+            max_articles = int(request.GET.get('max_articles', 20))
+        except (ValueError, TypeError):
+            return JsonResponse({'error': 'Invalid after_days or max_articles'}, status=400)
 
-        # プレビューなのでタイムアウトは短めに5秒
-        feed = fetch_rss_feed(query, timeout=5)
+        articles = fetch_articles_for_preview(
+            query_str=query,
+            after_days=after_days,
+            max_articles=max_articles
+        )
 
-        if not feed:
-            # 外部サービスからの取得失敗は 502 Bad Gateway を返す
-            return JsonResponse(
-                {'error': 'Failed to fetch news feed'},
-                status=502)
+        # 未保存のArticleオブジェクトを辞書に変換
+        articles_data = [
+            {
+                'title': article.title,
+                'link': article.url,
+                'published': article.published_date.strftime('%Y-%m-%d %H:%M:%S') if article.published_date else 'N/A'
+            }
+            for article in articles
+        ]
 
-        articles = []
-        for entry in feed.entries[:5]:
-            articles.append({
-                'title': entry.title,
-                'link': entry.link,
-                'published': entry.get('published', 'N/A')
-            })
-
-        return JsonResponse({'feed': feed.feed, 'articles': articles},
-                            safe=False)
+        return JsonResponse({'articles': articles_data}, safe=False)

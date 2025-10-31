@@ -56,19 +56,65 @@ def fetch_rss_feed(query: str, timeout: int = 10):
         return None
 
 
-def fetch_articles_for_queryset(queryset: QuerySet, user: User, after_days: int = 2, dry_run: bool = False):
+def fetch_articles_for_preview(query_str: str, after_days: int, max_articles: int):
+    """
+    プレビュー用に新しいニュース記事を取得する。DBへの保存は行わない。
+
+    Args:
+        query_str (str): 検索クエリ文字列。
+        after_days (int): 何日前までの記事を取得するかの日数。
+        max_articles (int): 取得する記事の最大数。
+
+    Returns:
+        list[Article]: Articleオブジェクトのリスト（未保存）。
+    """
+    query_with_date = query_str
+    if after_days > 0:
+        limit_date = datetime.now() - timedelta(days=after_days)
+        after_date_str = limit_date.strftime('%Y-%m-%d')
+        query_with_date += f" after:{after_date_str}"
+
+    feed = fetch_rss_feed(query_with_date, timeout=5)
+    if not feed:
+        return []
+
+    preview_articles = []
+    for entry in feed.entries:
+        published_date = get_published_date_from_entry(entry)
+
+        if after_days > 0 and published_date:
+            threshold_date = datetime.now(timezone.utc) - timedelta(days=after_days)
+            if published_date < threshold_date:
+                continue
+
+        article = Article(
+            url=entry.link,
+            title=entry.title,
+            published_date=published_date
+        )
+        preview_articles.append(article)
+
+        if len(preview_articles) >= max_articles:
+            break
+            
+    return preview_articles
+
+
+def fetch_articles_for_queryset(queryset: QuerySet, user: User, after_days_override: int = None, dry_run: bool = False):
     """
     一つのQuerySetから新しいニュース記事を取得する。
 
     Args:
         queryset (QuerySet): ニュースを取得するためのQuerySetオブジェクト。
         user (User): 記事が既に送信されたかを判断するためのUserオブジェクト。
-        after_days (int): 何日前までの記事を取得するかの日数。0以下で無制限。
+        after_days_override (int, optional): querysetの設定を上書きする日数。デフォルトはNone。
         dry_run (bool): Trueの場合、DBへの書き込みは行わない。
 
     Returns:
         list[Article]: 新しく見つかったArticleオブジェクトのリスト。
     """
+    after_days = after_days_override if after_days_override is not None else queryset.after_days
+
     query_with_date = queryset.query_str
     if after_days > 0:
         limit_date = datetime.now() - timedelta(days=after_days)
@@ -81,6 +127,10 @@ def fetch_articles_for_queryset(queryset: QuerySet, user: User, after_days: int 
     new_articles = []
 
     for entry in feed.entries:
+        # 最大数に達したらループを抜ける
+        if len(new_articles) >= queryset.max_articles:
+            break
+
         published_date = get_published_date_from_entry(entry)
 
         if after_days > 0 and published_date:

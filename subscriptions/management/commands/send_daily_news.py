@@ -59,7 +59,7 @@ class Command(BaseCommand):
             new_articles = fetch_articles_for_queryset(
                 queryset=queryset,
                 user=user,
-                after_days=options['after_days'],
+                after_days_override=options['after_days'],
                 dry_run=dry_run
             )
 

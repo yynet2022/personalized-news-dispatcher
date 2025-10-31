@@ -169,10 +169,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
+        const afterDays = document.querySelector('#id_after_days').value;
+        const maxArticles = document.querySelector('#id_max_articles').value;
+
         previewArea.style.display = 'block';
         previewResults.innerHTML = '<p>読み込み中...</p>';
 
-        fetch(`/subscriptions/api/news-preview/?q=${encodeURIComponent(finalQuery)}`)
+        const params = new URLSearchParams({
+            q: finalQuery,
+            after_days: afterDays,
+            max_articles: maxArticles
+        });
+
+        fetch(`/subscriptions/api/news-preview/?${params.toString()}`)
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
@@ -184,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
 
-                let html = `<h3>${data.feed.title || 'ニュースフィード'}</h3><ul>`;
+                let html = '<ul>';
                 data.articles.forEach(article => {
                     html += `
                         <li>

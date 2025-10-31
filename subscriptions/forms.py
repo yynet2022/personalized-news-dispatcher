@@ -5,7 +5,7 @@ from .models import QuerySet, UniversalKeywords, CurrentKeywords, RelatedKeyword
 class QuerySetForm(forms.ModelForm):
     class Meta:
         model = QuerySet
-        fields = ['name', 'large_category', 'universal_keywords',
+        fields = ['name', 'large_category', 'after_days', 'max_articles', 'universal_keywords',
                   'current_keywords', 'related_keywords',
                   'additional_or_keywords', 'refinement_keywords']
         widgets = {
@@ -17,6 +17,9 @@ class QuerySetForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+
+        self.fields['after_days'].widget.attrs.update({'min': 0})
+        self.fields['max_articles'].widget.attrs.update({'min': 1})
 
         self.fields['universal_keywords'].label_from_instance = lambda obj: obj.name
         self.fields['current_keywords'].label_from_instance = lambda obj: obj.name

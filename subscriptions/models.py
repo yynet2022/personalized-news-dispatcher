@@ -2,6 +2,7 @@ import uuid
 import unicodedata
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.utils.translation import gettext_lazy as _
 from users.models import User
 
@@ -130,6 +131,20 @@ class QuerySet(models.Model):
         blank=True,
         default='',
         help_text='さらにキーワードで絞り込む場合に入力します (例: "Python" -Django)'
+    )
+
+    after_days = models.IntegerField(
+        "取得日数（日）",
+        default=2,
+        validators=[MinValueValidator(0)],
+        help_text="何日前までの記事を取得するか。0を指定すると無制限になります。"
+    )
+
+    max_articles = models.IntegerField(
+        "最大記事数",
+        default=20,
+        validators=[MinValueValidator(1)],
+        help_text="一度に取得する記事の最大数。"
     )
 
     class Meta:
