@@ -14,7 +14,7 @@ import feedparser
 import requests
 from urllib.parse import quote
 
-from .services import fetch_articles_for_queryset, send_digest_email, log_sent_articles
+from .services import fetch_articles_for_queryset, send_digest_email, log_sent_articles, fetch_rss_feed
 
 
 class QuerySetListView(LoginRequiredMixin, View):
@@ -197,22 +197,14 @@ class NewsPreviewApiView(LoginRequiredMixin, View):
             return JsonResponse({'error': 'Query parameter "q" is required'},
                                 status=400)
 
-        encoded_query = quote(query)
-        base_url = ("https://news.google.com/rss/search?"
-                    "q={query}&hl=ja&gl=JP&ceid=JP:ja")
-        rss_url = base_url.format(query=encoded_query)
+        # プレビューなのでタイムアウトは短めに5秒
+        feed = fetch_rss_feed(query, timeout=5)
 
-        try:
-            # プレビューなのでタイムアウトは短めに5秒
-            response = requests.get(rss_url, timeout=5)
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
+        if not feed:
             # 外部サービスからの取得失敗は 502 Bad Gateway を返す
             return JsonResponse(
-                {'error': f'Failed to fetch news feed: {e}'},
+                {'error': 'Failed to fetch news feed'},
                 status=502)
-
-        feed = feedparser.parse(response.content)
 
         articles = []
         for entry in feed.entries[:5]:

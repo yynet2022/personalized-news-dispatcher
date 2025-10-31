@@ -32,6 +32,30 @@ def get_published_date_from_entry(entry):
     return None
 
 
+def fetch_rss_feed(query: str, timeout: int = 10):
+    """
+    指定されたクエリでGoogle NewsからRSSフィードを取得し、解析する。
+
+    Args:
+        query (str): 検索クエリ文字列。
+        timeout (int): リクエストのタイムアウト秒数。
+
+    Returns:
+        feedparser.FeedParserDict or None: 解析されたフィードオブジェクト。
+                                            取得に失敗した場合はNoneを返す。
+    """
+    encoded_query = quote(query)
+    base_url = (f"https://news.google.com/rss/search?"
+                f"q={encoded_query}&hl=ja&gl=JP&ceid=JP:ja")
+
+    try:
+        response = requests.get(base_url, timeout=timeout)
+        response.raise_for_status()
+        return feedparser.parse(response.content)
+    except requests.exceptions.RequestException:
+        return None
+
+
 def fetch_articles_for_queryset(queryset: QuerySet, user: User, after_days: int = 2, dry_run: bool = False):
     """
     一つのQuerySetから新しいニュース記事を取得する。
@@ -45,24 +69,15 @@ def fetch_articles_for_queryset(queryset: QuerySet, user: User, after_days: int 
     Returns:
         list[Article]: 新しく見つかったArticleオブジェクトのリスト。
     """
-    date_query_param = ""
+    query_with_date = queryset.query_str
     if after_days > 0:
         limit_date = datetime.now() - timedelta(days=after_days)
         after_date_str = limit_date.strftime('%Y-%m-%d')
-        date_query_param = f"after:{after_date_str}"
+        query_with_date += f" after:{after_date_str}"
 
-    base_url = (f"https://news.google.com/rss/search?"
-                f"q={{query}}+{date_query_param}&hl=ja&gl=JP&ceid=JP:ja")
-    encoded_query = quote(queryset.query_str)
-    rss_url = base_url.format(query=encoded_query)
-
-    try:
-        response = requests.get(rss_url, timeout=10)
-        response.raise_for_status()
-    except requests.exceptions.RequestException:
+    feed = fetch_rss_feed(query_with_date)
+    if not feed:
         return []
-
-    feed = feedparser.parse(response.content)
     new_articles = []
 
     for entry in feed.entries:
