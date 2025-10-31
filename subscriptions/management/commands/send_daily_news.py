@@ -49,14 +49,11 @@ class Command(BaseCommand):
             self.stdout.write(f"  No querysets found for {user.email}. Skipping.")
             return
 
-        querysets_with_articles = []
-        all_new_articles = []
-
-        # ユーザーの各QuerySetについて新しい記事を取得
+        # ユーザーの各QuerySetについて新しい記事を取得し、個別にメールを送信
         for queryset in user_querysets:
             self.stdout.write(f"  Processing queryset: {queryset.name}")
             
-            new_articles = fetch_articles_for_queryset(
+            query_with_date, new_articles = fetch_articles_for_queryset(
                 queryset=queryset,
                 user=user,
                 after_days_override=options['after_days'],
@@ -65,22 +62,20 @@ class Command(BaseCommand):
 
             if new_articles:
                 self.stdout.write(f"    Found {len(new_articles)} new articles.")
-                querysets_with_articles.append({
+                querysets_with_articles = [{
                     'queryset_name': queryset.name,
+                    'query_str': query_with_date,
                     'articles': new_articles,
-                })
-                all_new_articles.extend(new_articles)
+                }]
 
-        # 新しい記事があればメールを送信し、ログを記録
-        if querysets_with_articles:
-            if dry_run:
-                self.stdout.write(f"  [DRY RUN] Would send digest email to {user.email}.")
-                self.stdout.write(f"  [DRY RUN] Would log {len(all_new_articles)} articles as sent for {user.email}.")
+                if dry_run:
+                    self.stdout.write(f"    [DRY RUN] Would send digest email to {user.email} for queryset '{queryset.name}'.")
+                    self.stdout.write(f"    [DRY RUN] Would log {len(new_articles)} articles as sent.")
+                else:
+                    self.stdout.write(f"    Sending email to {user.email} for queryset '{queryset.name}'.")
+                    send_digest_email(user, querysets_with_articles)
+                    
+                    self.stdout.write(f"    Logging {len(new_articles)} sent articles.")
+                    log_sent_articles(user, new_articles)
             else:
-                self.stdout.write(f"  Sending email to {user.email}.")
-                send_digest_email(user, querysets_with_articles)
-                
-                self.stdout.write(f"  Logging {len(all_new_articles)} sent articles for {user.email}.")
-                log_sent_articles(user, all_new_articles)
-        else:
-            self.stdout.write(f"  No new articles found for {user.email}.")
+                self.stdout.write(f"    No new articles found for queryset '{queryset.name}'.")

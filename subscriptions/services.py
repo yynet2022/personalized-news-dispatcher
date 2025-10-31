@@ -205,8 +205,12 @@ def send_digest_email(user: User, querysets_with_articles: list):
     plain_body = render_to_string('news/email/news_digest_email.txt', context)
     html_body = render_to_string('news/email/news_digest_email.html', context)
 
+    # 件名にQuerySet名を追加
+    queryset_name = querysets_with_articles[0]['queryset_name']
+    subject = f'【News Dispatcher】今日のニュースダイジェスト - {queryset_name}'
+
     send_mail(
-        subject='【News Dispatcher】今日のニュースダイジェスト',
+        subject=subject,
         message=plain_body,
         from_email=settings.EMAIL_HOST_USER,
         recipient_list=[user.email],

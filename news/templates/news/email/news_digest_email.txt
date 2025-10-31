@@ -4,6 +4,7 @@
 
 {% for item in querysets_with_articles %}
 --- 📂 {{ item.queryset_name }} ---
+検索クエリ: {{ item.query_str }}
 
 {% for article in item.articles %}
 - {{ article.title }}
