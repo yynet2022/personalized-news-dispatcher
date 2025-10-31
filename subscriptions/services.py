@@ -56,6 +56,71 @@ def fetch_rss_feed(query: str, timeout: int = 10):
         return None
 
 
+def _build_query_with_date(query_str: str, after_days: int) -> str:
+    """
+    クエリ文字列に日付フィルターを追加する。
+    """
+    if after_days > 0:
+        limit_date = datetime.now() - timedelta(days=after_days)
+        after_date_str = limit_date.strftime('%Y-%m-%d')
+        return f"{query_str} after:{after_date_str}"
+    return query_str
+
+
+def _process_feed_entries(entries, after_days: int, max_articles: int, user: User = None, persist: bool = False):
+    """
+    フィードエントリーを処理してArticleオブジェクトのリストを生成する内部関数。
+
+    Args:
+        entries (list): feedparserのエントリーリスト。
+        after_days (int): 何日前までの記事を取得するか。
+        max_articles (int): 取得する記事の最大数。
+        user (User, optional): 送信済みか確認するためのユーザー。Noneならチェックしない。
+        persist (bool): Trueの場合、ArticleをDBに保存する。
+
+    Returns:
+        list[Article]: Articleオブジェクトのリスト。
+    """
+    articles = []
+    for entry in entries:
+        if len(articles) >= max_articles:
+            break
+
+        published_date = get_published_date_from_entry(entry)
+
+        if after_days > 0 and published_date:
+            threshold_date = datetime.now(timezone.utc) - timedelta(days=after_days)
+            if published_date < threshold_date:
+                continue
+
+        article_instance = None
+        if persist:
+            article_instance, _ = Article.objects.get_or_create(
+                url=entry.link,
+                defaults={
+                    'title': entry.title,
+                    'published_date': published_date
+                }
+            )
+        else:
+            # DB検索またはインスタンス作成のみ
+            article_instance = Article.objects.filter(url=entry.link).first()
+            if not article_instance:
+                article_instance = Article(
+                    url=entry.link,
+                    title=entry.title,
+                    published_date=published_date
+                )
+        
+        # ユーザーが指定されていて、かつ送信済みでない場合のみ追加
+        if user and SentArticleLog.objects.filter(user=user, article=article_instance).exists():
+            continue
+
+        articles.append(article_instance)
+            
+    return articles
+
+
 def fetch_articles_for_preview(query_str: str, after_days: int, max_articles: int):
     """
     プレビュー用に新しいニュース記事を取得する。DBへの保存は行わない。
@@ -66,38 +131,21 @@ def fetch_articles_for_preview(query_str: str, after_days: int, max_articles: in
         max_articles (int): 取得する記事の最大数。
 
     Returns:
-        list[Article]: Articleオブジェクトのリスト（未保存）。
+        tuple[str, list[Article]]: 実際に使用したクエリ文字列と、Articleオブジェクトのリスト。
     """
-    query_with_date = query_str
-    if after_days > 0:
-        limit_date = datetime.now() - timedelta(days=after_days)
-        after_date_str = limit_date.strftime('%Y-%m-%d')
-        query_with_date += f" after:{after_date_str}"
+    query_with_date = _build_query_with_date(query_str, after_days)
 
     feed = fetch_rss_feed(query_with_date, timeout=5)
     if not feed:
-        return []
+        return query_with_date, []
 
-    preview_articles = []
-    for entry in feed.entries:
-        published_date = get_published_date_from_entry(entry)
-
-        if after_days > 0 and published_date:
-            threshold_date = datetime.now(timezone.utc) - timedelta(days=after_days)
-            if published_date < threshold_date:
-                continue
-
-        article = Article(
-            url=entry.link,
-            title=entry.title,
-            published_date=published_date
-        )
-        preview_articles.append(article)
-
-        if len(preview_articles) >= max_articles:
-            break
-            
-    return preview_articles
+    articles = _process_feed_entries(
+        entries=feed.entries, 
+        after_days=after_days, 
+        max_articles=max_articles, 
+        persist=False
+    )
+    return query_with_date, articles
 
 
 def fetch_articles_for_queryset(queryset: QuerySet, user: User, after_days_override: int = None, dry_run: bool = False):
@@ -111,58 +159,24 @@ def fetch_articles_for_queryset(queryset: QuerySet, user: User, after_days_overr
         dry_run (bool): Trueの場合、DBへの書き込みは行わない。
 
     Returns:
-        list[Article]: 新しく見つかったArticleオブジェクトのリスト。
+        tuple[str, list[Article]]: 実際に使用したクエリ文字列と、見つかったArticleオブジェクトのリスト。
     """
     after_days = after_days_override if after_days_override is not None else queryset.after_days
 
-    query_with_date = queryset.query_str
-    if after_days > 0:
-        limit_date = datetime.now() - timedelta(days=after_days)
-        after_date_str = limit_date.strftime('%Y-%m-%d')
-        query_with_date += f" after:{after_date_str}"
+    query_with_date = _build_query_with_date(queryset.query_str, after_days)
 
     feed = fetch_rss_feed(query_with_date)
     if not feed:
-        return []
-    new_articles = []
+        return query_with_date, []
 
-    for entry in feed.entries:
-        # 最大数に達したらループを抜ける
-        if len(new_articles) >= queryset.max_articles:
-            break
-
-        published_date = get_published_date_from_entry(entry)
-
-        if after_days > 0 and published_date:
-            threshold_date = datetime.now(timezone.utc) - timedelta(days=after_days)
-            if published_date < threshold_date:
-                continue
-
-        article = None
-        if dry_run:
-            # dry-run時はDB検索のみ、またはインスタンス作成のみ
-            article = Article.objects.filter(url=entry.link).first()
-            if not article:
-                article = Article(
-                    url=entry.link,
-                    title=entry.title,
-                    published_date=published_date
-                )
-        else:
-            # 通常時はDBに保存
-            article, _ = Article.objects.get_or_create(
-                url=entry.link,
-                defaults={
-                    'title': entry.title,
-                    'published_date': published_date
-                }
-            )
-
-        # ユーザーに送信済みでなければリストに追加
-        if article and not SentArticleLog.objects.filter(user=user, article=article).exists():
-            new_articles.append(article)
-            
-    return new_articles
+    articles = _process_feed_entries(
+        entries=feed.entries,
+        after_days=after_days,
+        max_articles=queryset.max_articles,
+        user=user,
+        persist=(not dry_run)
+    )
+    return query_with_date, articles
 
 
 def send_digest_email(user: User, querysets_with_articles: list):

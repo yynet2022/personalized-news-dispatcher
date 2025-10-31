@@ -189,11 +189,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
                 if (data.articles.length === 0) {
-                    previewResults.innerHTML = '<p>ニュースが見つかりませんでした。</p>';
+                    previewResults.innerHTML = `<p>「${data.query_str}」に関するニュースは見つかりませんでした。</p>`;
                     return;
                 }
 
-                let html = '<ul>';
+                let html = `<h3>「${data.query_str}」の検索結果</h3><ol>`;
                 data.articles.forEach(article => {
                     html += `
                         <li>
@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </li>
                     `;
                 });
-                html += '</ul>';
+                html += '</ol>';
                 previewResults.innerHTML = html;
             })
             .catch(error => {

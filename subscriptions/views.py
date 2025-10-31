@@ -135,7 +135,7 @@ def send_manual_email(request, pk):
     queryset = get_object_or_404(QuerySet, pk=pk, user=request.user)
     
     # querysetに設定された値で記事を取得
-    new_articles = fetch_articles_for_queryset(queryset, request.user)
+    _, new_articles = fetch_articles_for_queryset(queryset, request.user)
 
     if new_articles:
         querysets_with_articles = [{
@@ -203,7 +203,7 @@ class NewsPreviewApiView(LoginRequiredMixin, View):
         except (ValueError, TypeError):
             return JsonResponse({'error': 'Invalid after_days or max_articles'}, status=400)
 
-        articles = fetch_articles_for_preview(
+        query_with_date, articles = fetch_articles_for_preview(
             query_str=query,
             after_days=after_days,
             max_articles=max_articles
@@ -219,4 +219,4 @@ class NewsPreviewApiView(LoginRequiredMixin, View):
             for article in articles
         ]
 
-        return JsonResponse({'articles': articles_data}, safe=False)
+        return JsonResponse({'query_str': query_with_date, 'articles': articles_data}, safe=False)
