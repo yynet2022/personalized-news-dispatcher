@@ -99,6 +99,19 @@ class QuerySet(models.Model):
         verbose_name='大分類'
     )
 
+    COUNTRIES = [
+        ('JP', '日本'),
+        ('US', 'アメリカ'),
+        ('CN', '中国'),
+        ('KR', '韓国'),
+    ]
+    country = models.CharField(
+        '国',
+        max_length=2,
+        choices=COUNTRIES,
+        default='JP'
+    )
+
     universal_keywords = models.ManyToManyField(
         UniversalKeywords,
         blank=True,

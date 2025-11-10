@@ -200,11 +200,13 @@ class NewsPreviewApiView(LoginRequiredMixin, View):
         try:
             after_days = int(request.GET.get('after_days', 2))
             max_articles = int(request.GET.get('max_articles', 20))
+            country_code = request.GET.get('country', 'JP')
         except (ValueError, TypeError):
             return JsonResponse({'error': 'Invalid after_days or max_articles'}, status=400)
 
         query_with_date, articles = fetch_articles_for_preview(
             query_str=query,
+            country_code=country_code,
             after_days=after_days,
             max_articles=max_articles
         )

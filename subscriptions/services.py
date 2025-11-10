@@ -32,21 +32,30 @@ def get_published_date_from_entry(entry):
     return None
 
 
-def fetch_rss_feed(query: str, timeout: int = 10):
+def fetch_rss_feed(query: str, country_code: str = 'JP', timeout: int = 10):
     """
     指定されたクエリでGoogle NewsからRSSフィードを取得し、解析する。
 
     Args:
         query (str): 検索クエリ文字列。
+        country_code (str): 国コード (例: 'JP', 'US')。
         timeout (int): リクエストのタイムアウト秒数。
 
     Returns:
         feedparser.FeedParserDict or None: 解析されたフィードオブジェクト。
                                             取得に失敗した場合はNoneを返す。
     """
+    country_params = {
+        'JP': {'hl': 'ja', 'gl': 'JP', 'ceid': 'JP:ja'},
+        'US': {'hl': 'en', 'gl': 'US', 'ceid': 'US:en'},
+        'CN': {'hl': 'zh-CN', 'gl': 'CN', 'ceid': 'CN:zh-Hans'},
+        'KR': {'hl': 'ko', 'gl': 'KR', 'ceid': 'KR:ko'},
+    }
+    params = country_params.get(country_code, country_params['JP'])
+
     encoded_query = quote(query)
     base_url = (f"https://news.google.com/rss/search?"
-                f"q={encoded_query}&hl=ja&gl=JP&ceid=JP:ja")
+                f"q={encoded_query}&hl={params['hl']}&gl={params['gl']}&ceid={params['ceid']}")
 
     try:
         response = requests.get(base_url, timeout=timeout)
@@ -121,12 +130,13 @@ def _process_feed_entries(entries, after_days: int, max_articles: int, user: Use
     return articles
 
 
-def fetch_articles_for_preview(query_str: str, after_days: int, max_articles: int):
+def fetch_articles_for_preview(query_str: str, country_code: str, after_days: int, max_articles: int):
     """
     プレビュー用に新しいニュース記事を取得する。DBへの保存は行わない。
 
     Args:
         query_str (str): 検索クエリ文字列。
+        country_code (str): 国コード。
         after_days (int): 何日前までの記事を取得するかの日数。
         max_articles (int): 取得する記事の最大数。
 
@@ -135,7 +145,7 @@ def fetch_articles_for_preview(query_str: str, after_days: int, max_articles: in
     """
     query_with_date = _build_query_with_date(query_str, after_days)
 
-    feed = fetch_rss_feed(query_with_date, timeout=5)
+    feed = fetch_rss_feed(query_with_date, country_code=country_code, timeout=5)
     if not feed:
         return query_with_date, []
 
@@ -165,7 +175,7 @@ def fetch_articles_for_queryset(queryset: QuerySet, user: User, after_days_overr
 
     query_with_date = _build_query_with_date(queryset.query_str, after_days)
 
-    feed = fetch_rss_feed(query_with_date)
+    feed = fetch_rss_feed(query_with_date, country_code=queryset.country)
     if not feed:
         return query_with_date, []
 
