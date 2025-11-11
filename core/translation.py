@@ -41,10 +41,15 @@ def translate_text_with_gemini(text: str, target_language: str = "Japanese") -> 
         return text
 
     try:
+        logger.debug(f"Attempting to translate with Gemini model: {settings.GEMINI_MODEL}")
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel(settings.GEMINI_MODEL)
         prompt = f"Translate the following text into {target_language}. If the text is HTML, translate only the visible text content while preserving all HTML tags and structure:\n\n{text}"
+        
+        logger.debug("Sending request to Gemini API...")
         response = model.generate_content(prompt)
+        logger.debug("Successfully received response from Gemini API.")
+        
         return response.text
     except Exception as e:
         logger.error(f"Gemini translation failed: {e}")
@@ -71,11 +76,14 @@ def translate_text_with_openai(text: str, target_language: str = "Japanese") -> 
         return text
 
     try:
+        logger.debug(f"Attempting to translate with OpenAI model: {settings.OPENAI_MODEL}")
         # クライアントの初期化
         client = openai.OpenAI(
             api_key=api_key,
             base_url=settings.OPENAI_API_BASE_URL # Noneの場合はデフォルトのURLが使われる
         )
+
+        logger.debug("Sending request to OpenAI API...")
         response = client.chat.completions.create(
             model=settings.OPENAI_MODEL,
             messages=[
@@ -83,6 +91,8 @@ def translate_text_with_openai(text: str, target_language: str = "Japanese") -> 
                 {"role": "user", "content": text}
             ]
         )
+        logger.debug("Successfully received response from OpenAI API.")
+
         return response.choices[0].message.content
     except Exception as e:
         logger.error(f"OpenAI translation failed: {e}")
@@ -104,8 +114,10 @@ def translate_content(text: str, target_language: str = "Japanese") -> str:
     use_openai = OPENAI_IS_AVAILABLE and settings.OPENAI_API_KEY
 
     if use_gemini:
+        logger.debug("Gemini is selected as the translation provider.")
         return translate_text_with_gemini(text, target_language)
     elif use_openai:
+        logger.debug("OpenAI is selected as the translation provider.")
         return translate_text_with_openai(text, target_language)
     else:
         if not (GEMINI_IS_AVAILABLE or OPENAI_IS_AVAILABLE):
