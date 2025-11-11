@@ -63,6 +63,7 @@ class Command(BaseCommand):
             if new_articles:
                 self.stdout.write(f"    Found {len(new_articles)} new articles.")
                 querysets_with_articles = [{
+                    'queryset': queryset,
                     'queryset_name': queryset.name,
                     'query_str': query_with_date,
                     'articles': new_articles,

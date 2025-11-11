@@ -19,6 +19,7 @@ from django.db import transaction
 from users.models import User
 from news.models import Article, SentArticleLog
 from subscriptions.models import QuerySet
+from core.translation import translate_content # 追加
 
 
 def get_published_date_from_entry(entry):
@@ -218,6 +219,19 @@ def send_digest_email(user: User, querysets_with_articles: list):
     # 件名にQuerySet名を追加
     queryset_name = querysets_with_articles[0]['queryset_name']
     subject = f'【News Dispatcher】今日のニュースダイジェスト - {queryset_name}'
+
+    # AI翻訳を適用
+    # ニュースソースが日本(JP)で、ユーザーの優先言語がJapaneseの場合は翻訳しない
+    should_translate = True
+    queryset = querysets_with_articles[0].get('queryset')
+    if queryset and queryset.country == 'JP' and getattr(user, 'preferred_language', 'Japanese') == 'Japanese':
+        should_translate = False
+    if should_translate and (settings.GEMINI_API_KEY or settings.OPENAI_API_KEY):
+        target_language = getattr(user, 'preferred_language', 'Japanese')
+        plain_body = translate_content(plain_body, target_language=target_language)
+        html_body = translate_content(html_body, target_language=target_language)
+        subject = translate_content(subject, target_language=target_language)
+
 
     send_mail(
         subject=subject,

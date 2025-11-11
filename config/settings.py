@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import tomllib # Python 3.11+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -160,3 +161,35 @@ LOGGING = {
         'level': 'INFO',
     },
 }
+
+# Load API keys from .secrets.toml
+SECRETS_FILE = BASE_DIR / 'config' / '.secrets.toml'
+
+# config/.secrets.toml の設定例
+# --- 必須 ---
+# どちらか、あるいは両方のAPIキーを設定
+# GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
+# OPENAI_API_KEY = "YOUR_OPENAI_API_KEY"
+#
+# --- オプション ---
+# AIモデル名を指定（指定しない場合はデフォルト値が使われます）
+# GEMINI_MODEL = "gemini-pro-latest"
+# OPENAI_MODEL = "gpt-4o"
+#
+# OpenAI互換APIを利用する場合に指定
+# OPENAI_API_BASE_URL = "https://your-openai-compatible-api.example.com/v1"
+if SECRETS_FILE.exists():
+    with open(SECRETS_FILE, 'rb') as f:
+        secrets = tomllib.load(f)
+    GEMINI_API_KEY = secrets.get('GEMINI_API_KEY')
+    OPENAI_API_KEY = secrets.get('OPENAI_API_KEY')
+    # AIモデルとURLを .secrets.toml から読み込む（デフォルト値付き）
+    GEMINI_MODEL = secrets.get('GEMINI_MODEL', 'gemini-pro-latest')
+    OPENAI_MODEL = secrets.get('OPENAI_MODEL', 'gpt-4o')
+    OPENAI_API_BASE_URL = secrets.get('OPENAI_API_BASE_URL') # デフォルトはNone
+else:
+    GEMINI_API_KEY = None
+    OPENAI_API_KEY = None
+    GEMINI_MODEL = 'gemini-pro-latest'
+    OPENAI_MODEL = 'gpt-4o'
+    OPENAI_API_BASE_URL = None

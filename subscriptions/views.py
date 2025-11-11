@@ -139,6 +139,7 @@ def send_manual_email(request, pk):
 
     if new_articles:
         querysets_with_articles = [{
+            'queryset': queryset,
             'queryset_name': queryset.name,
             'articles': new_articles,
         }]

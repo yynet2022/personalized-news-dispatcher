@@ -14,3 +14,5 @@ db.*
 !**/fixtures/*.json
 
 !data/*.json
+
+config/.secrets.toml
