@@ -1,9 +1,24 @@
-import google.generativeai as genai
-import openai
 from django.conf import settings
 import logging
 
 logger = logging.getLogger(__name__)
+
+# --- Optional AI library imports ---
+try:
+    import google.generativeai as genai
+    GEMINI_IS_AVAILABLE = True
+except ImportError:
+    GEMINI_IS_AVAILABLE = False
+    genai = None
+
+try:
+    import openai
+    OPENAI_IS_AVAILABLE = True
+except ImportError:
+    OPENAI_IS_AVAILABLE = False
+    openai = None
+# --- End of optional imports ---
+
 
 def translate_text_with_gemini(text: str, target_language: str = "Japanese") -> str:
     """
@@ -14,8 +29,12 @@ def translate_text_with_gemini(text: str, target_language: str = "Japanese") -> 
         target_language: The language to translate the text into. Defaults to "Japanese".
 
     Returns:
-        The translated text, or the original text if translation fails or API key is not set.
+        The translated text, or the original text if translation fails, API key is not set, or the library is not installed.
     """
+    if not GEMINI_IS_AVAILABLE:
+        logger.warning("google-generativeai is not installed. Skipping Gemini translation.")
+        return text
+        
     api_key = settings.GEMINI_API_KEY
     if not api_key:
         logger.warning("GEMINI_API_KEY is not set. Skipping Gemini translation.")
@@ -40,8 +59,12 @@ def translate_text_with_openai(text: str, target_language: str = "Japanese") -> 
         target_language: The language to translate the text into. Defaults to "Japanese".
 
     Returns:
-        The translated text, or the original text if translation fails or API key is not set.
+        The translated text, or the original text if translation fails, API key is not set, or the library is not installed.
     """
+    if not OPENAI_IS_AVAILABLE:
+        logger.warning("openai is not installed. Skipping OpenAI translation.")
+        return text
+
     api_key = settings.OPENAI_API_KEY
     if not api_key:
         logger.warning("OPENAI_API_KEY is not set. Skipping OpenAI translation.")
@@ -68,7 +91,7 @@ def translate_text_with_openai(text: str, target_language: str = "Japanese") -> 
 def translate_content(text: str, target_language: str = "Japanese") -> str:
     """
     Translates content using available AI services (Gemini or OpenAI).
-    Prioritizes Gemini if its API key is set, otherwise tries OpenAI.
+    Prioritizes Gemini if its API key is set and the library is installed, otherwise tries OpenAI.
 
     Args:
         text: The text content (can be plain text or HTML) to translate.
@@ -77,10 +100,16 @@ def translate_content(text: str, target_language: str = "Japanese") -> str:
     Returns:
         The translated text, or the original text if no translation service is available or translation fails.
     """
-    if settings.GEMINI_API_KEY:
+    use_gemini = GEMINI_IS_AVAILABLE and settings.GEMINI_API_KEY
+    use_openai = OPENAI_IS_AVAILABLE and settings.OPENAI_API_KEY
+
+    if use_gemini:
         return translate_text_with_gemini(text, target_language)
-    elif settings.OPENAI_API_KEY:
+    elif use_openai:
         return translate_text_with_openai(text, target_language)
     else:
-        logger.info("No AI translation API key found. Skipping translation.")
+        if not (GEMINI_IS_AVAILABLE or OPENAI_IS_AVAILABLE):
+            logger.info("No AI translation libraries are installed. Skipping translation.")
+        else:
+            logger.info("No AI translation API key found. Skipping translation.")
         return text

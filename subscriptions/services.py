@@ -226,7 +226,7 @@ def send_digest_email(user: User, querysets_with_articles: list):
     queryset = querysets_with_articles[0].get('queryset')
     if queryset and queryset.country == 'JP' and getattr(user, 'preferred_language', 'Japanese') == 'Japanese':
         should_translate = False
-    if should_translate and (settings.GEMINI_API_KEY or settings.OPENAI_API_KEY):
+    if should_translate:
         target_language = getattr(user, 'preferred_language', 'Japanese')
         plain_body = translate_content(plain_body, target_language=target_language)
         html_body = translate_content(html_body, target_language=target_language)
