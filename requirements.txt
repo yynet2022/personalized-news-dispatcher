@@ -8,7 +8,7 @@ idna==3.11
 mccabe==0.7.0
 pycodestyle==2.14.0
 pyflakes==3.4.0
-requests==2.32.5
+httpx==0.28.1
 setuptools==80.9.0
 sgmllib3k==1.0.0
 sqlparse==0.5.3

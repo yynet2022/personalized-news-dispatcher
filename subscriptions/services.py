@@ -5,7 +5,7 @@ subscriptions アプリケーションのためのビジネスロジックをま
 コマンドやビューから共通して利用される機能を提供します。
 """
 import feedparser
-import requests
+import httpx
 from urllib.parse import quote
 from datetime import datetime, timezone, timedelta
 
@@ -59,10 +59,10 @@ def fetch_rss_feed(query: str, country_code: str = 'JP', timeout: int = 10):
                 f"q={encoded_query}&hl={params['hl']}&gl={params['gl']}&ceid={params['ceid']}")
 
     try:
-        response = requests.get(base_url, timeout=timeout)
+        response = httpx.get(base_url, timeout=timeout, follow_redirects=True)
         response.raise_for_status()
         return feedparser.parse(response.content)
-    except requests.exceptions.RequestException:
+    except httpx.RequestError:
         return None
 
 
