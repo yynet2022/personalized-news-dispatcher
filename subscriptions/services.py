@@ -1,6 +1,7 @@
 import feedparser
 import httpx
 import logging
+import asyncio
 from urllib.parse import quote
 from datetime import datetime, timezone, timedelta
 
@@ -237,10 +238,22 @@ def send_digest_email(user: User, querysets_with_articles: list):
         should_translate = False
     if should_translate:
         target_language = getattr(user, 'preferred_language', 'Japanese')
-        plain_body = translate_content(
-            plain_body, target_language=target_language)
-        html_body = translate_content(
-            html_body, target_language=target_language)
+
+        async def translate_bodies():
+            """非同期で本文とHTMLを翻訳する。"""
+            plain_body_task = asyncio.to_thread(
+                translate_content, plain_body, target_language=target_language
+            )
+            html_body_task = asyncio.to_thread(
+                translate_content, html_body, target_language=target_language
+            )
+            translated_plain, translated_html = await asyncio.gather(
+                plain_body_task, html_body_task
+            )
+            return translated_plain, translated_html
+
+        # 非同期関数を実行して翻訳結果を取得
+        plain_body, html_body = asyncio.run(translate_bodies())
 
     send_mail(
         subject=subject,
