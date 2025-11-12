@@ -13,11 +13,14 @@ except ImportError:
 
 try:
     import openai
+    import httpx
     OPENAI_IS_AVAILABLE = True
 except ImportError:
     OPENAI_IS_AVAILABLE = False
     openai = None
+    httpx = None
 # --- End of optional imports ---
+
 
 
 def translate_text_with_gemini(text: str, target_language: str = "Japanese") -> str:
@@ -77,10 +80,15 @@ def translate_text_with_openai(text: str, target_language: str = "Japanese") -> 
 
     try:
         logger.debug(f"Attempting to translate with OpenAI model: {settings.OPENAI_MODEL}")
+        
+        # SSL検証をsettings.pyの値に基づいて設定
+        http_client = httpx.Client(verify=settings.OPENAI_SSL_VERIFY)
+        
         # クライアントの初期化
         client = openai.OpenAI(
             api_key=api_key,
-            base_url=settings.OPENAI_API_BASE_URL # Noneの場合はデフォルトのURLが使われる
+            base_url=settings.OPENAI_API_BASE_URL, # Noneの場合はデフォルトのURLが使われる
+            http_client=http_client
         )
 
         logger.debug("Sending request to OpenAI API...")

@@ -181,6 +181,9 @@ SECRETS_FILE = BASE_DIR / 'config' / '.secrets.toml'
 #
 # OpenAI互換APIを利用する場合に指定
 # OPENAI_API_BASE_URL = "https://your-openai-compatible-api.example.com/v1"
+#
+# オンプレミス環境などでSSL証明書の検証を無効にする場合に指定
+# OPENAI_SSL_VERIFY = false
 if SECRETS_FILE.exists():
     with open(SECRETS_FILE, 'rb') as f:
         secrets = tomllib.load(f)
@@ -190,9 +193,11 @@ if SECRETS_FILE.exists():
     GEMINI_MODEL = secrets.get('GEMINI_MODEL', 'gemini-pro-latest')
     OPENAI_MODEL = secrets.get('OPENAI_MODEL', 'gpt-4o')
     OPENAI_API_BASE_URL = secrets.get('OPENAI_API_BASE_URL') # デフォルトはNone
+    OPENAI_SSL_VERIFY = secrets.get('OPENAI_SSL_VERIFY', True)
 else:
     GEMINI_API_KEY = None
     OPENAI_API_KEY = None
     GEMINI_MODEL = 'gemini-pro-latest'
     OPENAI_MODEL = 'gpt-4o'
     OPENAI_API_BASE_URL = None
+    OPENAI_SSL_VERIFY = True
