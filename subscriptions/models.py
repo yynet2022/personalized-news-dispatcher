@@ -6,13 +6,14 @@ from django.core.validators import MinValueValidator
 from django.utils.translation import gettext_lazy as _
 from users.models import User
 
+
 def validate_no_forbidden_chars(value):
     forbidden_chars = [
-        ' ', '　', # スペース
-        '・', '/', # 区切り文字
-        '(', ')', '（', '）', '[', ']', '【', '】', '{', '}', '「', '」', # 括弧
-        '+', '-', '*', '&', '|', '!', '~', # 検索演算子
-        '\\', '$', '^', '=', '<', '>', '?', '@', ':', ';', ',', '.', '"', "'" # その他
+        ' ', '　',  # スペース
+        '・', '/',  # 区切り文字
+        '(', ')', '（', '）', '[', ']', '【', '】', '{', '}', '「', '」',  # 括弧
+        '+', '-', '*', '&', '|', '!', '~',  # 検索演算子
+        '\\', '$', '^', '=', '<', '>', '?', '@', ':', ';', ',', '.', '"', "'",
     ]
     for char in forbidden_chars:
         if char in value:
@@ -20,6 +21,7 @@ def validate_no_forbidden_chars(value):
                 _('"%(char)s" は使用できません。複数のキーワードをまとめたり、別名を入れたりしないでください。'),
                 params={'char': char},
             )
+
 
 def normalize_text(text):
     """全角英数字を半角に変換する"""
@@ -41,7 +43,8 @@ class NormalizeNameMixin(models.Model):
 
 class LargeCategory(NormalizeNameMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField('大分類名', max_length=50, unique=True, validators=[validate_no_forbidden_chars])
+    name = models.CharField('大分類名', max_length=50, unique=True,
+                            validators=[validate_no_forbidden_chars])
 
     def __str__(self):
         return self.name
@@ -50,8 +53,10 @@ class LargeCategory(NormalizeNameMixin, models.Model):
 class UniversalKeywords(NormalizeNameMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     large_category = models.ForeignKey(LargeCategory, on_delete=models.CASCADE)
-    name = models.CharField('普遍キーワード', max_length=50, validators=[validate_no_forbidden_chars])
-    description = models.CharField('説明', max_length=255, blank=True, null=True)
+    name = models.CharField('普遍キーワード', max_length=50,
+                            validators=[validate_no_forbidden_chars])
+    description = models.CharField('説明', max_length=255,
+                                   blank=True, null=True)
 
     class Meta:
         unique_together = ('large_category', 'name')
@@ -63,8 +68,10 @@ class UniversalKeywords(NormalizeNameMixin, models.Model):
 class CurrentKeywords(NormalizeNameMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     large_category = models.ForeignKey(LargeCategory, on_delete=models.CASCADE)
-    name = models.CharField('時事キーワード', max_length=50, validators=[validate_no_forbidden_chars])
-    description = models.CharField('説明', max_length=255, blank=True, null=True)
+    name = models.CharField('時事キーワード', max_length=50,
+                            validators=[validate_no_forbidden_chars])
+    description = models.CharField('説明', max_length=255,
+                                   blank=True, null=True)
 
     class Meta:
         unique_together = ('large_category', 'name')
@@ -76,8 +83,10 @@ class CurrentKeywords(NormalizeNameMixin, models.Model):
 class RelatedKeywords(NormalizeNameMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     large_category = models.ForeignKey(LargeCategory, on_delete=models.CASCADE)
-    name = models.CharField('関連キーワード', max_length=100, validators=[validate_no_forbidden_chars])
-    description = models.CharField('説明', max_length=255, blank=True, null=True)
+    name = models.CharField('関連キーワード', max_length=100,
+                            validators=[validate_no_forbidden_chars])
+    description = models.CharField('説明', max_length=255,
+                                   blank=True, null=True)
 
     class Meta:
         unique_together = ('large_category', 'name')

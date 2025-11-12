@@ -91,6 +91,10 @@ def translate_text_with_openai(text: str,
                        " Skipping OpenAI translation.")
         return text
 
+    system_content = (
+        "You are a helpful assistant that translates text"
+        f" into {target_language}. If the text is HTML, translate only the"
+        " visible text content while preserving all HTML tags and structure.")
     try:
         logger.debug("Attempting to translate with OpenAI model: "
                      f"{settings.OPENAI_MODEL}")
@@ -109,7 +113,7 @@ def translate_text_with_openai(text: str,
         response = client.chat.completions.create(
             model=settings.OPENAI_MODEL,
             messages=[
-                {"role": "system", "content": f"You are a helpful assistant that translates text into {target_language}. If the text is HTML, translate only the visible text content while preserving all HTML tags and structure."},
+                {"role": "system", "content": system_content},
                 {"role": "user", "content": text}
             ]
         )

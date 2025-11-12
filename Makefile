@@ -14,7 +14,7 @@ init: all
 	@echo "ex# python manage.py createsuperuser --no-input --email ${EMAIL}"
 
 check:
-	flake8 --exclude migrations user/ || true
+	flake8 --exclude migrations users/ || true
 	flake8 --exclude migrations subscriptions/ || true
 	flake8 --exclude migrations news/ || true
 	flake8 --exclude migrations core/ || true

@@ -1,7 +1,9 @@
 import json
 from django.core.management.base import BaseCommand
-from subscriptions.models import LargeCategory, UniversalKeywords, CurrentKeywords, RelatedKeywords
+from subscriptions.models import (
+    LargeCategory, UniversalKeywords, CurrentKeywords, RelatedKeywords)
 from django.db import transaction, IntegrityError
+
 
 class Command(BaseCommand):
     """
@@ -13,9 +15,11 @@ class Command(BaseCommand):
         """
         コマンドライン引数を定義する
         """
-        parser.add_argument('json_file', type=str, help='Path to the JSON file')
+        parser.add_argument('json_file', type=str,
+                            help='Path to the JSON file')
 
-    def _update_keywords(self, large_cat, keyword_data_list, KeywordModel, keyword_type_name):
+    def _update_keywords(self, large_cat, keyword_data_list, KeywordModel,
+                         keyword_type_name):
         for keyword_data in keyword_data_list:
             keyword_name = keyword_data.get('name')
             if not keyword_name:
@@ -27,11 +31,17 @@ class Command(BaseCommand):
                     defaults={'description': keyword_data.get('description')}
                 )
                 if created:
-                    self.stdout.write(self.style.SUCCESS(f'    Created {keyword_type_name}: {large_cat.name} -> {keyword_name}'))
+                    message = (f'    Created {keyword_type_name}: '
+                               f'{large_cat.name} -> {keyword_name}')
+                    self.stdout.write(self.style.SUCCESS(message))
                 else:
-                    self.stdout.write(f'    Updated {keyword_type_name}: {large_cat.name} -> {keyword_name}')
+                    message = (f'    Updated {keyword_type_name}: '
+                               f'{large_cat.name} -> {keyword_name}')
+                    self.stdout.write(message)
             except IntegrityError:
-                self.stderr.write(self.style.ERROR(f'    Error: Duplicate {keyword_type_name} found for "{large_cat.name}": {keyword_name}'))
+                message = (f'    Error: Duplicate {keyword_type_name} '
+                           f'found for "{large_cat.name}": {keyword_name}')
+                self.stderr.write(self.style.ERROR(message))
 
     @transaction.atomic
     def handle(self, *args, **options):
@@ -44,10 +54,12 @@ class Command(BaseCommand):
             with open(json_file_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
         except FileNotFoundError:
-            self.stderr.write(self.style.ERROR(f'File not found: {json_file_path}'))
+            self.stderr.write(
+                self.style.ERROR(f'File not found: {json_file_path}'))
             return
         except json.JSONDecodeError:
-            self.stderr.write(self.style.ERROR(f'Invalid JSON format in {json_file_path}'))
+            self.stderr.write(
+                self.style.ERROR(f'Invalid JSON format in {json_file_path}'))
             return
 
         self.stdout.write(self.style.SUCCESS('Start updating categories...'))
@@ -58,14 +70,24 @@ class Command(BaseCommand):
                 continue
 
             # LargeCategory の登録
-            large_cat, created = LargeCategory.objects.get_or_create(name=large_cat_name)
+            large_cat, created = \
+                LargeCategory.objects.get_or_create(name=large_cat_name)
             if created:
-                self.stdout.write(self.style.SUCCESS(f'  Created LargeCategory: {large_cat_name}'))
+                self.stdout.write(self.style.SUCCESS(
+                    f'  Created LargeCategory: {large_cat_name}'))
             else:
-                self.stdout.write(f'  LargeCategory already exists: {large_cat_name}')
+                self.stdout.write(
+                    f'  LargeCategory already exists: {large_cat_name}')
 
-            self._update_keywords(large_cat, category_data.get('universal', []), UniversalKeywords, 'UniversalKeyword')
-            self._update_keywords(large_cat, category_data.get('current', []), CurrentKeywords, 'CurrentKeyword')
-            self._update_keywords(large_cat, category_data.get('related', []), RelatedKeywords, 'RelatedKeyword')
+            self._update_keywords(
+                large_cat, category_data.get('universal', []),
+                UniversalKeywords, 'UniversalKeyword')
+            self._update_keywords(
+                large_cat, category_data.get('current', []),
+                CurrentKeywords, 'CurrentKeyword')
+            self._update_keywords(
+                large_cat, category_data.get('related', []),
+                RelatedKeywords, 'RelatedKeyword')
 
-        self.stdout.write(self.style.SUCCESS('\nSuccessfully finished updating categories.'))
+        self.stdout.write(
+            self.style.SUCCESS('\nSuccessfully finished updating categories.'))

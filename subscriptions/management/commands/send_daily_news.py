@@ -17,19 +17,22 @@ class Command(BaseCommand):
         parser.add_argument(
             '--dry-run',
             action='store_true',
-            help='Simulate the process without sending emails or writing to the database.',
+            help=('Simulate the process without sending emails '
+                  'or writing to the database.'),
         )
         parser.add_argument(
             '--after-days',
             type=int,
             default=2,
-            help='Fetch articles published within the last N days. Set to 0 or less for no date limit.',
+            help=('Fetch articles published within the last N days. '
+                  'Set to 0 or less for no date limit.'),
         )
 
     def handle(self, *args, **options):
         dry_run = options['dry_run']
         if dry_run:
-            self.stdout.write(self.style.WARNING("[DRY RUN] Running in dry-run mode."))
+            self.stdout.write(
+                self.style.WARNING("[DRY RUN] Running in dry-run mode."))
 
         self.stdout.write("Starting the news fetching batch process...")
 
@@ -46,13 +49,14 @@ class Command(BaseCommand):
 
         user_querysets = QuerySet.objects.filter(user=user)
         if not user_querysets.exists():
-            self.stdout.write(f"  No querysets found for {user.email}. Skipping.")
+            self.stdout.write(
+                f"  No querysets found for {user.email}. Skipping.")
             return
 
         # ユーザーの各QuerySetについて新しい記事を取得し、個別にメールを送信
         for queryset in user_querysets:
             self.stdout.write(f"  Processing queryset: {queryset.name}")
-            
+
             query_with_date, new_articles = fetch_articles_for_queryset(
                 queryset=queryset,
                 user=user,
@@ -61,7 +65,8 @@ class Command(BaseCommand):
             )
 
             if new_articles:
-                self.stdout.write(f"    Found {len(new_articles)} new articles.")
+                self.stdout.write(
+                    f"    Found {len(new_articles)} new articles.")
                 querysets_with_articles = [{
                     'queryset': queryset,
                     'queryset_name': queryset.name,
@@ -70,13 +75,23 @@ class Command(BaseCommand):
                 }]
 
                 if dry_run:
-                    self.stdout.write(f"    [DRY RUN] Would send digest email to {user.email} for queryset '{queryset.name}'.")
-                    self.stdout.write(f"    [DRY RUN] Would log {len(new_articles)} articles as sent.")
+                    self.stdout.write(
+                        "    [DRY RUN] "
+                        f"Would send digest email to {user.email} "
+                        f"for queryset '{queryset.name}'.")
+                    self.stdout.write(
+                        f"    [DRY RUN] "
+                        f"Would log {len(new_articles)} articles as sent.")
                 else:
-                    self.stdout.write(f"    Sending email to {user.email} for queryset '{queryset.name}'.")
+                    self.stdout.write(
+                        f"    Sending email to {user.email} "
+                        f"for queryset '{queryset.name}'.")
                     send_digest_email(user, querysets_with_articles)
-                    
-                    self.stdout.write(f"    Logging {len(new_articles)} sent articles.")
+
+                    self.stdout.write(
+                        f"    Logging {len(new_articles)} sent articles.")
                     log_sent_articles(user, new_articles)
             else:
-                self.stdout.write(f"    No new articles found for queryset '{queryset.name}'.")
+                self.stdout.write(
+                    f"    No new articles found for "
+                    f"queryset '{queryset.name}'.")

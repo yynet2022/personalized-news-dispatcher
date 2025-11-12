@@ -1,11 +1,13 @@
 from django import forms
-from .models import QuerySet, UniversalKeywords, CurrentKeywords, RelatedKeywords
+from .models import (
+    QuerySet, UniversalKeywords, CurrentKeywords, RelatedKeywords)
 
 
 class QuerySetForm(forms.ModelForm):
     class Meta:
         model = QuerySet
-        fields = ['name', 'large_category', 'country', 'after_days', 'max_articles', 'universal_keywords',
+        fields = ['name', 'large_category', 'country', 'after_days',
+                  'max_articles', 'universal_keywords',
                   'current_keywords', 'related_keywords',
                   'additional_or_keywords', 'refinement_keywords']
         widgets = {
@@ -15,33 +17,43 @@ class QuerySetForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
+        _ = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
-        self.fields['after_days'].widget.attrs.update({'min': 0})
-        self.fields['max_articles'].widget.attrs.update({'min': 1})
+        f_ = self.fields
+        f_['after_days'].widget.attrs.update({'min': 0})
+        f_['max_articles'].widget.attrs.update({'min': 1})
 
-        self.fields['universal_keywords'].label_from_instance = lambda obj: obj.name
-        self.fields['current_keywords'].label_from_instance = lambda obj: obj.name
-        self.fields['related_keywords'].label_from_instance = lambda obj: obj.name
+        f_['universal_keywords'].label_from_instance = lambda x: x.name
+        f_['current_keywords'].label_from_instance = lambda x: x.name
+        f_['related_keywords'].label_from_instance = lambda x: x.name
 
-        self.fields['universal_keywords'].queryset = UniversalKeywords.objects.none()
-        self.fields['current_keywords'].queryset = CurrentKeywords.objects.none()
-        self.fields['related_keywords'].queryset = RelatedKeywords.objects.none()
+        f_['universal_keywords'].queryset = UniversalKeywords.objects.none()
+        f_['current_keywords'].queryset = CurrentKeywords.objects.none()
+        f_['related_keywords'].queryset = RelatedKeywords.objects.none()
 
         if 'large_category' in self.data:
             large_category_id = self.data.get('large_category')
             if large_category_id:
                 try:
-                    self.fields['universal_keywords'].queryset = UniversalKeywords.objects.filter(
-                        large_category_id=large_category_id).order_by('name')
-                    self.fields['current_keywords'].queryset = CurrentKeywords.objects.filter(
-                        large_category_id=large_category_id).order_by('name')
-                    self.fields['related_keywords'].queryset = RelatedKeywords.objects.filter(
-                        large_category_id=large_category_id).order_by('name')
+                    f_['universal_keywords'].queryset = \
+                        UniversalKeywords.objects.filter(
+                          large_category_id=large_category_id).order_by('name')
+                    f_['current_keywords'].queryset = \
+                        CurrentKeywords.objects.filter(
+                          large_category_id=large_category_id).order_by('name')
+                    f_['related_keywords'].queryset = \
+                        RelatedKeywords.objects.filter(
+                          large_category_id=large_category_id).order_by('name')
                 except (ValueError, TypeError):
                     pass
         elif self.instance.pk and self.instance.large_category_id:
-            self.fields['universal_keywords'].queryset = self.instance.large_category.universalkeywords_set.order_by('name')
-            self.fields['current_keywords'].queryset = self.instance.large_category.currentkeywords_set.order_by('name')
-            self.fields['related_keywords'].queryset = self.instance.large_category.relatedkeywords_set.order_by('name')
+            f_['universal_keywords'].queryset = \
+                self.instance.\
+                large_category.universalkeywords_set.order_by('name')
+            f_['current_keywords'].queryset = \
+                self.instance.\
+                large_category.currentkeywords_set.order_by('name')
+            f_['related_keywords'].queryset = \
+                self.instance.\
+                large_category.relatedkeywords_set.order_by('name')

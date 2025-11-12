@@ -6,7 +6,8 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 
-from .models import QuerySet, UniversalKeywords, CurrentKeywords, RelatedKeywords
+from .models import (
+    QuerySet, UniversalKeywords, CurrentKeywords, RelatedKeywords)
 from .forms import QuerySetForm
 from django.http import JsonResponse
 from django.db import IntegrityError
@@ -45,7 +46,8 @@ def generate_query_str(form):
         parts.append(keyword.name)
 
     # OR追加キーワード
-    additional_or_keywords = form.cleaned_data.get('additional_or_keywords', '')
+    additional_or_keywords = \
+        form.cleaned_data.get('additional_or_keywords', '')
     if additional_or_keywords:
         parts.extend(additional_or_keywords.split())
 
@@ -59,7 +61,7 @@ def generate_query_str(form):
 
     if not or_part:
         return refinement_part
-    
+
     return f"{or_part} {refinement_part}"
 
 
@@ -85,8 +87,6 @@ class QuerySetCreateView(LoginRequiredMixin, CreateView):
             form.add_error('name', '同じ名前のQuerySetが既に存在します。')
             return self.form_invalid(form)
         return redirect(self.success_url)
-
-
 
 
 class QuerySetUpdateView(LoginRequiredMixin, UpdateView):
@@ -115,8 +115,6 @@ class QuerySetUpdateView(LoginRequiredMixin, UpdateView):
         return redirect(self.success_url)
 
 
-
-
 class QuerySetDeleteView(LoginRequiredMixin, DeleteView):
     model = QuerySet
     template_name = 'subscriptions/queryset_confirm_delete.html'
@@ -133,7 +131,7 @@ def send_manual_email(request, pk):
     指定されたQuerySetに基づいてニュースダイジェストを手動で送信するビュー
     """
     queryset = get_object_or_404(QuerySet, pk=pk, user=request.user)
-    
+
     # querysetに設定された値で記事を取得
     _, new_articles = fetch_articles_for_queryset(queryset, request.user)
 
@@ -143,17 +141,22 @@ def send_manual_email(request, pk):
             'queryset_name': queryset.name,
             'articles': new_articles,
         }]
-        
+
         try:
             send_digest_email(request.user, querysets_with_articles)
             log_sent_articles(request.user, new_articles)
-            messages.success(request, f'「{queryset.name}」のニュース（{len(new_articles)}件）を {request.user.email} に送信しました。')
-        
+            messages.success(
+                request,
+                f'「{queryset.name}」のニュース（{len(new_articles)}件）を '
+                f'{request.user.email} に送信しました。')
+
         except Exception as e:
-            messages.error(request, f'メールの送信中にエラーが発生しました: {e}')
-            
+            messages.error(request,
+                           f'メールの送信中にエラーが発生しました: {e}')
     else:
-        messages.info(request, f'「{queryset.name}」に関する新しい記事は見つかりませんでした。')
+        messages.info(
+            request,
+            f'「{queryset.name}」に関する新しい記事は見つかりませんでした。')
 
     return redirect('subscriptions:queryset_list')
 
@@ -162,9 +165,11 @@ class UniversalKeywordsApiView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         large_category_id = request.GET.get('large_category_id')
         if not large_category_id:
-            return JsonResponse({'error': 'large_category_id is required'}, status=400)
+            return JsonResponse({'error': 'large_category_id is required'},
+                                status=400)
 
-        keywords = UniversalKeywords.objects.filter(large_category_id=large_category_id).order_by('name')
+        keywords = UniversalKeywords.objects.filter(
+            large_category_id=large_category_id).order_by('name')
         data = list(keywords.values('id', 'name', 'description'))
         return JsonResponse(data, safe=False)
 
@@ -173,9 +178,11 @@ class CurrentKeywordsApiView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         large_category_id = request.GET.get('large_category_id')
         if not large_category_id:
-            return JsonResponse({'error': 'large_category_id is required'}, status=400)
+            return JsonResponse({'error': 'large_category_id is required'},
+                                status=400)
 
-        keywords = CurrentKeywords.objects.filter(large_category_id=large_category_id).order_by('name')
+        keywords = CurrentKeywords.objects.filter(
+            large_category_id=large_category_id).order_by('name')
         data = list(keywords.values('id', 'name', 'description'))
         return JsonResponse(data, safe=False)
 
@@ -184,9 +191,11 @@ class RelatedKeywordsApiView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         large_category_id = request.GET.get('large_category_id')
         if not large_category_id:
-            return JsonResponse({'error': 'large_category_id is required'}, status=400)
+            return JsonResponse({'error': 'large_category_id is required'},
+                                status=400)
 
-        keywords = RelatedKeywords.objects.filter(large_category_id=large_category_id).order_by('name')
+        keywords = RelatedKeywords.objects.filter(
+            large_category_id=large_category_id).order_by('name')
         data = list(keywords.values('id', 'name', 'description'))
         return JsonResponse(data, safe=False)
 
@@ -197,13 +206,13 @@ class NewsPreviewApiView(LoginRequiredMixin, View):
         if not query:
             return JsonResponse({'error': 'Query parameter "q" is required'},
                                 status=400)
-        
         try:
             after_days = int(request.GET.get('after_days', 2))
             max_articles = int(request.GET.get('max_articles', 20))
             country_code = request.GET.get('country', 'JP')
         except (ValueError, TypeError):
-            return JsonResponse({'error': 'Invalid after_days or max_articles'}, status=400)
+            return JsonResponse(
+                {'error': 'Invalid after_days or max_articles'}, status=400)
 
         query_with_date, articles = fetch_articles_for_preview(
             query_str=query,
@@ -214,12 +223,15 @@ class NewsPreviewApiView(LoginRequiredMixin, View):
 
         # 未保存のArticleオブジェクトを辞書に変換
         articles_data = [
-            {
-                'title': article.title,
-                'link': article.url,
-                'published': article.published_date.strftime('%Y-%m-%d %H:%M:%S') if article.published_date else 'N/A'
-            }
-            for article in articles
+            {'title': x.title,
+             'link': x.url,
+             'published': (
+                 x.published_date.strftime('%Y-%m-%d %H:%M:%S')
+                 if x.published_date else 'N/A')
+             }
+            for x in articles
         ]
 
-        return JsonResponse({'query_str': query_with_date, 'articles': articles_data}, safe=False)
+        return JsonResponse(
+            {'query_str': query_with_date, 'articles': articles_data},
+            safe=False)
