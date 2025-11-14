@@ -6,59 +6,178 @@
     <h1>{% if object %}QuerySetの編集{% else %}QuerySetの作成{% endif %}</h1>
 
     <style>
+        /* カードスタイル */
+        .card {
+            background-color: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-top: 1rem;
+        }
+
+        /* CSS Grid レイアウト */
+        .form-grid {
+            display: grid;
+            grid-template-columns: auto 1fr; /* ラベルは自動幅、入力は残り全部 */
+            gap: 1rem 1.5rem; /* 行間と列間 */
+            align-items: center; /* 垂直方向中央揃え */
+        }
+
+        .form-grid label {
+            font-weight: bold;
+            justify-self: end; /* ラベルを右揃えにする */
+        }
+
+        /* 入力欄のスタイル */
+        .form-grid input[type="text"],
+        .form-grid input[type="number"],
+        .form-grid select,
+        .form-grid textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; /* paddingを含めてwidth:100%にする */
+        }
+
+        /* 2列にまたがる要素 */
+        .grid-full-width {
+            grid-column: 1 / -1; /* 最初の列から最後の列まで */
+        }
+
         /* チェックボックスのコンテナにスタイルを適用 */
-        #id_universal_keywords, #id_current_keywords, #id_related_keywords {
+        #keywords_container {
             border: 1px solid #ccc;
             padding: 0.5rem;
             border-radius: 4px;
-            max-height: 150px;
+            max-height: 250px;
             overflow-y: auto;
-            list-style: none; /* Djangoが生成するulの黒丸を消す */
-            padding-left: 0.5rem; /* 左のパディングを調整 */
+            list-style: none;
+            padding-left: 0.5rem;
+            background-color: #fff; /* 背景色を白に */
         }
 
-        /* チェックボックスの各項目を横並びにする */
-        #id_universal_keywords > div,
-        #id_current_keywords > div,
-        #id_related_keywords > div {
-            display: inline-block; /* 横並びに */
-            margin-right: 1rem;   /* 右側に余白 */
+        #keywords_container > div {
+            display: inline-block;
+            margin-right: 1rem;
             border: none;
             padding: 0;
         }
 
-        /* プレビュー結果のリストスタイルを上書き */
+        /* ボタンのコンテナ */
+        .button-group {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 1.5rem;
+        }
+
+        /* ボタンの共通スタイル */
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        .btn-link {
+            background-color: transparent;
+            color: #6c757d;
+            border: 1px solid #6c757d;
+        }
+        .btn-link:hover {
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+
+        /* プレビュー結果 */
+        #preview-area {
+            margin-top: 2rem;
+        }
         #preview-results ol {
             list-style: decimal;
-            padding-left: 2rem; /* 字下げを調整 */
+            padding-left: 2rem;
         }
         #preview-results li {
-            display: list-item; /* li要素のデフォルト表示に戻す */
+            display: list-item;
             background: none;
             border: none;
             padding: 0.25em 0;
         }
     </style>
     
-    <form method="post" id="queryset-form">
+    <form method="post" id="queryset-form" class="card">
         {% csrf_token %}
-        <div>{{ form.name.label_tag }} {{ form.name }}</div>
-        <div>{{ form.large_category.label_tag }} {{ form.large_category }}</div>
-        <div>{{ form.country.label_tag }} {{ form.country }}</div>
-        <div>{{ form.after_days.label_tag }} {{ form.after_days }}</div>
-        <div>{{ form.max_articles.label_tag }} {{ form.max_articles }}</div>
-        <div>{{ form.universal_keywords.label_tag }} {{ form.universal_keywords }}</div>
-        <div>{{ form.current_keywords.label_tag }} {{ form.current_keywords }}</div>
-        <div>{{ form.related_keywords.label_tag }} {{ form.related_keywords }}</div>
-        <div>{{ form.additional_or_keywords.label_tag }} {{ form.additional_or_keywords }}</div>
-        <div>{{ form.refinement_keywords.label_tag }} {{ form.refinement_keywords }}</div>
-        
-        <button type="submit">{% if object %}更新する{% else %}作成する{% endif %}</button>
-        <button type="button" id="preview-button">プレビュー</button>
-        <a href="{% url 'subscriptions:queryset_list' %}" class="button-link">キャンセル</a>
+        <div class="form-grid">
+            {{ form.name.label_tag }} 
+            {{ form.name }}
+
+            {{ form.large_category.label_tag }} 
+            {{ form.large_category }}
+
+            {{ form.country.label_tag }} 
+            {{ form.country }}
+
+            {{ form.after_days.label_tag }} 
+            {{ form.after_days }}
+
+            {{ form.max_articles.label_tag }} 
+            {{ form.max_articles }}
+            
+            <!-- キーワードセクション -->
+            <div class="grid-full-width">
+                <label>キーワード</label>
+                <div id="keywords_container">
+                    <div style="display:none;">
+                        {{ form.universal_keywords }}
+                        {{ form.current_keywords }}
+                        {{ form.related_keywords }}
+                    </div>
+                </div>
+            </div>
+
+            {{ form.additional_or_keywords.label_tag }}
+            {{ form.additional_or_keywords }}
+
+            {{ form.refinement_keywords.label_tag }}
+            {{ form.refinement_keywords }}
+            
+            <!-- ボタンセクション -->
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary">{% if object %}更新する{% else %}作成する{% endif %}</button>
+                <button type="button" id="preview-button" class="btn btn-secondary">プレビュー</button>
+                <a href="{% url 'subscriptions:queryset_list' %}" class="btn btn-link">キャンセル</a>
+            </div>
+        </div>
     </form>
 
-    <div id="preview-area" style="display: none;">
+    <div id="preview-area" style="display: none;" class="card">
         <h3>プレビュー結果</h3>
         <div id="preview-results"></div>
     </div>
@@ -68,39 +187,34 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const largeCategorySelect = document.querySelector('#id_large_category');
-    const universalKeywordsContainer = document.querySelector('#id_universal_keywords');
-    const currentKeywordsContainer = document.querySelector('#id_current_keywords');
-    const relatedKeywordsContainer = document.querySelector('#id_related_keywords');
+    const keywordsContainer = document.querySelector('#keywords_container');
     const previewButton = document.querySelector('#preview-button');
     const previewArea = document.querySelector('#preview-area');
     const previewResults = document.querySelector('#preview-results');
 
-    // --- ヘルパー関数: チェックボックスを生成してコンテナに追加 ---
-    function createCheckboxes(container, name, data, selectedValues = []) {
-        container.innerHTML = '';
-        data.forEach(item => {
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.name = name;
-            checkbox.value = item.id;
-            checkbox.id = `id_${name}_${item.id}`;
-            if (selectedValues.includes(String(item.id))) {
-                checkbox.checked = true;
-            }
+    // --- ヘルパー関数: 1つのチェックボックス要素を生成 ---
+    function createCheckbox(name, item, selectedValues = []) {
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.name = name;
+        checkbox.value = item.id;
+        checkbox.id = `id_${name}_${item.id}`;
+        if (selectedValues.includes(String(item.id))) {
+            checkbox.checked = true;
+        }
 
-            const label = document.createElement('label');
-            label.htmlFor = checkbox.id;
-            label.title = item.description || ''; // ホバーで説明を表示
-            label.appendChild(checkbox);
-            label.appendChild(document.createTextNode(` ${item.name}`));
-            
-            const wrapper = document.createElement('div');
-            wrapper.appendChild(label);
-            container.appendChild(wrapper);
-        });
+        const label = document.createElement('label');
+        label.htmlFor = checkbox.id;
+        label.title = item.description || ''; // ホバーで説明を表示
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(` ${item.name}`));
+        
+        const wrapper = document.createElement('div');
+        wrapper.appendChild(label);
+        return wrapper;
     }
 
-    // --- 1. 大分類が変更されたら、各キーワードを動的に読み込む ---
+    // --- 1. 大分類が変更されたら、全キーワードを動的に読み込む ---
     largeCategorySelect.addEventListener('change', function() {
         loadAllKeywords();
     });
@@ -108,43 +222,63 @@ document.addEventListener('DOMContentLoaded', function() {
     function loadAllKeywords() {
         const largeCategoryId = largeCategorySelect.value;
 
-        // Get selected values before clearing the containers
+        // 変更前の選択状態を保持
         const selectedUniversal = getSelectedValues('universal_keywords');
         const selectedCurrent = getSelectedValues('current_keywords');
         const selectedRelated = getSelectedValues('related_keywords');
         
-        universalKeywordsContainer.innerHTML = ''; 
-        currentKeywordsContainer.innerHTML = '';
-        relatedKeywordsContainer.innerHTML = '';
+        keywordsContainer.innerHTML = '<p>読み込み中...</p>'; 
 
         if (!largeCategoryId) {
+            keywordsContainer.innerHTML = '';
             return;
         }
 
-        // Universal Keywords
-        fetch(`/subscriptions/api/universal-keywords/?large_category_id=${largeCategoryId}`)
-            .then(response => response.json())
-            .then(data => {
-                createCheckboxes(universalKeywordsContainer, 'universal_keywords', data, selectedUniversal);
-            });
+        const fetchUniversal = fetch(`/subscriptions/api/universal-keywords/?large_category_id=${largeCategoryId}`).then(res => res.json());
+        const fetchCurrent = fetch(`/subscriptions/api/current-keywords/?large_category_id=${largeCategoryId}`).then(res => res.json());
+        const fetchRelated = fetch(`/subscriptions/api/related-keywords/?large_category_id=${largeCategoryId}`).then(res => res.json());
 
-        // Current Keywords
-        fetch(`/subscriptions/api/current-keywords/?large_category_id=${largeCategoryId}`)
-            .then(response => response.json())
-            .then(data => {
-                createCheckboxes(currentKeywordsContainer, 'current_keywords', data, selectedCurrent);
-            });
+        Promise.all([fetchUniversal, fetchCurrent, fetchRelated])
+            .then(([universalData, currentData, relatedData]) => {
+                
+                let allKeywords = [];
+                universalData.forEach(item => allKeywords.push({ ...item, type: 'universal_keywords' }));
+                currentData.forEach(item => allKeywords.push({ ...item, type: 'current_keywords' }));
+                relatedData.forEach(item => allKeywords.push({ ...item, type: 'related_keywords' }));
 
-        // Related Keywords
-        fetch(`/subscriptions/api/related-keywords/?large_category_id=${largeCategoryId}`)
-            .then(response => response.json())
-            .then(data => {
-                createCheckboxes(relatedKeywordsContainer, 'related_keywords', data, selectedRelated);
+                // 名前順でソート
+                allKeywords.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+
+                keywordsContainer.innerHTML = ''; // コンテナをクリア
+
+                if (allKeywords.length === 0) {
+                    keywordsContainer.innerHTML = '<p>このカテゴリにはキーワードが登録されていません。</p>';
+                    return;
+                }
+
+                allKeywords.forEach(item => {
+                    let selectedValues = [];
+                    if (item.type === 'universal_keywords') selectedValues = selectedUniversal;
+                    if (item.type === 'current_keywords') selectedValues = selectedCurrent;
+                    if (item.type === 'related_keywords') selectedValues = selectedRelated;
+                    
+                    const checkboxElement = createCheckbox(item.type, item, selectedValues);
+                    keywordsContainer.appendChild(checkboxElement);
+                });
+            })
+            .catch(error => {
+                keywordsContainer.innerHTML = '<p>キーワードの読み込みに失敗しました。</p>';
+                console.error('Error loading keywords:', error);
             });
     }
     
     function getSelectedValues(name) {
-        return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(cb => cb.value);
+        // Djangoの初期レンダリングから選択値を取得
+        const initialSelected = Array.from(document.querySelectorAll(`input[name="${name}"][checked]`));
+        if (initialSelected.length > 0) {
+            return initialSelected.map(cb => cb.value);
+        }
+        return [];
     }
 
     // --- 2. プレビューボタンが押されたら、ニュースを取得して表示 ---
@@ -158,6 +292,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const largeCategoryName = largeCategorySelect.options[largeCategorySelect.selectedIndex].text;
         parts.push(largeCategoryName);
 
+        // プレビューロジックは変更不要 (name属性で正しく収集できるため)
         document.querySelectorAll('input[name="universal_keywords"]:checked').forEach(cb => {
             parts.push(cb.labels[0].textContent.trim());
         });
@@ -168,7 +303,6 @@ document.addEventListener('DOMContentLoaded', function() {
             parts.push(cb.labels[0].textContent.trim());
         });
 
-        // OR追加キーワード
         const additionalOrKeywords = document.querySelector('#id_additional_or_keywords').value.trim();
         if (additionalOrKeywords) {
             parts.push(...additionalOrKeywords.split(/\s+/).filter(k => k));
@@ -234,7 +368,11 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     });
 
-
+    // --- 初期読み込み ---
+    // ページ読み込み時に、もし大分類が選択済みならキーワードを読み込む
+    if (largeCategorySelect.value) {
+        loadAllKeywords();
+    }
 });
 </script>
 {% endblock %}
