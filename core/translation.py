@@ -96,7 +96,8 @@ def translate_text_with_openai(text: str,
     system_content = (
         "You are a helpful assistant that translates text"
         f" into {target_language}. If the text is HTML, translate only the"
-        " visible text content while preserving all HTML tags and structure.")
+        " visible text content while preserving all HTML tags and structure."
+        " Do not use code blocks in your response.")
     try:
         logger.info("OpenAI translation start.")
         logger.debug("Attempting to translate with OpenAI model: "
