@@ -48,6 +48,7 @@ def translate_text_with_gemini(text: str,
         return text
 
     try:
+        logger.info("Gemini translation start.")
         logger.debug("Attempting to translate with Gemini model: "
                      f"{settings.GEMINI_MODEL}")
         genai.configure(api_key=api_key)
@@ -61,6 +62,7 @@ def translate_text_with_gemini(text: str,
         response = model.generate_content(prompt)
         logger.debug("Successfully received response from Gemini API.")
 
+        logger.info("Gemini translation end.")
         return response.text
     except Exception as e:
         logger.error(f"Gemini translation failed: {e}")
@@ -96,6 +98,7 @@ def translate_text_with_openai(text: str,
         f" into {target_language}. If the text is HTML, translate only the"
         " visible text content while preserving all HTML tags and structure.")
     try:
+        logger.info("OpenAI translation start.")
         logger.debug("Attempting to translate with OpenAI model: "
                      f"{settings.OPENAI_MODEL}")
 
@@ -119,6 +122,7 @@ def translate_text_with_openai(text: str,
         )
         logger.debug("Successfully received response from OpenAI API.")
 
+        logger.info("OpenAI translation end.")
         return response.choices[0].message.content
     except Exception as e:
         logger.error(f"OpenAI translation failed: {e}")
