@@ -59,7 +59,7 @@ def translate_text_with_gemini(text: str,
                   f"{text}")
 
         logger.debug("Sending request to Gemini API...")
-        response = model.generate_content(prompt)
+        response = model.generate_content(prompt, generation_config={'temperature': 0.0})
         logger.debug("Successfully received response from Gemini API.")
 
         logger.info("Gemini translation end.")
@@ -119,7 +119,8 @@ def translate_text_with_openai(text: str,
             messages=[
                 {"role": "system", "content": system_content},
                 {"role": "user", "content": text}
-            ]
+            ],
+            temperature=0.0
         )
         logger.debug("Successfully received response from OpenAI API.")
 
