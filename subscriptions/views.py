@@ -143,7 +143,8 @@ def send_manual_email(request, pk):
         }]
 
         try:
-            send_digest_email(request.user, querysets_with_articles)
+            send_digest_email(request.user, querysets_with_articles,
+                              should_translate=False)
             log_sent_articles(request.user, new_articles)
             messages.success(
                 request,

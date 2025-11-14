@@ -198,7 +198,9 @@ def fetch_articles_for_queryset(queryset: QuerySet, user: User,
     return query_with_date, articles
 
 
-def send_digest_email(user: User, querysets_with_articles: list):
+def send_digest_email(user: User, querysets_with_articles: list,
+                      should_translate: bool = True):
+
     """
     ニュースダイジェストメールを送信する。
 
@@ -231,7 +233,6 @@ def send_digest_email(user: User, querysets_with_articles: list):
 
     # AI翻訳を適用
     # ニュースソースが日本(JP)で、ユーザーの優先言語がJapaneseの場合は翻訳しない
-    should_translate = True
     queryset = querysets_with_articles[0].get('queryset')
     if queryset and queryset.country == 'JP' and \
        getattr(user, 'preferred_language', 'Japanese') == 'Japanese':

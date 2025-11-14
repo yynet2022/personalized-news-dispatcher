@@ -59,7 +59,8 @@ def translate_text_with_gemini(text: str,
                   f"{text}")
 
         logger.debug("Sending request to Gemini API...")
-        response = model.generate_content(prompt, generation_config={'temperature': 0.0})
+        response = model.generate_content(
+            prompt, generation_config={'temperature': 0.0})
         logger.debug("Successfully received response from Gemini API.")
 
         logger.info("Gemini translation end.")
