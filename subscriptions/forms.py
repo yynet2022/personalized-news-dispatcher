@@ -6,7 +6,7 @@ from .models import (
 class QuerySetForm(forms.ModelForm):
     class Meta:
         model = QuerySet
-        fields = ['name', 'large_category', 'country', 'after_days',
+        fields = ['name', 'auto_send', 'large_category', 'country', 'after_days',
                   'max_articles', 'universal_keywords',
                   'current_keywords', 'related_keywords',
                   'additional_or_keywords', 'refinement_keywords']

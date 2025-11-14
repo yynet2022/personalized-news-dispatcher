@@ -100,9 +100,15 @@
         
         .action-form { display: inline; margin: 0; }
         .actions { display: flex; gap: 0.5rem; white-space: nowrap; } /* white-space: nowrap; を追加 */
+
+        /* 読み取り専用チェックボックスのスタイル */
+        .toggle-auto-send {
+            cursor: pointer; /* カーソルをポインターにする */
+        }
     </style>
 
     <div class="card">
+        {% csrf_token %}
         <h1>あなたのQuerySet一覧</h1>
 
         <table class="table">
@@ -111,6 +117,7 @@
                     <th>名前</th>
                     <th>国</th>
                     <th>クエリ文字列</th>
+                    <th>自動配信</th>
                     <th>操作</th>
                 </tr>
             </thead>
@@ -120,6 +127,7 @@
                     <td><a href="{% url 'subscriptions:queryset_update' pk=queryset.pk %}">{{ queryset.name }}</a></td>
                     <td>{{ queryset.get_country_display }}</td>
                     <td>{{ queryset.query_str }}</td>
+                    <td><input type="checkbox" class="toggle-auto-send" data-url="{% url 'subscriptions:api_queryset_toggle_auto_send' pk=queryset.pk %}" {% if queryset.auto_send %}checked{% endif %}></td>
                     <td>
                         <div class="actions">
                             <form action="{% url 'subscriptions:queryset_send' pk=queryset.pk %}" method="post" class="action-form">
@@ -132,7 +140,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="4">まだQuerySetが登録されていません。</td>
+                    <td colspan="5">まだQuerySetが登録されていません。</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -140,4 +148,48 @@
 
         <a href="{% url 'subscriptions:queryset_create' %}" class="btn btn-primary">新しいQuerySetを作成</a>
     </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    document.querySelectorAll('.toggle-auto-send').forEach(checkbox => {
+        checkbox.addEventListener('change', function(event) {
+            const checkbox = event.target;
+            const url = checkbox.dataset.url;
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json'
+                },
+            })
+            .then(response => {
+                if (!response.ok) {
+                    // レスポンスがOKでない場合、エラーを投げてcatchブロックに移行
+                    return response.json().then(err => { throw new Error(err.message || '更新に失敗しました。') });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status !== 'success') {
+                    // 成功ステータスでない場合もエラーとして扱う
+                    throw new Error(data.message || '更新に失敗しました。');
+                }
+                // 成功した場合、チェックボックスの状態は既にユーザーによって変更されているので、何もしない
+                console.log('Auto-send status updated to:', data.auto_send);
+            })
+            .catch(error => {
+                // エラーが発生した場合、チェックボックスの状態を元に戻す
+                checkbox.checked = !checkbox.checked;
+                alert(`エラー: ${error.message}`);
+                console.error('Failed to toggle auto-send:', error);
+            });
+        });
+    });
+});
+</script>
 {% endblock %}

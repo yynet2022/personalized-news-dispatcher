@@ -47,7 +47,7 @@ class Command(BaseCommand):
         """一人のユーザーに対する処理をまとめた関数"""
         self.stdout.write(f"Processing user: {user.email}")
 
-        user_querysets = QuerySet.objects.filter(user=user)
+        user_querysets = QuerySet.objects.filter(user=user, auto_send=True)
         if not user_querysets.exists():
             self.stdout.write(
                 f"  No querysets found for {user.email}. Skipping.")

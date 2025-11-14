@@ -99,6 +99,7 @@ class QuerySet(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField('セット名', max_length=100)
+    auto_send = models.BooleanField('メール自動配信', default=True)
     query_str = models.TextField('クエリ文字列', editable=False,
                                  help_text='ユーザ選択により自動生成')
 

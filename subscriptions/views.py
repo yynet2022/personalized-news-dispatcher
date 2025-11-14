@@ -235,3 +235,22 @@ class NewsPreviewApiView(LoginRequiredMixin, View):
         return JsonResponse(
             {'query_str': query_with_date, 'articles': articles_data},
             safe=False)
+
+
+class ToggleAutoSendView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        try:
+            queryset = get_object_or_404(
+                QuerySet, pk=self.kwargs['pk'], user=request.user)
+            queryset.auto_send = not queryset.auto_send
+            queryset.save(update_fields=['auto_send'])
+            return JsonResponse({
+                'status': 'success',
+                'auto_send': queryset.auto_send
+            })
+        except QuerySet.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Not Found'},
+                                status=404)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)},
+                                status=500)

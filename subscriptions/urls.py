@@ -9,6 +9,7 @@ from .views import (
     CurrentKeywordsApiView,
     RelatedKeywordsApiView,
     NewsPreviewApiView,
+    ToggleAutoSendView,
 )
 
 app_name = 'subscriptions'
@@ -34,4 +35,7 @@ urlpatterns = [
          name='api_related_keywords'),
     path('api/news-preview/', NewsPreviewApiView.as_view(),
          name='api_news_preview'),
+    path('api/queryset/<uuid:pk>/toggle-auto-send/',
+         ToggleAutoSendView.as_view(),
+         name='api_queryset_toggle_auto_send'),
 ]
