@@ -770,6 +770,34 @@
     ],
     "related": [
       {
+        "name": "Python",
+        "description": "インタープリタ型の高水準汎用プログラミング言語"
+      },
+      {
+        "name": "Perl",
+        "description": "インタープリタ型の高水準汎用プログラミング言語"
+      },
+      {
+        "name": "Ruby",
+        "description": "簡潔な文法が特徴的なオブジェクト指向スクリプト言語"
+      },
+      {
+        "name": "JavaScript",
+        "description": "プログラミング言語であり、HTMLやCSSと並ぶWWWの中核技術の一つ"
+      },
+      {
+        "name": "オープンソース",
+        "description": "ソースコードが公開されているソフトウェア"
+      },
+      {
+        "name": "Linux",
+        "description": "Unixを基にしたオープンソースのオペレーティングシステム (OS)"
+      },
+      {
+        "name": "Windows",
+        "description": "マイクロソフトが開発・販売するオペレーティングシステム (OS)"
+      },
+      {
         "name": "IoT",
         "description": "Internet of Things。モノのインターネット。"
       },
@@ -1999,6 +2027,34 @@
       {
         "name": "パワー半導体",
         "description": "電力制御に使われる半導体。SiCやGaNが注目される"
+      },
+      {
+        "name": "キオクシア",
+        "description": "日本の半導体メモリメーカー"
+      },
+      {
+        "name": "Samsung",
+        "description": "韓国のテクノロジー企業"
+      },
+      {
+        "name": "SKハイニックス",
+        "description": "韓国の半導体製造会社"
+      },
+      {
+        "name": "Micron",
+        "description": "アメリカ合衆国アイダホ州ボイシ市に本社を置く、半導体製造の多国籍企業"
+      },
+      {
+        "name": "BiCS",
+        "description": "キオクシア:が開発した3次元フラッシュメモリ技術"
+      },
+      {
+        "name": "MRAM",
+        "description": "磁気抵抗メモリ (Magnetoresistive Random Access Memory)"
+      },
+      {
+        "name": "TCAD",
+        "description": "半導体デバイスの設計・製造プロセスをコンピュータ上でシミュレーションする技術 (Technology Computer-Aided Design)"
       },
       {
         "name": "車載半導体",
