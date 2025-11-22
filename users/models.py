@@ -1,5 +1,6 @@
 # users/models.py
 import uuid
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 
@@ -34,6 +35,11 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
+# settings.py から言語の選択肢を動的に生成
+LANGUAGES = set(data['lang'] for data in settings.COUNTRY_CONFIG.values())
+LANGUAGE_CHOICES = sorted([(lang, lang) for lang in LANGUAGES])
+
+
 # ----------------------------------------------------------------------
 # 2. 作成したUserManagerをUserモデルに適用
 # ----------------------------------------------------------------------
@@ -44,6 +50,7 @@ class User(AbstractUser):
     preferred_language = models.CharField(
         '優先言語',
         max_length=50,
+        choices=LANGUAGE_CHOICES,
         default='Japanese',
         help_text='AI翻訳で利用する優先言語'
     )

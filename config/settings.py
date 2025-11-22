@@ -214,3 +214,11 @@ GEMINI_MODEL = secrets.get('GEMINI_MODEL', 'gemini-pro-latest')
 OPENAI_MODEL = secrets.get('OPENAI_MODEL', 'gpt-4o')
 OPENAI_API_BASE_URL = secrets.get('OPENAI_API_BASE_URL')
 OPENAI_SSL_VERIFY = secrets.get('OPENAI_SSL_VERIFY', True)
+
+# Master configuration for countries
+COUNTRY_CONFIG = {
+    'JP': {'lang': 'Japanese', 'name': '日本'},
+    'US': {'lang': 'English',  'name': 'アメリカ'},
+    'CN': {'lang': 'Chinese',  'name': '中国'},
+    'KR': {'lang': 'Korean',   'name': '韓国'},
+}

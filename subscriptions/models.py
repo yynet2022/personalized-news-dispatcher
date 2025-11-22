@@ -3,6 +3,7 @@ import unicodedata
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from users.models import User
 
@@ -95,6 +96,12 @@ class RelatedKeywords(NormalizeNameMixin, models.Model):
         return f'{self.large_category.name} - {self.name}'
 
 
+# settings.py の COUNTRY_NAME_MAP から国の選択肢を動的に生成
+COUNTRIES = sorted(
+    [(code, data['name']) for code, data in settings.COUNTRY_CONFIG.items()]
+)
+
+
 class QuerySet(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -109,12 +116,6 @@ class QuerySet(models.Model):
         verbose_name='大分類'
     )
 
-    COUNTRIES = [
-        ('JP', '日本'),
-        ('US', 'アメリカ'),
-        ('CN', '中国'),
-        ('KR', '韓国'),
-    ]
     country = models.CharField(
         '国',
         max_length=2,

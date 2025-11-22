@@ -204,13 +204,13 @@ def fetch_articles_for_queryset(queryset: QuerySet, user: User,
 
 def send_digest_email(user: User, querysets_with_articles: list,
                       should_translate: bool = True):
-
     """
     ニュースダイジェストメールを送信する。
 
     Args:
         user (User): 送信先のユーザー。
         querysets_with_articles (list): クエリセット名と記事リストの辞書のリスト。
+        should_translate (bool): 翻訳を試みるべきかどうか。呼び出し側でFalseに設定すると、以下のロジックに関わらず翻訳は行われません。
     """
     current_site = Site.objects.get_current()
     site_url = f'http://{current_site.domain}'
@@ -234,14 +234,22 @@ def send_digest_email(user: User, querysets_with_articles: list,
     # 件名にQuerySet名を追加
     queryset_name = querysets_with_articles[0]['queryset_name']
     subject = f'【News Dispatcher】Daily News Digest - {queryset_name}'
+    
+    # 翻訳ロジック
+    # 呼び出し元で should_translate=False が指定されている場合は、何もしない
+    final_should_translate = should_translate
+    
+    # 翻訳が有効な場合のみ、国と言語の一致をチェックする
+    if final_should_translate:
+        queryset = querysets_with_articles[0].get('queryset')
+        if queryset:
+            country_data = settings.COUNTRY_CONFIG.get(queryset.country)
+            country_lang = country_data['lang'] if country_data else None
+            user_lang = getattr(user, 'preferred_language', None)
+            if country_lang and country_lang == user_lang:
+                final_should_translate = False  # 一致したので翻訳不要
 
-    # AI翻訳を適用
-    # ニュースソースが日本(JP)で、ユーザーの優先言語がJapaneseの場合は翻訳しない
-    queryset = querysets_with_articles[0].get('queryset')
-    if queryset and queryset.country == 'JP' and \
-       getattr(user, 'preferred_language', 'Japanese') == 'Japanese':
-        should_translate = False
-    if should_translate:
+    if final_should_translate:
         target_language = getattr(user, 'preferred_language', 'Japanese')
 
         async def translate_bodies():

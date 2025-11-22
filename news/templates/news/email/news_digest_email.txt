@@ -1,21 +1,21 @@
-{{ user.email }}様
+Hello {{ user.email }},
 
-今日のニュースダイジェストをお届けします。
+Here is your daily news digest.
 
 {% for item in querysets_with_articles %}
 --- 📂 {{ item.queryset_name }} ---
-検索クエリ: {{ item.query_str }}
+Search Query: {{ item.query_str }}
 
 {% for article in item.articles %}
 - {{ article.title }}
   {{ article.tracking_url }}
-  {% if article.published_date %}({{ article.published_date|date:"Y年n月j日" }}){% endif %}
+  {% if article.published_date %}({{ article.published_date|date:"F j, Y" }}){% endif %}
 
 {% endfor %}
 {% endfor %}
 
 --------------------------------------
-設定の変更はこちらから:
+To change your settings, visit:
 {{ site_url }}{% url 'subscriptions:queryset_list' %}
 
 Personalized News Dispatcher
