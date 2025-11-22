@@ -14,7 +14,7 @@ from django.db import IntegrityError
 
 from .services import (
     fetch_articles_for_queryset, send_digest_email, log_sent_articles,
-    fetch_articles_for_preview
+    fetch_articles_for_preview, FeedFetchError
 )
 
 
@@ -132,8 +132,12 @@ def send_manual_email(request, pk):
     """
     queryset = get_object_or_404(QuerySet, pk=pk, user=request.user)
 
-    # querysetに設定された値で記事を取得
-    _, new_articles = fetch_articles_for_queryset(queryset, request.user)
+    try:
+        # querysetに設定された値で記事を取得
+        _, new_articles = fetch_articles_for_queryset(queryset, request.user)
+    except FeedFetchError as e:
+        messages.error(request, f"ニュースの取得に失敗しました: {e}")
+        return redirect('subscriptions:queryset_list')
 
     if new_articles:
         querysets_with_articles = [{
@@ -215,12 +219,18 @@ class NewsPreviewApiView(LoginRequiredMixin, View):
             return JsonResponse(
                 {'error': 'Invalid after_days or max_articles'}, status=400)
 
-        query_with_date, articles = fetch_articles_for_preview(
-            query_str=query,
-            country_code=country_code,
-            after_days=after_days,
-            max_articles=max_articles
-        )
+        try:
+            query_with_date, articles = fetch_articles_for_preview(
+                query_str=query,
+                country_code=country_code,
+                after_days=after_days,
+                max_articles=max_articles
+            )
+        except FeedFetchError as e:
+            return JsonResponse(
+                {'error': f'Failed to fetch news feed: {e}'},
+                status=502  # Bad Gateway: 上流サーバーから無効なレスポンス
+            )
 
         # 未保存のArticleオブジェクトを辞書に変換
         articles_data = [

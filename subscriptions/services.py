@@ -20,6 +20,11 @@ from core.translation import translate_content
 logger = logging.getLogger(__name__)
 
 
+class FeedFetchError(Exception):
+    """RSSフィードの取得に失敗した際に発生する例外。"""
+    pass
+
+
 def get_published_date_from_entry(entry):
     """
     feedparserのentryからタイムゾーン付きのdatetimeオブジェクトを取得する。
@@ -41,8 +46,10 @@ def fetch_rss_feed(query: str, country_code: str = 'JP', timeout: int = 10):
         timeout (int): リクエストのタイムアウト秒数。
 
     Returns:
-        feedparser.FeedParserDict or None: 解析されたフィードオブジェクト。
-                                            取得に失敗した場合はNoneを返す。
+        feedparser.FeedParserDict: 解析されたフィードオブジェクト。
+
+    Raises:
+        FeedFetchError: フィードの取得に失敗した場合。
     """
     country_params = {
         'JP': {'hl': 'ja', 'gl': 'JP', 'ceid': 'JP:ja'},
@@ -62,9 +69,10 @@ def fetch_rss_feed(query: str, country_code: str = 'JP', timeout: int = 10):
         response.raise_for_status()
         return feedparser.parse(response.content)
     except httpx.RequestError as e:
-        logger.error(f"Failed to fetch RSS feed for query '{query}' "
-                     f"from country '{country_code}': {e}")
-        return None
+        error_message = (f"Failed to fetch RSS feed for query '{query}' "
+                         f"from country '{country_code}': {e}")
+        logger.error(error_message)
+        raise FeedFetchError(error_message) from e
 
 
 def _build_query_with_date(query_str: str, after_days: int) -> str:
@@ -152,8 +160,6 @@ def fetch_articles_for_preview(query_str: str, country_code: str,
 
     feed = fetch_rss_feed(
         query_with_date, country_code=country_code, timeout=5)
-    if not feed:
-        return query_with_date, []
 
     articles = _process_feed_entries(
         entries=feed.entries,
@@ -185,8 +191,6 @@ def fetch_articles_for_queryset(queryset: QuerySet, user: User,
     query_with_date = _build_query_with_date(queryset.query_str, after_days)
 
     feed = fetch_rss_feed(query_with_date, country_code=queryset.country)
-    if not feed:
-        return query_with_date, []
 
     articles = _process_feed_entries(
         entries=feed.entries,

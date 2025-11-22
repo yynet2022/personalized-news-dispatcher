@@ -19,15 +19,32 @@ except ImportError:
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load secrets from .secrets.toml at the project root.
+# .secrets.toml が存在しない場合や読み込みに失敗した場合は、空の辞書を使用
+try:
+    SECRETS_FILE = BASE_DIR / 'config' / '.secrets.toml'
+    if SECRETS_FILE.exists():
+        with open(SECRETS_FILE, 'rb') as f:
+            secrets = tomllib.load(f)
+    else:
+        secrets = {}
+except Exception:
+    secrets = {}
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-77s@l!7^nner#5%q^-6k*+n04a!hpa5_+j69pv$16@#e6fb)6b'
+# The default value is for development only.
+SECRET_KEY = secrets.get(
+    'SECRET_KEY',
+    'django-insecure-77s@l!7^nner#5%q^-6k*+n04a!hpa5_+j69pv$16@#e6fb)6b'
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# The default value is for development only.
+DEBUG = secrets.get('DEBUG', True)
 
 ALLOWED_HOSTS = []
 
@@ -171,39 +188,29 @@ LOGGING = {
     },
 }
 
-# Load API keys from .secrets.toml
-SECRETS_FILE = BASE_DIR / 'config' / '.secrets.toml'
-
-# config/.secrets.toml の設定例
-# --- 必須 ---
-# どちらか、あるいは両方のAPIキーを設定
+# Load API keys from the 'secrets' dictionary loaded at the top of the file.
+# config/.secrets.toml is the source of truth.
+#
+# --- Example .secrets.toml settings ---
+# --- Required ---
+# Set one or both API keys
 # GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
 # OPENAI_API_KEY = "YOUR_OPENAI_API_KEY"
 #
-# --- オプション ---
-# AIモデル名を指定（指定しない場合はデフォルト値が使われます）
+# --- Optional ---
+# Specify AI model names (defaults are used if not set)
 # GEMINI_MODEL = "gemini-pro-latest"
 # OPENAI_MODEL = "gpt-4o"
 #
-# OpenAI互換APIを利用する場合に指定
+# For OpenAI-compatible APIs
 # OPENAI_API_BASE_URL = "https://your-openai-compatible-api.example.com/v1"
 #
-# オンプレミス環境などでSSL証明書の検証を無効にする場合に指定
+# To disable SSL verification for on-premise environments
 # OPENAI_SSL_VERIFY = false
-if SECRETS_FILE.exists():
-    with open(SECRETS_FILE, 'rb') as f:
-        secrets = tomllib.load(f)
-    GEMINI_API_KEY = secrets.get('GEMINI_API_KEY')
-    OPENAI_API_KEY = secrets.get('OPENAI_API_KEY')
-    # AIモデルとURLを .secrets.toml から読み込む（デフォルト値付き）
-    GEMINI_MODEL = secrets.get('GEMINI_MODEL', 'gemini-pro-latest')
-    OPENAI_MODEL = secrets.get('OPENAI_MODEL', 'gpt-4o')
-    OPENAI_API_BASE_URL = secrets.get('OPENAI_API_BASE_URL') # デフォルトはNone
-    OPENAI_SSL_VERIFY = secrets.get('OPENAI_SSL_VERIFY', True)
-else:
-    GEMINI_API_KEY = None
-    OPENAI_API_KEY = None
-    GEMINI_MODEL = 'gemini-pro-latest'
-    OPENAI_MODEL = 'gpt-4o'
-    OPENAI_API_BASE_URL = None
-    OPENAI_SSL_VERIFY = True
+#
+GEMINI_API_KEY = secrets.get('GEMINI_API_KEY')
+OPENAI_API_KEY = secrets.get('OPENAI_API_KEY')
+GEMINI_MODEL = secrets.get('GEMINI_MODEL', 'gemini-pro-latest')
+OPENAI_MODEL = secrets.get('OPENAI_MODEL', 'gpt-4o')
+OPENAI_API_BASE_URL = secrets.get('OPENAI_API_BASE_URL')
+OPENAI_SSL_VERIFY = secrets.get('OPENAI_SSL_VERIFY', True)
