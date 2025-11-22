@@ -6,11 +6,13 @@ from django.shortcuts import render, redirect
 from django.views import View
 from django.contrib.auth import login
 from django.core.mail import send_mail
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.conf import settings
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LogoutView as AuthLogoutView
+from django.views.generic import FormView, TemplateView
 from .models import User, LoginToken
-from .forms import EmailLoginForm
+from .forms import EmailLoginForm, UserSettingsForm
 
 logger = logging.getLogger(__name__)
 
@@ -97,3 +99,30 @@ class AuthenticateView(View):
 
 class LogoutView(AuthLogoutView):
     next_page = 'users:login'
+
+
+class UserSettingsView(LoginRequiredMixin, FormView):
+    """
+    ユーザー設定（優先言語）を更新するためのビュー
+    """
+    template_name = 'users/user_settings.html'
+    form_class = UserSettingsForm
+    success_url = reverse_lazy('users:user_settings_success')
+
+    def get_initial(self):
+        """フォームの初期値を設定する"""
+        return {'preferred_language': self.request.user.preferred_language}
+
+    def form_valid(self, form):
+        """フォームが有効な場合にユーザー情報を更新する"""
+        user = self.request.user
+        user.preferred_language = form.cleaned_data['preferred_language']
+        user.save()
+        return super().form_valid(form)
+
+
+class UserSettingsSuccessView(LoginRequiredMixin, TemplateView):
+    """
+    ユーザー設定の更新成功ページを表示するビュー
+    """
+    template_name = 'users/user_settings_success.html'

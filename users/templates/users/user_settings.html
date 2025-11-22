@@ -1,0 +1,27 @@
+{% extends 'core/base.html' %}
+
+{% block title %}ユーザー設定{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">ユーザー設定</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ form.preferred_language.label_tag }}
+                            {{ form.preferred_language }}
+                        </div>
+                        <button type="submit" class="btn btn-primary">更新</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

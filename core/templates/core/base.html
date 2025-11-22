@@ -24,7 +24,8 @@
             <a href="{% url 'subscriptions:queryset_list' %}" class="site-title">📰 News Dispatcher</a>
             <span>
                 {% if user.is_authenticated %}
-                    {{ user.email }} | 
+                    {{ user.email }} |
+                    <a href="{% url 'users:user_settings' %}">設定</a> |
                     <form action="{% url 'users:logout' %}" method="post" style="display: inline;">
                         {% csrf_token %}
                         <button type="submit" style="background: none; border: none; color: #007bff; cursor: pointer; padding: 0; text-decoration: underline;">ログアウト</button>

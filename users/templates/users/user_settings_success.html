@@ -1,0 +1,14 @@
+{% extends 'core/base.html' %}
+
+{% block title %}設定完了{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="alert alert-success" role="alert">
+        <h4 class="alert-heading">設定が更新されました！</h4>
+        <p>優先言語の設定が正常に更新されました。</p>
+        <hr>
+        <p class="mb-0"><a href="{% url 'subscriptions:queryset_list' %}" class="alert-link">クエリセット一覧に戻る</a></p>
+    </div>
+</div>
+{% endblock %}
