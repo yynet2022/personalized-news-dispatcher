@@ -876,6 +876,30 @@
       {
         "name": "BtoB",
         "description": "企業間取引（Business to Business）。"
+      },
+      {
+        "name": "ChatGPT",
+        "description": "OpenAIが開発した生成AIチャットボット"
+      },
+      {
+        "name": "OpenAI",
+        "description": "人工知能の研究開発機関"
+      },
+      {
+        "name": "Google",
+        "description": "世界最大の検索エンジンとITサービス企業"
+      },
+      {
+        "name": "Gemini",
+        "description": "Googleが開発したマルチモーダルAIモデル"
+      },
+      {
+        "name": "Claude",
+        "description": "Anthropicが開発したAIアシスタント"
+      },
+      {
+        "name": "Grok",
+        "description": "xAIが開発した生成AI"
       }
     ],
     "name": "IT"
