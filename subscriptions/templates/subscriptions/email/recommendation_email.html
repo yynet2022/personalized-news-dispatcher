@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+</head>
+<body style="font-family: sans-serif; line-height: 1.6; color: #333; background-color: #f7f7f7; margin: 0; padding: 20px;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #ddd; border-radius: 5px; padding: 20px;">
+        <h1 style="font-size: 24px; color: #333; margin-top: 0;">News Dispatcher</h1>
+        <p>Hello {{ user.email }},</p>
+        <p>Here are some articles that other users have found interesting in the last 24 hours. You might like them too!</p>
+        
+        <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+            <h2 style="font-size: 20px; color: #555; margin-top: 0; margin-bottom: 15px;">🚀 Popular Articles You Haven't Read</h2>
+            
+            <ol style="list-style-type: decimal; padding-left: 20px; margin-top: 10px;">
+            {% for item in recommendations %}
+                <li style="margin-bottom: 15px; padding-left: 5px;">
+                    <a href="{{ item.article.tracking_url }}" style="font-size: 16px; font-weight: bold; color: #007bff; text-decoration: none;">{{ item.article.title }}</a>
+                    <p style="font-size: 12px; color: #777; margin: 5px 0 0 0;">Read by {{ item.count }} user(s)</p>
+                </li>
+            {% endfor %}
+            </ol>
+        </div>
+        
+        <hr style="border: 0; border-top: 1px solid #eee; margin-top: 30px;">
+        <p style="font-size: 12px; color: #999; text-align: center;">
+            <a href="{{ site_url }}{% url 'users:user_settings' %}" style="color: #007bff;">Change Settings</a> | Personalized News Dispatcher
+        </p>
+    </div>
+</body>
+</html>

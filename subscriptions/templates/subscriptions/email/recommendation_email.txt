@@ -1,0 +1,18 @@
+Hello {{ user.email }},
+
+Here are some articles that other users have found interesting in the last 24 hours. You might like them too!
+
+--- 🚀 Popular Articles You Haven't Read ---
+
+{% for item in recommendations %}
+- {{ item.article.title }}
+  Read by {{ item.count }} user(s)
+  {{ item.article.tracking_url }}
+
+{% endfor %}
+
+--------------------------------------
+To change your settings, visit:
+{{ site_url }}{% url 'users:user_settings' %}
+
+Personalized News Dispatcher

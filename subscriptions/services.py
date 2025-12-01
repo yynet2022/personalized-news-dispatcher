@@ -278,6 +278,47 @@ def send_digest_email(user: User, querysets_with_articles: list,
     )
 
 
+def send_recommendation_email(user: User, recommendations: list):
+    """
+    おすすめ記事のメールを送信する。
+
+    Args:
+        user (User): 送信先のユーザー。
+        recommendations (list): おすすめ記事と読者数の辞書のリスト。
+    """
+    current_site = Site.objects.get_current()
+    site_url = f'http://{current_site.domain}'
+
+    # トラッキングURLを記事オブジェクトに付与
+    for item in recommendations:
+        article = item['article']
+        tracking_path = reverse('news:track_click',
+                                kwargs={'pk': article.pk})
+        article.tracking_url = site_url + tracking_path
+
+    context = {
+        'user': user,
+        'recommendations': recommendations,
+        'site_url': site_url,
+    }
+
+    subject = '【News Dispatcher】Popular Articles You Might Like'
+    plain_body = render_to_string(
+        'subscriptions/email/recommendation_email.txt', context)
+    html_body = render_to_string(
+        'subscriptions/email/recommendation_email.html', context)
+
+    send_mail(
+        subject=subject,
+        message=plain_body,
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=[user.email],
+        fail_silently=False,
+        html_message=html_body,
+    )
+
+
+
 @transaction.atomic
 def log_sent_articles(user: User, articles: list):
     """
