@@ -1,3 +1,5 @@
+import time
+
 from django.core.management.base import BaseCommand
 
 from users.models import User
@@ -28,6 +30,12 @@ class Command(BaseCommand):
             help=('Fetch articles published within the last N days. '
                   'Set to 0 or less for no date limit.'),
         )
+        parser.add_argument(
+            '--interval',
+            type=int,
+            default=2,
+            help='Interval in seconds between fetch operations.'
+        )
 
     def handle(self, *args, **options):
         dry_run = options['dry_run']
@@ -42,15 +50,17 @@ class Command(BaseCommand):
 
         for user in active_users:
             try:
-                self.process_user(user, dry_run, options)
+                self.process_user(user, options)
             except Exception as e:
                 self.stderr.write(self.style.ERROR(
                     f"Failed to process user {user.email}: {e}"))
 
         self.stdout.write("Batch process finished.")
 
-    def process_user(self, user, dry_run, options):
+    def process_user(self, user, options):
         """一人のユーザーに対する処理をまとめた関数"""
+        dry_run = options['dry_run']
+        interval = options['interval']
         self.stdout.write(f"Processing user: {user.email}")
 
         # prefetch_related を使ってキャッシュされた結果を効率的に利用
@@ -65,6 +75,11 @@ class Command(BaseCommand):
         for queryset in user_querysets:
             self.stdout.write(f"  Processing queryset: {queryset.name}")
             try:
+                if interval > 0:
+                    self.stdout.write(
+                        f"    Waiting for {interval} seconds...")
+                    time.sleep(interval)
+
                 query_with_date, new_articles = fetch_articles_for_queryset(
                     queryset=queryset,
                     user=user,
