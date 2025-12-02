@@ -58,8 +58,13 @@ class User(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
-    # 👈 この一行を追加！
     objects = CustomUserManager()
+
+    def get_display_name(self):
+        n = self.get_full_name()
+        if n:
+            return n
+        return self.email
 
     def __str__(self):
         return self.email

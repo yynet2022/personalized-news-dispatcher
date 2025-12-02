@@ -6,7 +6,7 @@
 <body style="font-family: sans-serif; line-height: 1.6; color: #333; background-color: #f7f7f7; margin: 0; padding: 20px;">
     <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #ddd; border-radius: 5px; padding: 20px;">
         <h1 style="font-size: 24px; color: #333; margin-top: 0;">News Dispatcher</h1>
-        <p>Hello {{ user.email }},</p>
+        <p>Hello {{ user.get_display_name }},</p>
         <p>Here are some articles that other users have found interesting in the last 24 hours. You might like them too!</p>
         
         <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">

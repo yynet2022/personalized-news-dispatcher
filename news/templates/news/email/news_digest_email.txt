@@ -1,4 +1,4 @@
-Hello {{ user.email }},
+Hello {{ user.get_display_name }},
 
 Here is your daily news digest.
 

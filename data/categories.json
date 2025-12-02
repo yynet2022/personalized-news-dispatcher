@@ -1989,7 +1989,7 @@
         "description": "集積回路（Integrated Circuit）。複数の素子をまとめたもの"
       },
       {
-        "name": "ウェハー",
+        "name": "Wafer",
         "description": "半導体チップの基材となる薄い円盤（主にシリコン製）"
       },
       {
@@ -2015,7 +2015,7 @@
     ],
     "current": [
       {
-        "name": "AIチップ",
+        "name": "AI-Chip",
         "description": "人工知能の処理に特化した半導体（GPU、ASICなど）"
       },
       {
@@ -2053,7 +2053,7 @@
         "description": "電力制御に使われる半導体。SiCやGaNが注目される"
       },
       {
-        "name": "キオクシア",
+        "name": "KIOXIA",
         "description": "日本の半導体メモリメーカー"
       },
       {
@@ -2061,7 +2061,7 @@
         "description": "韓国のテクノロジー企業"
       },
       {
-        "name": "SKハイニックス",
+        "name": "SK-hynix",
         "description": "韓国の半導体製造会社"
       },
       {

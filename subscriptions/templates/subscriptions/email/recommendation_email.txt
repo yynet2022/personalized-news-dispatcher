@@ -1,4 +1,4 @@
-Hello {{ user.email }},
+Hello {{ user.get_display_name }},
 
 Here are some articles that other users have found interesting in the last 24 hours. You might like them too!
 
