@@ -1,219 +1,34 @@
-import feedparser
-import httpx
 import logging
 import asyncio
-from urllib.parse import quote
-from datetime import datetime, timezone, timedelta
 
 from django.core.mail import send_mail
 from django.conf import settings
 from django.urls import reverse
 from django.contrib.sites.models import Site
 from django.template.loader import render_to_string
-from django.db import transaction
 
 from users.models import User
-from news.models import Article, SentArticleLog
+from news.models import Article
 from subscriptions.models import QuerySet
+from core.fetchers import ArticleFetcher, CiNiiFetcher, GoogleNewsFetcher
 from core.translation import translate_content
 
 logger = logging.getLogger(__name__)
 
 
-class FeedFetchError(Exception):
-    """RSSフィードの取得に失敗した際に発生する例外。"""
-    pass
-
-
-def get_published_date_from_entry(entry):
+def send_articles_email(
+    user: User,
+    querysets_with_articles: list,
+    subject: str,
+    template_name: str,
+    enable_translation: bool = True
+):
     """
-    feedparserのentryからタイムゾーン付きのdatetimeオブジェクトを取得する。
-    published_parsedがなければNoneを返す。
-    """
-    if hasattr(entry, 'published_parsed') and entry.published_parsed:
-        dt_naive = datetime(*entry.published_parsed[:6])
-        return dt_naive.replace(tzinfo=timezone.utc)
-    return None
-
-
-def fetch_rss_feed(query: str, country_code: str = 'JP', timeout: int = 10):
-    """
-    指定されたクエリでGoogle NewsからRSSフィードを取得し、解析する。
-
-    Args:
-        query (str): 検索クエリ文字列。
-        country_code (str): 国コード (例: 'JP', 'US')。
-        timeout (int): リクエストのタイムアウト秒数。
-
-    Returns:
-        feedparser.FeedParserDict: 解析されたフィードオブジェクト。
-
-    Raises:
-        FeedFetchError: フィードの取得に失敗した場合。
-    """
-    country_params = {
-        'JP': {'hl': 'ja', 'gl': 'JP', 'ceid': 'JP:ja'},
-        'US': {'hl': 'en', 'gl': 'US', 'ceid': 'US:en'},
-        'CN': {'hl': 'zh-CN', 'gl': 'CN', 'ceid': 'CN:zh-Hans'},
-        'KR': {'hl': 'ko', 'gl': 'KR', 'ceid': 'KR:ko'},
-    }
-    params = country_params.get(country_code, country_params['JP'])
-
-    encoded_query = quote(query)
-    base_url = (f"https://news.google.com/rss/search?"
-                f"q={encoded_query}&hl={params['hl']}&"
-                f"gl={params['gl']}&ceid={params['ceid']}")
-
-    try:
-        response = httpx.get(base_url, timeout=timeout, follow_redirects=True)
-        response.raise_for_status()
-        return feedparser.parse(response.content)
-    except httpx.RequestError as e:
-        error_message = (f"Failed to fetch RSS feed for query '{query}' "
-                         f"from country '{country_code}': {e}")
-        logger.error(error_message)
-        raise FeedFetchError(error_message) from e
-
-
-def _build_query_with_date(query_str: str, after_days: int) -> str:
-    """
-    クエリ文字列に日付フィルターを追加する。
-    """
-    if after_days > 0:
-        limit_date = datetime.now() - timedelta(days=after_days)
-        after_date_str = limit_date.strftime('%Y-%m-%d')
-        return f"{query_str} after:{after_date_str}"
-    return query_str
-
-
-def _process_feed_entries(entries, after_days: int, max_articles: int,
-                          user: User = None, persist: bool = False):
-    """
-    フィードエントリーを処理してArticleオブジェクトのリストを生成する内部関数。
-
-    Args:
-        entries (list): feedparserのエントリーリスト。
-        after_days (int): 何日前までの記事を取得するか。
-        max_articles (int): 取得する記事の最大数。
-        user (User, optional): 送信済みか確認するためのユーザー。Noneならチェックしない。
-        persist (bool): Trueの場合、ArticleをDBに保存する。
-
-    Returns:
-        list[Article]: Articleオブジェクトのリスト。
-    """
-    articles = []
-    for entry in entries:
-        if len(articles) >= max_articles:
-            break
-
-        published_date = get_published_date_from_entry(entry)
-
-        if after_days > 0 and published_date:
-            threshold_date = \
-                datetime.now(timezone.utc) - timedelta(days=after_days)
-            if published_date < threshold_date:
-                continue
-
-        article_instance = None
-        if persist:
-            article_instance, _ = Article.objects.get_or_create(
-                url=entry.link,
-                defaults={
-                    'title': entry.title,
-                    'published_date': published_date
-                }
-            )
-        else:
-            # DB検索またはインスタンス作成のみ
-            article_instance = Article.objects.filter(url=entry.link).first()
-            if not article_instance:
-                article_instance = Article(
-                    url=entry.link,
-                    title=entry.title,
-                    published_date=published_date
-                )
-        # ユーザーが指定されていて、かつ送信済みでない場合のみ追加
-        if user and SentArticleLog.objects.filter(
-                user=user, article=article_instance).exists():
-            continue
-
-        articles.append(article_instance)
-
-    return articles
-
-
-def fetch_articles_for_preview(query_str: str, country_code: str,
-                               after_days: int, max_articles: int):
-    """
-    プレビュー用に新しいニュース記事を取得する。DBへの保存は行わない。
-
-    Args:
-        query_str (str): 検索クエリ文字列。
-        country_code (str): 国コード。
-        after_days (int): 何日前までの記事を取得するかの日数。
-        max_articles (int): 取得する記事の最大数。
-
-    Returns:
-        tuple[str, list[Article]]: 実際に使用したクエリ文字列と、Articleオブジェクトのリスト。
-    """
-    query_with_date = _build_query_with_date(query_str, after_days)
-
-    feed = fetch_rss_feed(
-        query_with_date, country_code=country_code, timeout=5)
-
-    articles = _process_feed_entries(
-        entries=feed.entries,
-        after_days=after_days,
-        max_articles=max_articles,
-        persist=False
-    )
-    return query_with_date, articles
-
-
-def fetch_articles_for_queryset(queryset: QuerySet, user: User,
-                                after_days_override: int = None,
-                                dry_run: bool = False):
-    """
-    一つのQuerySetから新しいニュース記事を取得する。
-
-    Args:
-        queryset (QuerySet): ニュースを取得するためのQuerySetオブジェクト。
-        user (User): 記事が既に送信されたかを判断するためのUserオブジェクト。
-        after_days_override (int, optional): querysetの設定を上書きする日数。デフォルトはNone。
-        dry_run (bool): Trueの場合、DBへの書き込みは行わない。
-
-    Returns:
-        tuple[str, list[Article]]: 実際に使用したクエリ文字列と、見つかったArticleオブジェクトのリスト。
-    """
-    after_days = after_days_override \
-        if after_days_override is not None else queryset.after_days
-
-    query_with_date = _build_query_with_date(queryset.query_str, after_days)
-
-    feed = fetch_rss_feed(query_with_date, country_code=queryset.country)
-
-    articles = _process_feed_entries(
-        entries=feed.entries,
-        after_days=after_days,
-        max_articles=queryset.max_articles,
-        user=user,
-        persist=(not dry_run)
-    )
-    return query_with_date, articles
-
-
-def send_digest_email(user: User, querysets_with_articles: list,
-                      should_translate: bool = True):
-    """
-    ニュースダイジェストメールを送信する。
-
-    Args:
-        user (User): 送信先のユーザー。
-        querysets_with_articles (list): クエリセット名と記事リストの辞書のリスト。
-        should_translate (bool): 翻訳を試みるべきかどうか。呼び出し側でFalseに設定すると、以下のロジックに関わらず翻訳は行われません。
+    汎用的な記事ダイジェストメールを送信する。
     """
     current_site = Site.objects.get_current()
     site_url = f'http://{current_site.domain}'
+    logger.debug(f'site_url: {site_url}')
 
     # トラッキングURLを記事オブジェクトに付与
     for item in querysets_with_articles:
@@ -228,26 +43,22 @@ def send_digest_email(user: User, querysets_with_articles: list,
         'site_url': site_url,
     }
 
-    plain_body = render_to_string('news/email/news_digest_email.txt', context)
-    html_body = render_to_string('news/email/news_digest_email.html', context)
+    plain_body = render_to_string(f'{template_name}.txt', context)
+    html_body = render_to_string(f'{template_name}.html', context)
 
-    # 件名にQuerySet名を追加
-    queryset_name = querysets_with_articles[0]['queryset_name']
-    subject = f'【News Dispatcher】Daily News Digest - {queryset_name}'
-    
     # 翻訳ロジック
-    # 呼び出し元で should_translate=False が指定されている場合は、何もしない
-    final_should_translate = should_translate
-    
-    # 翻訳が有効な場合のみ、国と言語の一致をチェックする
+    final_should_translate = enable_translation
     if final_should_translate:
         queryset = querysets_with_articles[0].get('queryset')
-        if queryset:
+        # Google News の場合のみ、言語が一致しない場合に翻訳を実行
+        if queryset and queryset.source == QuerySet.SOURCE_GOOGLE_NEWS:
             country_data = settings.COUNTRY_CONFIG.get(queryset.country)
             country_lang = country_data['lang'] if country_data else None
             user_lang = getattr(user, 'preferred_language', None)
-            if country_lang and country_lang == user_lang:
-                final_should_translate = False  # 一致したので翻訳不要
+            if country_lang and user_lang and country_lang == user_lang:
+                final_should_translate = False  # 言語が一致したので翻訳不要
+        else:
+            final_should_translate = False  # Google News 以外は翻訳しない
 
     if final_should_translate:
         target_language = getattr(user, 'preferred_language', 'Japanese')
@@ -265,8 +76,9 @@ def send_digest_email(user: User, querysets_with_articles: list,
             )
             return translated_plain, translated_html
 
-        # 非同期関数を実行して翻訳結果を取得
         plain_body, html_body = asyncio.run(translate_bodies())
+        # logger.debug(f'plain_body> {plain_body}')
+        # logger.debug(f'html_body> {html_body}')
 
     send_mail(
         subject=subject,
@@ -288,6 +100,7 @@ def send_recommendation_email(user: User, recommendations: list):
     """
     current_site = Site.objects.get_current()
     site_url = f'http://{current_site.domain}'
+    logger.debug(f'site_url: {site_url}')
 
     # トラッキングURLを記事オブジェクトに付与
     for item in recommendations:
@@ -302,7 +115,7 @@ def send_recommendation_email(user: User, recommendations: list):
         'site_url': site_url,
     }
 
-    subject = '【News Dispatcher】Popular Articles You Might Like'
+    subject = '[News Dispatcher] Popular Articles You Might Like'
     plain_body = render_to_string(
         'subscriptions/email/recommendation_email.txt', context)
     html_body = render_to_string(
@@ -318,16 +131,25 @@ def send_recommendation_email(user: User, recommendations: list):
     )
 
 
+def get_fetcher_for_queryset(queryset: QuerySet) -> ArticleFetcher:
+    """QuerySetのsourceに応じて適切なArticleFetcherインスタンスを返す。"""
+    if queryset.source == QuerySet.SOURCE_CINII:
+        return CiNiiFetcher()
+    elif queryset.source == QuerySet.SOURCE_GOOGLE_NEWS:
+        return GoogleNewsFetcher()
+    else:
+        raise ValueError(f"Unsupported queryset source: {queryset.source}")
 
-@transaction.atomic
-def log_sent_articles(user: User, articles: list):
-    """
-    送信済み記事をDBに記録する。
 
-    Args:
-        user (User): 送信先のユーザー。
-        articles (list[Article]): 送信したArticleオブジェクトのリスト。
+def fetch_articles_for_subscription(
+    queryset: QuerySet, user: User,
+    after_days_override: int | None = None,
+    dry_run: bool = False
+) -> tuple[str, list[Article]]:
     """
-    for article in set(articles):
-        # 冪等性を確保するためにget_or_createを使用
-        SentArticleLog.objects.get_or_create(user=user, article=article)
+    QuerySetに対応したFetcherを使い、未読の記事を取得する。
+    これは今後、記事取得のメインの入り口となる。
+    """
+    fetcher = get_fetcher_for_queryset(queryset)
+    return fetcher.fetch_articles(queryset, user, dry_run=dry_run,
+                                  after_days_override=after_days_override)

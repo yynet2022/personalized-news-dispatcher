@@ -19,5 +19,6 @@ class UserSettingsForm(forms.ModelForm):
         model = User
         fields = ['preferred_language']
         widgets = {
-            'preferred_language': forms.Select(attrs={'class': 'form-control'}),
+            'preferred_language':
+            forms.Select(attrs={'class': 'form-control'}),
         }

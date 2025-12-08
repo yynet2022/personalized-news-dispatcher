@@ -5,7 +5,8 @@ from .models import (
     UniversalKeywords,
     CurrentKeywords,
     RelatedKeywords,
-    QuerySet
+    QuerySet,
+    CiNiiKeywords,
 )
 
 
@@ -53,10 +54,20 @@ class QuerySetAdmin(admin.ModelAdmin):
     """
     クエリセットモデルの管理サイト設定
     """
-    list_display = ('name', 'user', 'large_category', 'country', 'auto_send')
+    list_display = ('name', 'user', 'source', 'auto_send')
     search_fields = ('name', 'user__email')
-    list_filter = ('user', 'auto_send', 'large_category', 'country')
+    list_filter = ('user', 'auto_send', 'source', 'large_category', 'country')
     raw_id_fields = ('user',)
     filter_horizontal = (
-        'universal_keywords', 'current_keywords', 'related_keywords'
+        'universal_keywords', 'current_keywords', 'related_keywords',
+        'cinii_keywords'
     )
+
+
+@admin.register(CiNiiKeywords)
+class CiNiiKeywordsAdmin(admin.ModelAdmin):
+    """
+    CiNiiキーワードモデルの管理サイト設定
+    """
+    list_display = ('name', 'description')
+    search_fields = ('name',)

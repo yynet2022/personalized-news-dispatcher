@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404, redirect
 from django.views import View
-from django.contrib.auth.mixins import LoginRequiredMixin
+# from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Article, ClickLog
 
 
@@ -11,6 +11,8 @@ class TrackClickView(View):
 
         if request.user.is_authenticated:
             # クリックログを記録 (既に存在する場合は重複させない)
+            # なお、update_or_create() はダメ。クリック時間は更新させない。
+            # recommendations 機能で重複させないため。
             ClickLog.objects.get_or_create(user=request.user, article=article)
 
         # ユーザーを本来の記事URLにリダイレクト

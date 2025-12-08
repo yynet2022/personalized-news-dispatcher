@@ -9,7 +9,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         users = User.objects.all()
         for user in users:
-            f = ['email', 'is_staff', 'is_superuser', 
+            f = ['email', 'is_staff', 'is_superuser',
                  'is_active',
                  'username', 'first_name',
                  'last_name',

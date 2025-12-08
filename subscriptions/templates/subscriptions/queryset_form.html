@@ -23,10 +23,20 @@
             gap: 1rem 1.5rem; /* 行間と列間 */
             align-items: center; /* 垂直方向中央揃え */
         }
+        
+        .form-group {
+            display: contents; /* 親要素のグリッドを継承 */
+        }
 
         .form-grid label {
             font-weight: bold;
             justify-self: end; /* ラベルを右揃えにする */
+        }
+        
+        /* ラジオボタンのラベルを通常のスタイルに */
+        #id_source label {
+            font-weight: normal;
+            justify-self: start;
         }
 
         /* 入力欄のスタイル */
@@ -46,23 +56,27 @@
             grid-column: 1 / -1; /* 最初の列から最後の列まで */
         }
 
-        /* チェックボックスのコンテナにスタイルを適用 */
-        #keywords_container {
+        /* キーワードコンテナの共通スタイル */
+        .keywords-container {
             border: 1px solid #ccc;
             padding: 0.5rem;
             border-radius: 4px;
-            max-height: 250px;
+         /* max-height: 250px; */
             overflow-y: auto;
             list-style: none;
             padding-left: 0.5rem;
             background-color: #fff; /* 背景色を白に */
         }
-
-        #keywords_container > div {
+        .keywords-container > div, /* JSで生成されるGoogle Newsのキーワード用 */
+        .keywords-container #id_cinii_keywords > div { /* Djangoで生成されるCiNiiのキーワード用 */
             display: inline-block;
             margin-right: 1rem;
             border: none;
             padding: 0;
+        }
+        .keywords-container label {
+            font-weight: normal;
+            justify-self: start;
         }
 
         /* ボタンのコンテナ */
@@ -115,21 +129,10 @@
             color: #333;
         }
 
-
         /* プレビュー結果 */
-        #preview-area {
-            margin-top: 2rem;
-        }
-        #preview-results ol {
-            list-style: decimal;
-            padding-left: 2rem;
-        }
-        #preview-results li {
-            display: list-item;
-            background: none;
-            border: none;
-            padding: 0.25em 0;
-        }
+        #preview-area { margin-top: 2rem; }
+        #preview-results ol { list-style: decimal; padding-left: 2rem; }
+        #preview-results li { display: list-item; background: none; border: none; padding: 0.25em 0; }
     </style>
     
     <form method="post" id="queryset-form" class="card">
@@ -138,40 +141,58 @@
             {{ form.name.label_tag }} 
             {{ form.name }}
 
+            {{ form.source.label_tag }}
+            <div id="id_source">{{ form.source }}</div>
+
             {{ form.auto_send.label_tag }}
             <div>{{ form.auto_send }}</div>
-
-            {{ form.large_category.label_tag }} 
-            {{ form.large_category }}
-
-            {{ form.country.label_tag }} 
-            {{ form.country }}
 
             {{ form.after_days.label_tag }} 
             {{ form.after_days }}
 
             {{ form.max_articles.label_tag }} 
             {{ form.max_articles }}
-            
-            <!-- キーワードセクション -->
-            <div class="grid-full-width">
-                <label>キーワード</label>
-                <div id="keywords_container">
-                    <div style="display:none;">
-                        {{ form.universal_keywords }}
-                        {{ form.current_keywords }}
-                        {{ form.related_keywords }}
+
+            <!-- Google News Fields -->
+            <div id="google-news-fields" class="form-group">
+                {{ form.country.label_tag }} 
+                {{ form.country }}
+                
+                {{ form.large_category.label_tag }} 
+                {{ form.large_category }}
+
+                <div class="grid-full-width">
+                    <label>キーワード</label>
+                    <div id="keywords_container" class="keywords-container">
+                        <div style="display:none;">
+                            {{ form.universal_keywords }}
+                            {{ form.current_keywords }}
+                            {{ form.related_keywords }}
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {{ form.additional_or_keywords.label_tag }}
-            {{ form.additional_or_keywords }}
-
-            {{ form.refinement_keywords.label_tag }}
-            {{ form.refinement_keywords }}
+            <!-- CiNii Fields -->
+            <div id="cinii-fields" class="form-group">
+                <div class="grid-full-width">
+                    {{ form.cinii_keywords.label_tag }}
+                    <div class="keywords-container" id="cinii_keywords_container">
+                      {{ form.cinii_keywords }}
+                    </div>
+                </div>
+            </div>
             
-            <!-- ボタンセクション -->
+            <!-- Common Fields -->
+            <div class="form-group">
+                {{ form.additional_or_keywords.label_tag }}
+                {{ form.additional_or_keywords }}
+
+                {{ form.refinement_keywords.label_tag }}
+                {{ form.refinement_keywords }}
+            </div>
+            
+            <!-- Buttons -->
             <div class="button-group">
                 <button type="submit" class="btn btn-primary">{% if object %}更新する{% else %}作成する{% endif %}</button>
                 <button type="button" id="preview-button" class="btn btn-secondary">プレビュー</button>
@@ -189,13 +210,17 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // --- Element Selectors ---
     const largeCategorySelect = document.querySelector('#id_large_category');
     const keywordsContainer = document.querySelector('#keywords_container');
+    const sourceRadios = document.querySelectorAll('input[name="source"]');
+    const googleNewsFields = document.getElementById('google-news-fields');
+    const ciniiFields = document.getElementById('cinii-fields');
     const previewButton = document.querySelector('#preview-button');
     const previewArea = document.querySelector('#preview-area');
     const previewResults = document.querySelector('#preview-results');
 
-    // --- ヘルパー関数: 1つのチェックボックス要素を生成 ---
+    // --- Helper function to create a checkbox element ---
     function createCheckbox(name, item, selectedValues = []) {
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
@@ -205,67 +230,61 @@ document.addEventListener('DOMContentLoaded', function() {
         if (selectedValues.includes(String(item.id))) {
             checkbox.checked = true;
         }
-
         const label = document.createElement('label');
         label.htmlFor = checkbox.id;
-        label.title = item.description || ''; // ホバーで説明を表示
+        label.title = item.description || '';
         label.appendChild(checkbox);
         label.appendChild(document.createTextNode(` ${item.name}`));
-        
         const wrapper = document.createElement('div');
         wrapper.appendChild(label);
         return wrapper;
     }
 
-    // --- 1. 大分類が変更されたら、全キーワードを動的に読み込む ---
-    largeCategorySelect.addEventListener('change', function() {
-        loadAllKeywords();
-    });
+    // --- Get selected values for checkboxes ---
+    function getSelectedValues(name) {
+        const initialSelected = Array.from(document.querySelectorAll(`input[name="${name}"][checked]`));
+        return initialSelected.map(cb => cb.value);
+    }
 
+    // --- Load all keywords for Google News ---
     function loadAllKeywords() {
+        if (!largeCategorySelect || !largeCategorySelect.value) {
+            keywordsContainer.innerHTML = '';
+            return;
+        }
         const largeCategoryId = largeCategorySelect.value;
-
-        // 変更前の選択状態を保持
         const selectedUniversal = getSelectedValues('universal_keywords');
         const selectedCurrent = getSelectedValues('current_keywords');
         const selectedRelated = getSelectedValues('related_keywords');
         
-        keywordsContainer.innerHTML = '<p>読み込み中...</p>'; 
-
-        if (!largeCategoryId) {
-            keywordsContainer.innerHTML = '';
-            return;
-        }
-
+        keywordsContainer.innerHTML = '<p>読み込み中...</p>';
+        
         const fetchUniversal = fetch(`/subscriptions/api/universal-keywords/?large_category_id=${largeCategoryId}`).then(res => res.json());
         const fetchCurrent = fetch(`/subscriptions/api/current-keywords/?large_category_id=${largeCategoryId}`).then(res => res.json());
         const fetchRelated = fetch(`/subscriptions/api/related-keywords/?large_category_id=${largeCategoryId}`).then(res => res.json());
 
         Promise.all([fetchUniversal, fetchCurrent, fetchRelated])
             .then(([universalData, currentData, relatedData]) => {
-                
-                let allKeywords = [];
-                universalData.forEach(item => allKeywords.push({ ...item, type: 'universal_keywords' }));
-                currentData.forEach(item => allKeywords.push({ ...item, type: 'current_keywords' }));
-                relatedData.forEach(item => allKeywords.push({ ...item, type: 'related_keywords' }));
-
-                // 名前順でソート
+                let allKeywords = [
+                    ...universalData.map(item => ({ ...item, type: 'universal_keywords' })),
+                    ...currentData.map(item => ({ ...item, type: 'current_keywords' })),
+                    ...relatedData.map(item => ({ ...item, type: 'related_keywords' }))
+                ];
                 allKeywords.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
-
-                keywordsContainer.innerHTML = ''; // コンテナをクリア
-
+                
+                keywordsContainer.innerHTML = '';
                 if (allKeywords.length === 0) {
                     keywordsContainer.innerHTML = '<p>このカテゴリにはキーワードが登録されていません。</p>';
                     return;
                 }
 
                 allKeywords.forEach(item => {
-                    let selectedValues = [];
-                    if (item.type === 'universal_keywords') selectedValues = selectedUniversal;
-                    if (item.type === 'current_keywords') selectedValues = selectedCurrent;
-                    if (item.type === 'related_keywords') selectedValues = selectedRelated;
-                    
-                    const checkboxElement = createCheckbox(item.type, item, selectedValues);
+                    const selectedMap = {
+                        'universal_keywords': selectedUniversal,
+                        'current_keywords': selectedCurrent,
+                        'related_keywords': selectedRelated
+                    };
+                    const checkboxElement = createCheckbox(item.type, item, selectedMap[item.type] || []);
                     keywordsContainer.appendChild(checkboxElement);
                 });
             })
@@ -274,72 +293,76 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error loading keywords:', error);
             });
     }
-    
-    function getSelectedValues(name) {
-        // Djangoの初期レンダリングから選択値を取得
-        const initialSelected = Array.from(document.querySelectorAll(`input[name="${name}"][checked]`));
-        if (initialSelected.length > 0) {
-            return initialSelected.map(cb => cb.value);
+
+    // --- Toggle field visibility based on source ---
+    function toggleSourceFields(resetValue=true) {
+        const selectedSource = document.querySelector('input[name="source"]:checked').value;
+        googleNewsFields.style.display = (selectedSource === 'google_news') ? '' : 'none';
+        ciniiFields.style.display = (selectedSource === 'cinii') ? '' : 'none';
+        if (resetValue) {
+            console.log("reset")
+            document.querySelector('#id_additional_or_keywords').value = "";
+            document.querySelector('#id_refinement_keywords').value = "";
+    document.querySelector('#id_after_days').value = (selectedSource === 'google_news') ? '2' : '180';
         }
-        return [];
     }
 
-    // --- 2. プレビューボタンが押されたら、ニュースを取得して表示 ---
-    previewButton.addEventListener('click', function() {
-        if (!largeCategorySelect.value) {
-            alert('先に大分類を選択してください。');
+    // --- Handle Preview Button Click ---
+    function handlePreview() {
+        const selectedSource = document.querySelector('input[name="source"]:checked').value;
+        let finalQuery = '';
+        let params = new URLSearchParams({
+            source: selectedSource,
+            max_articles: document.querySelector('#id_max_articles').value,
+        });
+
+        if (selectedSource === 'google_news') {
+            if (!largeCategorySelect.value) {
+                alert('先に大分類を選択してください。');
+                return;
+            }
+            const parts = [];
+            parts.push(largeCategorySelect.options[largeCategorySelect.selectedIndex].text);
+            document.querySelectorAll('#keywords_container input[type="checkbox"]:checked').forEach(cb => {
+                parts.push(cb.labels[0].textContent.trim());
+            });
+            const additionalOrKeywords = document.querySelector('#id_additional_or_keywords').value.trim();
+            if (additionalOrKeywords) {
+                parts.push(...additionalOrKeywords.split(/\s+/).filter(k => k));
+            }
+            let orPart = parts.filter(p => p).join(' OR ');
+            if (parts.length > 1) orPart = `(${orPart})`;
+            const refinementPart = document.querySelector('#id_refinement_keywords').value.trim();
+            finalQuery = `${orPart} ${refinementPart}`.trim();
+
+            params.append('q', finalQuery);
+            params.append('after_days', document.querySelector('#id_after_days').value);
+            params.append('country', document.querySelector('#id_country').value);
+
+        } else if (selectedSource === 'cinii') {
+            const parts = [];
+            document.querySelectorAll('#cinii_keywords_container input:checked').forEach(cb => {
+                 parts.push(`${cb.labels[0].textContent.trim()}`);
+            });
+            const additionalOrKeywords = document.querySelector('#id_additional_or_keywords').value.trim();
+            if (additionalOrKeywords) {
+                parts.push(...additionalOrKeywords.split(/\s+/).filter(k => k).map(k => `"${k}"`));
+            }
+            let orPart = parts.join(' OR ');
+            if (parts.length > 1) orPart = `(${orPart})`;
+            const refinementPart = document.querySelector('#id_refinement_keywords').value.trim();
+            finalQuery = `${orPart} ${refinementPart}`.trim();
+            params.append('q', finalQuery);
+            params.append('after_days', document.querySelector('#id_after_days').value);
+        }
+
+        if (!finalQuery) {
+            alert('プレビューするキーワードを1つ以上選択・入力してください。');
             return;
         }
 
-        const parts = [];
-        const largeCategoryName = largeCategorySelect.options[largeCategorySelect.selectedIndex].text;
-        parts.push(largeCategoryName);
-
-        // プレビューロジックは変更不要 (name属性で正しく収集できるため)
-        document.querySelectorAll('input[name="universal_keywords"]:checked').forEach(cb => {
-            parts.push(cb.labels[0].textContent.trim());
-        });
-        document.querySelectorAll('input[name="current_keywords"]:checked').forEach(cb => {
-            parts.push(cb.labels[0].textContent.trim());
-        });
-        document.querySelectorAll('input[name="related_keywords"]:checked').forEach(cb => {
-            parts.push(cb.labels[0].textContent.trim());
-        });
-
-        const additionalOrKeywords = document.querySelector('#id_additional_or_keywords').value.trim();
-        if (additionalOrKeywords) {
-            parts.push(...additionalOrKeywords.split(/\s+/).filter(k => k));
-        }
-
-        let orPart = parts.filter(p => p).join(' OR ');
-        if (orPart) {
-            orPart = `(${orPart})`;
-        }
-
-        const refinementPart = document.querySelector('#id_refinement_keywords').value.trim();
-        
-        let finalQuery = orPart;
-        if (refinementPart) {
-            if (finalQuery) {
-                finalQuery = `${finalQuery} ${refinementPart}`;
-            } else {
-                finalQuery = refinementPart;
-            }
-        }
-
-        const afterDays = document.querySelector('#id_after_days').value;
-        const maxArticles = document.querySelector('#id_max_articles').value;
-        const country = document.querySelector('#id_country').value;
-
         previewArea.style.display = 'block';
         previewResults.innerHTML = '<p>読み込み中...</p>';
-
-        const params = new URLSearchParams({
-            q: finalQuery,
-            after_days: afterDays,
-            max_articles: maxArticles,
-            country: country
-        });
 
         fetch(`/subscriptions/api/news-preview/?${params.toString()}`)
             .then(response => response.json())
@@ -349,10 +372,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
                 if (data.articles.length === 0) {
-                    previewResults.innerHTML = `<p>「${data.query_str}」に関するニュースは見つかりませんでした。</p>`;
+                    previewResults.innerHTML = `<p>「${data.query_str}」に関する記事は見つかりませんでした。</p>`;
                     return;
                 }
-
                 let html = `<h3>「${data.query_str}」の検索結果</h3><ol>`;
                 data.articles.forEach(article => {
                     html += `
@@ -369,11 +391,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 previewResults.innerHTML = '<p>プレビューの取得中にエラーが発生しました。</p>';
                 console.error('Error:', error);
             });
-    });
+    }
 
-    // --- 初期読み込み ---
-    // ページ読み込み時に、もし大分類が選択済みならキーワードを読み込む
-    if (largeCategorySelect.value) {
+    // --- Event Listeners & Initial Calls ---
+
+    const isAnyRadioEnabled = document.querySelectorAll('input[name="source"]:not([disabled])').length > 0;
+    // console.log('isEnable', isAnyRadioEnabled);
+    if (isAnyRadioEnabled) {
+       sourceRadios.forEach(radio => radio.addEventListener('change', toggleSourceFields));
+    }
+    if (largeCategorySelect) {
+        largeCategorySelect.addEventListener('change', loadAllKeywords);
+    }
+    if (previewButton) {
+        previewButton.addEventListener('click', handlePreview);
+    }
+
+    // Initial State Setup
+    toggleSourceFields(false);
+    if (largeCategorySelect && largeCategorySelect.value && document.querySelector('input[name="source"]:checked').value === 'google_news') {
         loadAllKeywords();
     }
 });

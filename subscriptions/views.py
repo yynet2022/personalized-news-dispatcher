@@ -1,68 +1,35 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import CreateView, UpdateView, DeleteView, View
+from django.shortcuts import redirect, get_object_or_404
+from django.views.generic import (
+    ListView, CreateView, UpdateView, DeleteView, View)
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.contrib import messages
+from django.http import JsonResponse
+from django.db import IntegrityError
+import logging
 
 from .models import (
     QuerySet, UniversalKeywords, CurrentKeywords, RelatedKeywords)
 from .forms import QuerySetForm
-from django.http import JsonResponse
-from django.db import IntegrityError
-
 from .services import (
-    fetch_articles_for_queryset, send_digest_email, log_sent_articles,
-    fetch_articles_for_preview, FeedFetchError
+    fetch_articles_for_subscription, send_articles_email
 )
+from core.fetchers import FeedFetchError
+from core.services import log_sent_articles
+
+logger = logging.getLogger(__name__)
 
 
-class QuerySetListView(LoginRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
-        querysets = QuerySet.objects.filter(user=request.user).order_by('name')
-        context = {'querysets': querysets}
-        return render(request, 'subscriptions/queryset_list.html', context)
+class QuerySetListView(LoginRequiredMixin, ListView):
+    model = QuerySet
+    template_name = 'subscriptions/queryset_list.html'
+    context_object_name = 'querysets'
 
-
-def generate_query_str(form):
-    parts = []
-
-    # 大分類
-    large_category = form.cleaned_data.get('large_category')
-    if large_category:
-        parts.append(large_category.name)
-
-    # 普遍キーワード
-    for keyword in form.cleaned_data.get('universal_keywords', []):
-        parts.append(keyword.name)
-
-    # 時事キーワード
-    for keyword in form.cleaned_data.get('current_keywords', []):
-        parts.append(keyword.name)
-
-    # 関連キーワード
-    for keyword in form.cleaned_data.get('related_keywords', []):
-        parts.append(keyword.name)
-
-    # OR追加キーワード
-    additional_or_keywords = \
-        form.cleaned_data.get('additional_or_keywords', '')
-    if additional_or_keywords:
-        parts.extend(additional_or_keywords.split())
-
-    or_part = " OR ".join(parts)
-    if or_part:
-        or_part = f"({or_part})"
-
-    refinement_part = form.cleaned_data.get('refinement_keywords', '')
-    if not refinement_part:
-        return or_part
-
-    if not or_part:
-        return refinement_part
-
-    return f"{or_part} {refinement_part}"
+    def get_queryset(self):
+        return QuerySet.objects.filter(
+            user=self.request.user).order_by('source', 'name')
 
 
 class QuerySetCreateView(LoginRequiredMixin, CreateView):
@@ -71,22 +38,13 @@ class QuerySetCreateView(LoginRequiredMixin, CreateView):
     template_name = 'subscriptions/queryset_form.html'
     success_url = reverse_lazy('subscriptions:queryset_list')
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
-
     def form_valid(self, form):
-        queryset = form.save(commit=False)
-        queryset.user = self.request.user
-        queryset.query_str = generate_query_str(form)
+        form.instance.user = self.request.user
         try:
-            queryset.save()
-            form.save_m2m()
+            return super().form_valid(form)
         except IntegrityError:
             form.add_error('name', '同じ名前のQuerySetが既に存在します。')
             return self.form_invalid(form)
-        return redirect(self.success_url)
 
 
 class QuerySetUpdateView(LoginRequiredMixin, UpdateView):
@@ -98,21 +56,12 @@ class QuerySetUpdateView(LoginRequiredMixin, UpdateView):
     def get_queryset(self):
         return QuerySet.objects.filter(user=self.request.user)
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
-
     def form_valid(self, form):
-        queryset = form.save(commit=False)
-        queryset.query_str = generate_query_str(form)
         try:
-            queryset.save()
-            form.save_m2m()
+            return super().form_valid(form)
         except IntegrityError:
             form.add_error('name', '同じ名前のQuerySetが既に存在します。')
             return self.form_invalid(form)
-        return redirect(self.success_url)
 
 
 class QuerySetDeleteView(LoginRequiredMixin, DeleteView):
@@ -133,10 +82,12 @@ def send_manual_email(request, pk):
     queryset = get_object_or_404(QuerySet, pk=pk, user=request.user)
 
     try:
-        # querysetに設定された値で記事を取得
-        _, new_articles = fetch_articles_for_queryset(queryset, request.user)
+        _, new_articles = fetch_articles_for_subscription(queryset,
+                                                          request.user)
     except FeedFetchError as e:
-        messages.error(request, f"ニュースの取得に失敗しました: {e}")
+        s = f"ニュースの取得に失敗しました: {e}"
+        logger.error(s)
+        messages.error(request, s)
         return redirect('subscriptions:queryset_list')
 
     if new_articles:
@@ -147,8 +98,21 @@ def send_manual_email(request, pk):
         }]
 
         try:
-            send_digest_email(request.user, querysets_with_articles,
-                              should_translate=False)
+            if queryset.source == QuerySet.SOURCE_GOOGLE_NEWS:
+                subject = f'[News Dispatcher] Manual Send - {queryset.name}'
+            elif queryset.source == QuerySet.SOURCE_CINII:
+                subject = f'[CiNii Research] Manual Send - {queryset.name}'
+            else:
+                raise ValueError(f"Unknown source: {queryset.source}")
+
+            template_name = 'news/email/news_digest_email'
+            send_articles_email(
+                user=request.user,
+                querysets_with_articles=querysets_with_articles,
+                subject=subject,
+                template_name=template_name,
+                enable_translation=False  # 手動送信では翻訳しない
+            )
             log_sent_articles(request.user, new_articles)
             messages.success(
                 request,
@@ -156,8 +120,9 @@ def send_manual_email(request, pk):
                 f'{request.user.email} に送信しました。')
 
         except Exception as e:
-            messages.error(request,
-                           f'メールの送信中にエラーが発生しました: {e}')
+            s = f'メールの送信中にエラーが発生しました: {e}'
+            logger.error(s)
+            messages.error(request, s)
     else:
         messages.info(
             request,
@@ -166,86 +131,92 @@ def send_manual_email(request, pk):
     return redirect('subscriptions:queryset_list')
 
 
-class UniversalKeywordsApiView(LoginRequiredMixin, View):
+class _KeywordsApiView(LoginRequiredMixin, View):
+    _KeywordsModel = None
+
     def get(self, request, *args, **kwargs):
         large_category_id = request.GET.get('large_category_id')
         if not large_category_id:
             return JsonResponse({'error': 'large_category_id is required'},
                                 status=400)
 
-        keywords = UniversalKeywords.objects.filter(
+        keywords = self._KeywordsModel.objects.filter(
             large_category_id=large_category_id).order_by('name')
         data = list(keywords.values('id', 'name', 'description'))
         return JsonResponse(data, safe=False)
 
 
-class CurrentKeywordsApiView(LoginRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
-        large_category_id = request.GET.get('large_category_id')
-        if not large_category_id:
-            return JsonResponse({'error': 'large_category_id is required'},
-                                status=400)
-
-        keywords = CurrentKeywords.objects.filter(
-            large_category_id=large_category_id).order_by('name')
-        data = list(keywords.values('id', 'name', 'description'))
-        return JsonResponse(data, safe=False)
+class UniversalKeywordsApiView(_KeywordsApiView):
+    _KeywordsModel = UniversalKeywords
 
 
-class RelatedKeywordsApiView(LoginRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
-        large_category_id = request.GET.get('large_category_id')
-        if not large_category_id:
-            return JsonResponse({'error': 'large_category_id is required'},
-                                status=400)
+class CurrentKeywordsApiView(_KeywordsApiView):
+    _KeywordsModel = CurrentKeywords
 
-        keywords = RelatedKeywords.objects.filter(
-            large_category_id=large_category_id).order_by('name')
-        data = list(keywords.values('id', 'name', 'description'))
-        return JsonResponse(data, safe=False)
+
+class RelatedKeywordsApiView(_KeywordsApiView):
+    _KeywordsModel = RelatedKeywords
 
 
 class NewsPreviewApiView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         query = request.GET.get('q')
+        source = request.GET.get('source', QuerySet.SOURCE_GOOGLE_NEWS)
+
         if not query:
-            return JsonResponse({'error': 'Query parameter "q" is required'},
-                                status=400)
+            return JsonResponse(
+                {'error': 'Query parameter "q" is required'}, status=400)
+
         try:
-            after_days = int(request.GET.get('after_days', 2))
             max_articles = int(request.GET.get('max_articles', 20))
-            country_code = request.GET.get('country', 'JP')
+
+            logger.debug(f'source={source}')
+            if source == QuerySet.SOURCE_CINII:
+                # --- CiNii Preview Logic ---
+                after_days = int(request.GET.get('after_days', 180))
+                logger.debug(f'after_days={after_days}')
+
+                dummy_queryset = QuerySet(
+                    query_str=query,
+                    after_days=after_days,
+                    max_articles=max_articles,
+                    source=QuerySet.SOURCE_CINII
+                )
+
+            else:
+                # --- Google News Preview Logic (Default) ---
+                after_days = int(request.GET.get('after_days', 2))
+                logger.debug(f'after_days={after_days}')
+                country_code = request.GET.get('country', 'JP')
+
+                dummy_queryset = QuerySet(
+                    query_str=query,
+                    country=country_code,
+                    after_days=after_days,
+                    max_articles=max_articles,
+                    source=QuerySet.SOURCE_GOOGLE_NEWS
+                )
+
+            query_with_date, articles = fetch_articles_for_subscription(
+                queryset=dummy_queryset,
+                user=request.user,
+                dry_run=True
+            )
+            articles_data = [
+                {'title': x.title, 'link': x.url, 'published': (
+                    x.published_date.strftime('%Y-%m-%d %H:%M:%S')
+                    if x.published_date else 'N/A')}
+                for x in articles
+            ]
+            return JsonResponse({'query_str': query_with_date,
+                                 'articles': articles_data}, safe=False)
+
         except (ValueError, TypeError):
+            return JsonResponse({'error': 'Invalid parameter format'},
+                                status=400)
+        except (FeedFetchError, Exception) as e:
             return JsonResponse(
-                {'error': 'Invalid after_days or max_articles'}, status=400)
-
-        try:
-            query_with_date, articles = fetch_articles_for_preview(
-                query_str=query,
-                country_code=country_code,
-                after_days=after_days,
-                max_articles=max_articles
-            )
-        except FeedFetchError as e:
-            return JsonResponse(
-                {'error': f'Failed to fetch news feed: {e}'},
-                status=502  # Bad Gateway: 上流サーバーから無効なレスポンス
-            )
-
-        # 未保存のArticleオブジェクトを辞書に変換
-        articles_data = [
-            {'title': x.title,
-             'link': x.url,
-             'published': (
-                 x.published_date.strftime('%Y-%m-%d %H:%M:%S')
-                 if x.published_date else 'N/A')
-             }
-            for x in articles
-        ]
-
-        return JsonResponse(
-            {'query_str': query_with_date, 'articles': articles_data},
-            safe=False)
+                {'error': f'Failed to fetch news feed: {e}'}, status=502)
 
 
 class ToggleAutoSendView(LoginRequiredMixin, View):

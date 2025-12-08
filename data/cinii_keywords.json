@@ -1,0 +1,444 @@
+{
+  "cinii_keywords": [
+    {
+      "name": "AI",
+      "description": "人工知能（生産性向上や産業構造変革のドライバー）"
+    },
+    {
+      "name": "半導体",
+      "description": "技術覇権やサプライチェーンの鍵となる重要部品"
+    },
+    {
+      "name": "DX",
+      "description": "デジタルトランスフォーメーション"
+    },
+    {
+      "name": "生成AI",
+      "description": "テキストや画像を生成する人工知能"
+    },
+    {
+      "name": "サイバー攻撃",
+      "description": "国家や重要インフラを標的としたインターネットを通じた攻撃。"
+    },
+    {
+      "name": "OS",
+      "description": "オペレーティングシステム。コンピュータの基本動作を制御するソフトウェア。"
+    },
+    {
+      "name": "ネットワーク",
+      "description": "コンピュータ間の通信を可能にする基盤技術。"
+    },
+    {
+      "name": "セキュリティ",
+      "description": "情報資産を脅威から保護するための技術および対策。"
+    },
+    {
+      "name": "データベース",
+      "description": "大量のデータを効率的に管理・検索するためのシステム（DB）。"
+    },
+    {
+      "name": "プログラミング",
+      "description": "コンピュータに実行させる処理を記述する行為。"
+    },
+    {
+      "name": "サーバー",
+      "description": "ネットワーク上でサービスやデータを提供するコンピュータ。"
+    },
+    {
+      "name": "クラウド",
+      "description": "インターネット経由で提供されるコンピューティングリソースやサービス。"
+    },
+    {
+      "name": "ハードウェア",
+      "description": "CPUやメモリ、ストレージなど、コンピュータの物理的な構成要素。"
+    },
+    {
+      "name": "ソフトウェア",
+      "description": "プログラムとデータの総称。タスクを実行するためにハードウェア上で動作する。"
+    },
+    {
+      "name": "アルゴリズム",
+      "description": "特定の課題を解決するための明確な手順や計算方法。"
+    },
+    {
+      "name": "量子コンピュータ",
+      "description": "量子力学的な現象を利用した、従来型コンピュータを遥かに超える計算能力を持つ次世代計算機。"
+    },
+    {
+      "name": "ローコード",
+      "description": "プログラミングの記述を最小限に抑え、迅速にアプリケーションを開発する手法。"
+    },
+    {
+      "name": "GX",
+      "description": "グリーン・トランスフォーメーション。IT技術などを活用した産業構造の変革による脱炭素化。"
+    },
+    {
+      "name": "ゼロトラスト",
+      "description": "ネットワークの内外を問わず、すべてのアクセスを信頼しないことを前提とするセキュリティモデル。"
+    },
+    {
+      "name": "SaaS",
+      "description": "Software as a Service。クラウド上で提供されるソフトウェアの利用形態。"
+    },
+    {
+      "name": "Python",
+      "description": "インタープリタ型の高水準汎用プログラミング言語"
+    },
+    {
+      "name": "Perl",
+      "description": "インタープリタ型の高水準汎用プログラミング言語"
+    },
+    {
+      "name": "Ruby",
+      "description": "簡潔な文法が特徴的なオブジェクト指向スクリプト言語"
+    },
+    {
+      "name": "JavaScript",
+      "description": "プログラミング言語であり、HTMLやCSSと並ぶWWWの中核技術の一つ"
+    },
+    {
+      "name": "オープンソース",
+      "description": "ソースコードが公開されているソフトウェア"
+    },
+    {
+      "name": "Linux",
+      "description": "Unixを基にしたオープンソースのオペレーティングシステム (OS)"
+    },
+    {
+      "name": "Windows",
+      "description": "マイクロソフトが開発・販売するオペレーティングシステム (OS)"
+    },
+    {
+      "name": "IoT",
+      "description": "Internet of Things。モノのインターネット。"
+    },
+    {
+      "name": "ビッグデータ",
+      "description": "従来の手法では分析が困難なほど巨大で複雑なデータ群。"
+    },
+    {
+      "name": "インフラ",
+      "description": "ITシステムを稼働させるための基盤（ネットワーク、サーバーなど）。"
+    },
+    {
+      "name": "仮想化",
+      "description": "物理的なリソースをソフトウェア的に抽象化し、効率的に利用する技術。"
+    },
+    {
+      "name": "アジャイル",
+      "description": "計画・設計・実装・テストを短期間で繰り返すソフトウェア開発手法。"
+    },
+    {
+      "name": "ブロックチェーン",
+      "description": "暗号技術と分散処理によりデータを改ざんが困難な形で記録する技術。"
+    },
+    {
+      "name": "5G",
+      "description": "第5世代移動通信システム。高速大容量、低遅延を実現。"
+    },
+    {
+      "name": "メタバース",
+      "description": "インターネット上に構築された、人々が交流できる仮想空間。"
+    },
+    {
+      "name": "エッジコンピューティング",
+      "description": "デバイスの近く（エッジ）でデータ処理を行う分散処理形態。"
+    },
+    {
+      "name": "FinTech",
+      "description": "金融（Finance）と技術（Technology）を融合させたサービス。"
+    },
+    {
+      "name": "データサイエンティスト",
+      "description": "ビッグデータから価値を引き出す分析専門家。"
+    },
+    {
+      "name": "ガバナンス",
+      "description": "組織やシステムを適正に管理・統制するための仕組み。"
+    },
+    {
+      "name": "PM",
+      "description": "プロジェクトマネージャー（Project Manager）。ITプロジェクトの責任者。"
+    },
+    {
+      "name": "内製化",
+      "description": "外部に依存せず、システム開発や運用を自社のリソースで行うこと。"
+    },
+    {
+      "name": "クラウドネイティブ",
+      "description": "クラウド環境の特性を最大限に活かすように設計されたシステムやアーキテクチャ。"
+    },
+    {
+      "name": "AI倫理",
+      "description": "人工知能の公平性や透明性、社会的影響に関する規範。"
+    },
+    {
+      "name": "IaaS",
+      "description": "Infrastructure as a Service。サーバーやストレージなどのインフラを提供するクラウド形態。"
+    },
+    {
+      "name": "BtoB",
+      "description": "企業間取引（Business to Business）。"
+    },
+    {
+      "name": "ChatGPT",
+      "description": "OpenAIが開発した生成AIチャットボット"
+    },
+    {
+      "name": "OpenAI",
+      "description": "人工知能の研究開発機関"
+    },
+    {
+      "name": "Google",
+      "description": "世界最大の検索エンジンとITサービス企業"
+    },
+    {
+      "name": "Gemini",
+      "description": "Googleが開発したマルチモーダルAIモデル"
+    },
+    {
+      "name": "Claude",
+      "description": "Anthropicが開発したAIアシスタント"
+    },
+    {
+      "name": "Grok",
+      "description": "xAIが開発した生成AI"
+    },
+    {
+      "name": "物理学",
+      "description": "自然界の基本法則を扱う科学の基礎分野"
+    },
+    {
+      "name": "化学",
+      "description": "物質の構成、性質、反応を扱う科学"
+    },
+    {
+      "name": "材料科学",
+      "description": "新素材、高機能材料の研究開発"
+    },
+    {
+      "name": "エネルギー",
+      "description": "発電、送電、貯蔵など、動力源に関する技術全般"
+    },
+    {
+      "name": "ロボティクス",
+      "description": "ロボットの設計、製造、応用に関する工学分野"
+    },
+    {
+      "name": "ナノテクノロジー",
+      "description": "ナノメートルスケール（10億分の1メートル）での物質制御技術"
+    },
+    {
+      "name": "バイオテクノロジー",
+      "description": "生命体や生物学的プロセスを利用した技術（生物工学）"
+    },
+    {
+      "name": "宇宙開発",
+      "description": "宇宙飛行、探査、利用に関する技術とプロジェクト"
+    },
+    {
+      "name": "カーボンニュートラル",
+      "description": "温室効果ガス排出量を実質ゼロにする目標と技術"
+    },
+    {
+      "name": "量子技術",
+      "description": "量子の特性を利用したセンシング、計測、通信、マテリアル技術"
+    },
+    {
+      "name": "EV/HV",
+      "description": "電気自動車（Electric Vehicle）やハイブリッド車の開発競争"
+    },
+    {
+      "name": "宇宙ビジネス",
+      "description": "民間企業が主導する衛星打ち上げ、データ利用、月面探査などの商業化"
+    },
+    {
+      "name": "核融合",
+      "description": "次世代のクリーンエネルギーとして各国が研究を加速させている技術"
+    },
+    {
+      "name": "超伝導",
+      "description": "特定の物質が電気抵抗ゼロになる現象と応用技術"
+    },
+    {
+      "name": "触媒",
+      "description": "化学反応を促進する物質（環境浄化、化学工業などで重要）"
+    },
+    {
+      "name": "計測技術",
+      "description": "物理量や化学量を正確に測定する技術"
+    },
+    {
+      "name": "構造工学",
+      "description": "建築物やインフラの強度・安定性を確保する技術"
+    },
+    {
+      "name": "ゲノム編集",
+      "description": "生物のDNA配列をピンポイントで改変する技術（CRISPRなど）"
+    },
+    {
+      "name": "バッテリー",
+      "description": "二次電池や蓄電システム（リチウムイオン、全固体電池など）"
+    },
+    {
+      "name": "AMR",
+      "description": "自律移動ロボット（Autonomous Mobile Robot）"
+    },
+    {
+      "name": "ドローン",
+      "description": "無人航空機（UAV）およびその応用技術"
+    },
+    {
+      "name": "メタマテリアル",
+      "description": "自然界にはない特性を持つように人工的に設計された材料"
+    },
+    {
+      "name": "バイオ燃料",
+      "description": "生物資源から作られる代替エネルギー（例：エタノール、SAF）"
+    },
+    {
+      "name": "テレワーク",
+      "description": "情報通信技術を活用した場所や時間にとらわれない働き方。"
+    },
+    {
+      "name": "クラウドコンピューティング",
+      "description": "インターネット経由でITリソースを利用する形態。"
+    },
+    {
+      "name": "データサイエンス",
+      "description": "データ分析に基づき意思決定や予測を行う手法。"
+    },
+    {
+      "name": "UX/UI",
+      "description": "ユーザー体験とユーザーインターフェース。"
+    },
+    {
+      "name": "トランジスタ",
+      "description": "半導体の基本となるスイッチング素子"
+    },
+    {
+      "name": "IC",
+      "description": "集積回路（Integrated Circuit）。複数の素子をまとめたもの"
+    },
+    {
+      "name": "Wafer",
+      "description": "半導体チップの基材となる薄い円盤（主にシリコン製）"
+    },
+    {
+      "name": "リソグラフィ",
+      "description": "回路パターンをウェハーに焼き付ける露光技術"
+    },
+    {
+      "name": "CMOS",
+      "description": "相補型金属酸化膜半導体。低消費電力で広く使われる回路形式"
+    },
+    {
+      "name": "ファウンドリ",
+      "description": "半導体の製造を専門に受託する企業"
+    },
+    {
+      "name": "ムーアの法則",
+      "description": "集積回路の集積密度が18〜24ヶ月で倍増するという経験則"
+    },
+    {
+      "name": "歩留まり",
+      "description": "製造された製品のうち、良品として完成した割合"
+    },
+    {
+      "name": "AI-Chip",
+      "description": "人工知能の処理に特化した半導体（GPU、ASICなど）"
+    },
+    {
+      "name": "EUV",
+      "description": "極端紫外線露光技術。最先端プロセスに必須"
+    },
+    {
+      "name": "Chiplet",
+      "description": "複数の小型チップを統合し、一つのパッケージとして機能させる設計技術"
+    },
+    {
+      "name": "先端プロセス",
+      "description": "2nm、3nmといった微細化された最新の製造技術"
+    },
+    {
+      "name": "HBM",
+      "description": "High Bandwidth Memory。AI処理に使われる広帯域メモリ"
+    },
+    {
+      "name": "パワー半導体",
+      "description": "電力制御に使われる半導体。SiCやGaNが注目される"
+    },
+    {
+      "name": "BiCS",
+      "description": "キオクシア:が開発した3次元フラッシュメモリ技術"
+    },
+    {
+      "name": "MRAM",
+      "description": "磁気抵抗メモリ (Magnetoresistive Random Access Memory)"
+    },
+    {
+      "name": "TCAD",
+      "description": "半導体デバイスの設計・製造プロセスをコンピュータ上でシミュレーションする技術 (Technology Computer-Aided Design)"
+    },
+    {
+      "name": "車載半導体",
+      "description": "自動車の電装化、自動運転に使われる半導体"
+    },
+    {
+      "name": "SiC",
+      "description": "炭化ケイ素。次世代パワー半導体材料"
+    },
+    {
+      "name": "GaN",
+      "description": "窒化ガリウム。次世代パワー半導体材料"
+    },
+    {
+      "name": "EDA",
+      "description": "電子設計自動化（Electronic Design Automation）ソフトウェア"
+    },
+    {
+      "name": "ASML",
+      "description": "オランダの主要な半導体製造装置メーカー"
+    },
+    {
+      "name": "DRAM",
+      "description": "ダイナミック・ランダム・アクセス・メモリ（揮発性メモリ）"
+    },
+    {
+      "name": "NAND",
+      "description": "フラッシュメモリの一種（不揮発性メモリ）"
+    },
+    {
+      "name": "FinFET",
+      "description": "3次元構造を持つトランジスタ技術"
+    },
+    {
+      "name": "RISC-V",
+      "description": "オープンソースの命令セットアーキテクチャ"
+    },
+    {
+      "name": "IDM",
+      "description": "垂直統合型デバイスメーカー（設計、製造、販売を一貫）"
+    },
+    {
+      "name": "パッケージング",
+      "description": "半導体製造の後工程。チップを保護し電気的に接続する"
+    },
+    {
+      "name": "フォトマスク",
+      "description": "リソグラフィ工程で回路パターンが描かれる原版"
+    },
+    {
+      "name": "レジスト",
+      "description": "リソグラフィで使用される感光性材料"
+    },
+    {
+      "name": "MEMS",
+      "description": "微小電気機械システム"
+    },
+    {
+      "name": "ヘテロジニアス統合",
+      "description": "異なる種類のチップを組み合わせて性能を向上させる技術"
+    }
+  ]
+}

@@ -52,6 +52,15 @@ class LargeCategory(NormalizeNameMixin, models.Model):
         return self.name
 
 
+class CiNiiKeywords(NormalizeNameMixin, models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField('キーワード', max_length=100, unique=True)
+    description = models.CharField('説明', max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+
 class UniversalKeywords(NormalizeNameMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     large_category = models.ForeignKey(LargeCategory, on_delete=models.CASCADE)
@@ -104,24 +113,44 @@ COUNTRIES = sorted(
 
 
 class QuerySet(models.Model):
+    # ニュースソースの選択肢
+    SOURCE_GOOGLE_NEWS = 'google_news'
+    SOURCE_CINII = 'cinii'
+    SOURCE_CHOICES = [
+        (SOURCE_GOOGLE_NEWS, 'Google News'),
+        (SOURCE_CINII, 'CiNii Research'),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField('セット名', max_length=100)
+    source = models.CharField(
+        'ニュースソース',
+        max_length=20,
+        choices=SOURCE_CHOICES,
+        default=SOURCE_GOOGLE_NEWS,
+        help_text='どちらのニュースソースから記事を取得するかを選択します。'
+    )
     auto_send = models.BooleanField('メール自動配信', default=True)
     query_str = models.TextField('クエリ文字列', editable=False,
                                  help_text='ユーザ選択により自動生成')
 
+    # --- Google News 専用フィールド ---
     large_category = models.ForeignKey(
         LargeCategory,
         on_delete=models.PROTECT,
-        verbose_name='大分類'
+        verbose_name='大分類',
+        null=True, blank=True,
+        help_text='ニュースソースが「Google News」の場合に選択します。'
     )
 
     country = models.CharField(
         '国',
         max_length=2,
         choices=COUNTRIES,
-        default='JP'
+        default='JP',
+        blank=True,
+        help_text='ニュースソースが「Google News」の場合に選択します。'
     )
 
     universal_keywords = models.ManyToManyField(
@@ -142,6 +171,15 @@ class QuerySet(models.Model):
         verbose_name='関連キーワード'
     )
 
+    # --- CiNii Research 専用フィールド ---
+    cinii_keywords = models.ManyToManyField(
+        'CiNiiKeywords',
+        blank=True,
+        verbose_name='CiNiiキーワード',
+        help_text='ニュースソースが「CiNii Research」の場合に選択します。'
+    )
+
+    # --- 共通フィールド ---
     additional_or_keywords = models.CharField(
         'OR追加キーワード',
         max_length=255,

@@ -67,7 +67,7 @@ INSTALLED_APPS = [
     'core.apps.CoreConfig',
 ]
 
-AUTH_USER_MODEL = 'users.User' 
+AUTH_USER_MODEL = 'users.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -132,9 +132,11 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+# LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ja'
 
-TIME_ZONE = 'UTC'
+# TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Tokyo'
 
 USE_I18N = True
 
@@ -160,12 +162,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # EMAIL_HOST_USER = 'YOUR_EMAIL@gmail.com'
 # EMAIL_HOST_PASSWORD = 'YOUR_APP_PASSWORD'
 
-DEFAULT_FROM_EMAIL = 'webmaster@yynet.org'
-EMAIL_HOST = 'yynet.org'
-
 LOGIN_URL = 'users:login'
 
-SITE_ID = 1 # どのサイト設定を使うかを指定
+SITE_ID = 1  # どのサイト設定を使うかを指定
 
 # Logging Configuration
 LOGGING = {
@@ -222,3 +221,11 @@ COUNTRY_CONFIG = {
     'CN': {'lang': 'Chinese',  'name': '中国'},
     'KR': {'lang': 'Korean',   'name': '韓国'},
 }
+
+try:
+    from .local_settings import *  # noqa
+except Exception as e:
+    import sys
+    print(f'Info: {e}: skip.', file=sys.stderr)
+
+#

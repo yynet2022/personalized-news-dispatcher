@@ -63,11 +63,13 @@
         }
         /* 列幅調整 */
         .table th:nth-child(1) { min-width: 10em; } /* 名前 */
-        .table th:nth-child(2) { min-width: 6em; }  /* 国 */
-        .table th:nth-child(4) { width: 1%; white-space: nowrap; } /* 操作 */
+        .table th:nth-child(2) { min-width: 8em; }  /* ソース */
+        .table th:nth-child(4) { width: 1%; white-space: nowrap; } /* 自動配信 */
+        .table th:nth-child(5) { width: 1%; white-space: nowrap; } /* 操作 */
+
 
         .table td a {
-            font-weight: 600; /* 500から600に変更 */
+            font-weight: 600;
             text-decoration: none;
         }
         .table td a:hover {
@@ -95,15 +97,14 @@
         .btn-primary:hover { background-color: #0056b3; }
         .btn-secondary { background-color: #6c757d; color: white; }
         .btn-secondary:hover { background-color: #5a6268; }
-        .btn-danger { background-color: #c00; color: white; border-color: #c00; } /* 濃い赤に変更 */
-        .btn-danger:hover { background-color: #a00; border-color: #a00; } /* ホバー時も濃い赤に */
+        .btn-danger { background-color: #c00; color: white; border-color: #c00; }
+        .btn-danger:hover { background-color: #a00; border-color: #a00; }
         
         .action-form { display: inline; margin: 0; }
-        .actions { display: flex; gap: 0.5rem; white-space: nowrap; } /* white-space: nowrap; を追加 */
+        .actions { display: flex; gap: 0.5rem; white-space: nowrap; }
 
-        /* 読み取り専用チェックボックスのスタイル */
         .toggle-auto-send {
-            cursor: pointer; /* カーソルをポインターにする */
+            cursor: pointer;
         }
     </style>
 
@@ -115,7 +116,7 @@
             <thead>
                 <tr>
                     <th>名前</th>
-                    <th>国</th>
+                    <th>ソース</th>
                     <th>クエリ文字列</th>
                     <th>自動配信</th>
                     <th>操作</th>
@@ -125,7 +126,7 @@
                 {% for queryset in querysets %}
                 <tr>
                     <td><a href="{% url 'subscriptions:queryset_update' pk=queryset.pk %}">{{ queryset.name }}</a></td>
-                    <td>{{ queryset.get_country_display }}</td>
+                    <td>{{ queryset.get_source_display }}</td>
                     <td>{{ queryset.query_str }}</td>
                     <td><input type="checkbox" class="toggle-auto-send" data-url="{% url 'subscriptions:api_queryset_toggle_auto_send' pk=queryset.pk %}" {% if queryset.auto_send %}checked{% endif %}></td>
                     <td>
@@ -148,6 +149,7 @@
 
         <a href="{% url 'subscriptions:queryset_create' %}" class="btn btn-primary">新しいQuerySetを作成</a>
     </div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -169,21 +171,17 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => {
                 if (!response.ok) {
-                    // レスポンスがOKでない場合、エラーを投げてcatchブロックに移行
                     return response.json().then(err => { throw new Error(err.message || '更新に失敗しました。') });
                 }
                 return response.json();
             })
             .then(data => {
                 if (data.status !== 'success') {
-                    // 成功ステータスでない場合もエラーとして扱う
                     throw new Error(data.message || '更新に失敗しました。');
                 }
-                // 成功した場合、チェックボックスの状態は既にユーザーによって変更されているので、何もしない
                 console.log('Auto-send status updated to:', data.auto_send);
             })
             .catch(error => {
-                // エラーが発生した場合、チェックボックスの状態を元に戻す
                 checkbox.checked = !checkbox.checked;
                 alert(`エラー: ${error.message}`);
                 console.error('Failed to toggle auto-send:', error);

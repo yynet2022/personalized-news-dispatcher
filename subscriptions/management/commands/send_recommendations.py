@@ -85,7 +85,8 @@ class Command(BaseCommand):
             f"{len(user_read_articles)} users in the last {hours} hours.")
 
         # 記事IDを一括で取得するための準備
-        all_article_ids = [article_id for article_id, count in popular_articles]
+        all_article_ids = [
+            article_id for article_id, count in popular_articles]
         articles_in_bulk = Article.objects.in_bulk(all_article_ids)
 
         # これからユーザーごとの処理
@@ -95,7 +96,8 @@ class Command(BaseCommand):
             recommendations = []
             for article_id, reader_count in popular_articles:
                 # ユーザーが読んでいない、かつ記事DBに存在する
-                if article_id not in read_articles_set and article_id in articles_in_bulk:
+                if article_id not in read_articles_set and \
+                   article_id in articles_in_bulk:
                     article = articles_in_bulk[article_id]
                     recommendations.append({
                         'article': article,
@@ -107,9 +109,11 @@ class Command(BaseCommand):
 
             if recommendations:
                 self.stdout.write(
-                    f"  Found {len(recommendations)} recommendations for {user.email}")
+                    f"  Found {len(recommendations)} "
+                    f"recommendations for {user.email}")
                 if dry_run:
-                    self.stdout.write(f"    [DRY RUN] Would send email to {user.email}")
+                    self.stdout.write("    [DRY RUN] "
+                                      f"Would send email to {user.email}")
                 else:
                     try:
                         self.stdout.write(f"    Sending email to {user.email}")

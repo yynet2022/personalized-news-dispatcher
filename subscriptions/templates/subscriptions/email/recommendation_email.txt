@@ -13,6 +13,6 @@ Here are some articles that other users have found interesting in the last 24 ho
 
 --------------------------------------
 To change your settings, visit:
-{{ site_url }}{% url 'users:user_settings' %}
+{{ site_url }}{% url 'subscriptions:queryset_list' %}
 
 Personalized News Dispatcher
