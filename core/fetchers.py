@@ -1,16 +1,19 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Tuple
+from typing import List, Tuple, Union
 import feedparser
 import httpx
-from urllib.parse import quote
+from urllib.parse import quote_plus
 from datetime import datetime, timezone, timedelta
 
+from django.conf import settings
 from django.utils import timezone as django_timezone
 from users.models import User
 from news.models import Article, SentArticleLog
 from subscriptions.models import QuerySet
 from core.cinii_api import search_cinii_research
+from core.arxiv_api import search_arxiv
+
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +33,7 @@ class ArticleFetcher(ABC):
         queryset: QuerySet,
         user: User,
         dry_run: bool = False,
-        after_days_override: int | None = None
+        after_days_override: Union[int, None] = None
     ) -> Tuple[str, List[Article]]:
         """
         指定されたQuerySetに基づいて、ユーザーが未読の記事を取得する。
@@ -69,7 +72,7 @@ class GoogleNewsFetcher(ArticleFetcher):
         params = google_news_params.get(country_code, google_news_params['JP'])
 
         logger.debug(f'query: {query}')
-        encoded_query = quote(query)
+        encoded_query = quote_plus(query)
         base_url = (f"https://news.google.com/rss/search?"
                     f"q={encoded_query}&hl={params['hl']}&"
                     f"gl={params['gl']}&ceid={params['ceid']}")
@@ -138,7 +141,7 @@ class GoogleNewsFetcher(ArticleFetcher):
         queryset: QuerySet,
         user: User,
         dry_run: bool = False,
-        after_days_override: int | None = None
+        after_days_override: Union[int, None] = None
     ) -> Tuple[str, List[Article]]:
         logger.debug(f"Fetching Google News for queryset: {queryset.name}")
 
@@ -164,7 +167,7 @@ class GoogleNewsFetcher(ArticleFetcher):
 class CiNiiFetcher(ArticleFetcher):
     """CiNii Researchから記事を取得するためのFetcher。"""
 
-    def _parse_date_string(self, date_str: str) -> datetime | None:
+    def _parse_date_string(self, date_str: str) -> Union[datetime, None]:
         if not date_str:
             return None
         try:
@@ -190,7 +193,7 @@ class CiNiiFetcher(ArticleFetcher):
         queryset: QuerySet,
         user: User,
         dry_run: bool = False,
-        after_days_override: int | None = None
+        after_days_override: Union[int, None] = None
     ) -> Tuple[str, List[Article]]:
         logger.debug(f"Fetching CiNii Research for queryset: {queryset.name}")
         search_keyword = queryset.query_str
@@ -210,7 +213,8 @@ class CiNiiFetcher(ArticleFetcher):
             cinii_results = search_cinii_research(
                 keyword=search_keyword,
                 count=min(queryset.max_articles * 3, 200),
-                start_year=start_year
+                start_year=start_year,
+                appid=settings.CINII_APP_ID
             )
         except httpx.RequestError as e:
             raise FeedFetchError(
@@ -254,5 +258,70 @@ class CiNiiFetcher(ArticleFetcher):
                     url=url, title=title, published_date=published_date)
 
             new_articles.append(article)
+
+        return search_keyword, new_articles
+
+
+class ArXivFetcher(ArticleFetcher):
+    """arXivから記事を取得するためのFetcher。"""
+
+    def fetch_articles(
+        self,
+        queryset: QuerySet,
+        user: User,
+        dry_run: bool = False,
+        after_days_override: Union[int, None] = None
+    ) -> Tuple[str, List[Article]]:
+        logger.debug(f"Fetching arXiv for queryset: {queryset.name}")
+        search_keyword = queryset.query_str
+        if not search_keyword:
+            return "", []
+
+        after_days = after_days_override \
+            if after_days_override is not None else queryset.after_days
+
+        try:
+            arxiv_results = search_arxiv(
+                query=search_keyword,
+                max_articles=min(queryset.max_articles * 3, 100),
+                after_days=after_days
+            )
+        except httpx.RequestError as e:
+            raise FeedFetchError(
+                f"Network error fetching arXiv feed: {e}") from e
+        except httpx.HTTPStatusError as e:
+            raise FeedFetchError(f"HTTP error fetching arXiv feed: {e}") from e
+
+        new_articles = []
+        sent_article_urls = set(SentArticleLog.objects.filter(
+            user=user).values_list('article__url', flat=True))
+
+        for item in arxiv_results:
+            if len(new_articles) >= queryset.max_articles:
+                break
+
+            url = item.get('link')
+            title = item.get('title')
+            published_date = item.get('published_date')
+
+            if not url or not title or not published_date or \
+               url in sent_article_urls:
+                continue
+
+            # after_days のフィルタリングは search_arxiv 内で既に行われている
+
+            if not dry_run:
+                article, created = Article.objects.get_or_create(
+                    url=url,
+                    defaults={'title': title, 'published_date': published_date}
+                )
+                if created or not SentArticleLog.objects.filter(
+                        user=user, article=article).exists():
+                    new_articles.append(article)
+            else:
+                # dry_run時はDBに存在するかどうかは気にせずインスタンスを作成
+                article = Article(
+                    url=url, title=title, published_date=published_date)
+                new_articles.append(article)
 
         return search_keyword, new_articles

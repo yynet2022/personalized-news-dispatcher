@@ -1,7 +1,17 @@
 from django import forms
 from .models import (
     QuerySet, UniversalKeywords, CurrentKeywords, RelatedKeywords,
-    CiNiiKeywords)
+    CiNiiKeywords, ArXivKeywords)
+import shlex
+
+
+def _split(s: str):
+    parts = []
+    for p in shlex.split(s):
+        p = p.strip()
+        if p:
+            parts.append(f'"{p}"' if ' ' in p else p)
+    return parts
 
 
 class QuerySetForm(forms.ModelForm):
@@ -14,6 +24,8 @@ class QuerySetForm(forms.ModelForm):
             'universal_keywords', 'current_keywords', 'related_keywords',
             # CiNii fields
             'cinii_keywords',
+            # arXiv fields
+            'arxiv_keywords',
             # Common fields
             'additional_or_keywords', 'refinement_keywords',
             'after_days', 'max_articles',
@@ -24,6 +36,7 @@ class QuerySetForm(forms.ModelForm):
             'current_keywords': forms.CheckboxSelectMultiple,
             'related_keywords': forms.CheckboxSelectMultiple,
             'cinii_keywords': forms.CheckboxSelectMultiple,
+            'arxiv_keywords': forms.CheckboxSelectMultiple,
         }
 
     def __init__(self, *args, **kwargs):
@@ -71,6 +84,10 @@ class QuerySetForm(forms.ModelForm):
         f_['cinii_keywords'].queryset = CiNiiKeywords.objects.order_by('name')
         f_['cinii_keywords'].label_from_instance = lambda obj: obj.name
 
+        # --- arXiv field setup ---
+        f_['arxiv_keywords'].queryset = ArXivKeywords.objects.order_by('name')
+        f_['arxiv_keywords'].label_from_instance = lambda obj: obj.name
+
         # --- Common field setup ---
         f_['after_days'].widget.attrs.update({'min': 0})
         f_['max_articles'].widget.attrs.update({'min': 1})
@@ -87,21 +104,32 @@ class QuerySetForm(forms.ModelForm):
             # CiNii関連のフィールドをクリア
             if 'cinii_keywords' in cleaned_data:
                 cleaned_data['cinii_keywords'] = CiNiiKeywords.objects.none()
+
         elif source == QuerySet.SOURCE_CINII:
             # Google News関連のフィールドをクリア
-            cleaned_data['large_category'] = None
-            cleaned_data['country'] = ''
-            if 'universal_keywords' in cleaned_data:
-                cleaned_data['universal_keywords'] = \
-                    UniversalKeywords.objects.none()
-            if 'current_keywords' in cleaned_data:
-                cleaned_data['current_keywords'] = \
-                    CurrentKeywords.objects.none()
-            if 'related_keywords' in cleaned_data:
-                cleaned_data['related_keywords'] = \
-                    RelatedKeywords.objects.none()
+            self._clear_google_news_fields(cleaned_data)
+
+        elif source == QuerySet.SOURCE_ARXIV:
+            # Google News と CiNii 関連のフィールドをクリア
+            self._clear_google_news_fields(cleaned_data)
+            if 'cinii_keywords' in cleaned_data:
+                cleaned_data['cinii_keywords'] = CiNiiKeywords.objects.none()
 
         return cleaned_data
+
+    def _clear_google_news_fields(self, cleaned_data):
+        """Google News関連のフィールドをクリアするヘルパーメソッド"""
+        cleaned_data['large_category'] = None
+        cleaned_data['country'] = ''
+        if 'universal_keywords' in cleaned_data:
+            cleaned_data['universal_keywords'] = \
+                UniversalKeywords.objects.none()
+        if 'current_keywords' in cleaned_data:
+            cleaned_data['current_keywords'] = \
+                CurrentKeywords.objects.none()
+        if 'related_keywords' in cleaned_data:
+            cleaned_data['related_keywords'] = \
+                RelatedKeywords.objects.none()
 
     def save(self, commit=True):
         instance = super().save(commit=False)
@@ -111,6 +139,8 @@ class QuerySetForm(forms.ModelForm):
             instance.query_str = self._build_google_news_query()
         elif source == QuerySet.SOURCE_CINII:
             instance.query_str = self._build_cinii_query()
+        elif source == QuerySet.SOURCE_ARXIV:
+            instance.query_str = self._build_arxiv_query()
 
         if commit:
             instance.save()
@@ -129,10 +159,9 @@ class QuerySetForm(forms.ModelForm):
                 parts.append(keyword.name)
 
         additional = self.cleaned_data.get('additional_or_keywords', '')
-        if additional:
-            parts.extend(additional.split())
+        parts.extend(_split(additional))
 
-        or_part = " OR ".join(f'{p}' for p in parts if p)
+        or_part = " OR ".join(parts)
         if len(parts) > 1:
             or_part = f"({or_part})"
 
@@ -142,11 +171,12 @@ class QuerySetForm(forms.ModelForm):
     def _build_cinii_query(self):
         parts = []
         for keyword in self.cleaned_data.get('cinii_keywords', []):
-            parts.append(f'{keyword.name}')
+            # スペースを含むものはダブルクオートで囲む
+            name = keyword.name
+            parts.append(f'"{name}"' if ' ' in name else name)
 
         additional = self.cleaned_data.get('additional_or_keywords', '')
-        if additional:
-            parts.extend(f'{p}' for p in additional.split() if p)
+        parts.extend(_split(additional))
 
         or_part = " OR ".join(parts)
         if len(parts) > 1:
@@ -154,3 +184,59 @@ class QuerySetForm(forms.ModelForm):
 
         refinement = self.cleaned_data.get('refinement_keywords', '')
         return f"{or_part} {refinement}".strip()
+
+    def _build_arxiv_query(self):
+        """arXivの検索クエリを構築する。"""
+        # https://info.arxiv.org/help/api/user-manual.html#query_details
+        parts = []
+
+        # 選択されたキーワード
+        for keyword in self.cleaned_data.get('arxiv_keywords', []):
+            name = keyword.name
+            # スペースを含む場合はダブルクオートで囲む
+            part = f'"{name}"' if ' ' in name else name
+            parts.append(f"all:{part}")
+
+        # OR追加キーワード
+        additional = self.cleaned_data.get('additional_or_keywords', '')
+        for p in _split(additional):
+            parts.append(f"all:{p}")
+
+        or_part = " OR ".join(parts)
+
+        # 絞り込みキーワード
+        refinement = self.cleaned_data.get('refinement_keywords', '')
+        refinement_parts = []
+        if refinement:
+            # refinement_keywords をスペースで分割し、AND/ANDNOTを処理
+            for term in shlex.split(refinement):
+                term = term.strip()
+                if not term:
+                    continue
+                # マイナスから始まる場合は ANDNOT
+                if term.startswith('-'):
+                    term_body = term[1:]
+                    # フレーズ検索のためにダブルクオートで囲む
+                    if ' ' in term_body:
+                        term_body = f'"{term_body}"'
+                    refinement_parts.append(f"ANDNOT all:{term_body}")
+                # それ以外は AND
+                else:
+                    term_body = term
+                    if ' ' in term_body:
+                        term_body = f'"{term_body}"'
+                    refinement_parts.append(f"AND all:{term_body}")
+
+        refinement_part = " ".join(refinement_parts)
+
+        # クエリの組み立て
+        if or_part and refinement_part:
+            return f"({or_part}) {refinement_part}"
+        elif or_part:
+            return or_part
+        elif refinement_part:
+            # AND/ANDNOTのみの場合は先頭の演算子を削除
+            first_part = refinement_parts[0].split(" ", 1)[1]
+            other_parts = " ".join(refinement_parts[1:])
+            return f"{first_part} {other_parts}".strip()
+        return ""

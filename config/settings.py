@@ -195,6 +195,7 @@ LOGGING = {
 # Set one or both API keys
 # GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
 # OPENAI_API_KEY = "YOUR_OPENAI_API_KEY"
+# CINII_APP_ID = "YOUR_CINII_APP_ID"
 #
 # --- Optional ---
 # Specify AI model names (defaults are used if not set)
@@ -209,6 +210,7 @@ LOGGING = {
 #
 GEMINI_API_KEY = secrets.get('GEMINI_API_KEY')
 OPENAI_API_KEY = secrets.get('OPENAI_API_KEY')
+CINII_APP_ID = secrets.get('CINII_APP_ID')
 GEMINI_MODEL = secrets.get('GEMINI_MODEL', 'gemini-pro-latest')
 OPENAI_MODEL = secrets.get('OPENAI_MODEL', 'gpt-4o')
 OPENAI_API_BASE_URL = secrets.get('OPENAI_API_BASE_URL')

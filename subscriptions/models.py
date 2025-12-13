@@ -61,6 +61,15 @@ class CiNiiKeywords(NormalizeNameMixin, models.Model):
         return self.name
 
 
+class ArXivKeywords(NormalizeNameMixin, models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField('キーワード', max_length=100, unique=True)
+    description = models.CharField('説明', max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+
 class UniversalKeywords(NormalizeNameMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     large_category = models.ForeignKey(LargeCategory, on_delete=models.CASCADE)
@@ -116,9 +125,11 @@ class QuerySet(models.Model):
     # ニュースソースの選択肢
     SOURCE_GOOGLE_NEWS = 'google_news'
     SOURCE_CINII = 'cinii'
+    SOURCE_ARXIV = 'arxiv'
     SOURCE_CHOICES = [
         (SOURCE_GOOGLE_NEWS, 'Google News'),
         (SOURCE_CINII, 'CiNii Research'),
+        (SOURCE_ARXIV, 'arXiv'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -177,6 +188,14 @@ class QuerySet(models.Model):
         blank=True,
         verbose_name='CiNiiキーワード',
         help_text='ニュースソースが「CiNii Research」の場合に選択します。'
+    )
+
+    # --- arXiv 専用フィールド ---
+    arxiv_keywords = models.ManyToManyField(
+        'ArXivKeywords',
+        blank=True,
+        verbose_name='arXivキーワード',
+        help_text='ニュースソースが「arXiv」の場合に選択します。'
     )
 
     # --- 共通フィールド ---

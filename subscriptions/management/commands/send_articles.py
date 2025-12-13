@@ -25,7 +25,7 @@ class Command(BaseCommand):
             '--source',
             type=str,
             default='all',
-            choices=['all', 'google_news', 'cinii'],
+            choices=['all', 'google_news', 'cinii', 'arxiv'],
             help='Specify the news source to fetch from.'
         )
         parser.add_argument(
@@ -120,6 +120,10 @@ class Command(BaseCommand):
                             enable_translation = True
                         elif queryset.source == QuerySet.SOURCE_CINII:
                             subject = ('[CiNii Research] Daily Digest'
+                                       f' - {queryset.name}')
+                            enable_translation = False
+                        elif queryset.source == QuerySet.SOURCE_ARXIV:
+                            subject = ('[arXiv] Daily Digest'
                                        f' - {queryset.name}')
                             enable_translation = False
                         else:

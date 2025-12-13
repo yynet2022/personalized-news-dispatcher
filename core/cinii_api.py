@@ -14,7 +14,8 @@ def search_cinii_research(
         count=20,
         start=1,
         start_year=None,
-        max_retries=3
+        max_retries=3,
+        appid=None
 ):
     """
     CiNii Researchを検索し、結果をJSONで返す関数。
@@ -36,6 +37,8 @@ def search_cinii_research(
         'start': start,           # ページ番号 (デフォルト1)
     }
 
+    if appid:
+        params['appid'] = appid
     if start_year:
         params['from'] = start_year
 

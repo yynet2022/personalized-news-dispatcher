@@ -68,7 +68,8 @@
             background-color: #fff; /* 背景色を白に */
         }
         .keywords-container > div, /* JSで生成されるGoogle Newsのキーワード用 */
-        .keywords-container #id_cinii_keywords > div { /* Djangoで生成されるCiNiiのキーワード用 */
+        .keywords-container #id_cinii_keywords > div, /* Djangoで生成されるCiNiiのキーワード用 */
+        .keywords-container #id_arxiv_keywords > div { /* Djangoで生成されるArXivのキーワード用 */
             display: inline-block;
             margin-right: 1rem;
             border: none;
@@ -182,6 +183,16 @@
                     </div>
                 </div>
             </div>
+
+            <!-- arXiv Fields -->
+            <div id="arxiv-fields" class="form-group">
+                <div class="grid-full-width">
+                    {{ form.arxiv_keywords.label_tag }}
+                    <div class="keywords-container" id="arxiv_keywords_container">
+                      {{ form.arxiv_keywords }}
+                    </div>
+                </div>
+            </div>
             
             <!-- Common Fields -->
             <div class="form-group">
@@ -216,6 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const sourceRadios = document.querySelectorAll('input[name="source"]');
     const googleNewsFields = document.getElementById('google-news-fields');
     const ciniiFields = document.getElementById('cinii-fields');
+    const arxivFields = document.getElementById('arxiv-fields');
     const previewButton = document.querySelector('#preview-button');
     const previewArea = document.querySelector('#preview-area');
     const previewResults = document.querySelector('#preview-results');
@@ -299,12 +311,28 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectedSource = document.querySelector('input[name="source"]:checked').value;
         googleNewsFields.style.display = (selectedSource === 'google_news') ? '' : 'none';
         ciniiFields.style.display = (selectedSource === 'cinii') ? '' : 'none';
+        arxivFields.style.display = (selectedSource === 'arxiv') ? '' : 'none';
+
         if (resetValue) {
             console.log("reset")
             document.querySelector('#id_additional_or_keywords').value = "";
             document.querySelector('#id_refinement_keywords').value = "";
-    document.querySelector('#id_after_days').value = (selectedSource === 'google_news') ? '2' : '180';
+            let afterDays = 2;
+            if (selectedSource === 'cinii') afterDays = 180;
+            if (selectedSource === 'arxiv') afterDays = 30;
+            document.querySelector('#id_after_days').value = afterDays;
         }
+    }
+
+    // --- クォート対応の分割処理を分離した関数 ---
+    function quotedSplit(str) {
+        // 正規表現: ダブルクォートで囲まれた部分 or 非空白文字にマッチ
+        const regex = /"([^"]*)"|\S+/g;
+        const matches = [...str.matchAll(regex)];
+        // マッチ結果から、クォート内部 (グループ1) または全体 (グループ0) を抽出
+        return matches.map(match => {
+            return match[1] !== undefined ? match[1] : match[0];
+        });
     }
 
     // --- Handle Preview Button Click ---
@@ -327,10 +355,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 parts.push(cb.labels[0].textContent.trim());
             });
             const additionalOrKeywords = document.querySelector('#id_additional_or_keywords').value.trim();
+            // if (additionalOrKeywords) {
+            //  parts.push(...additionalOrKeywords.split(/\s+/).filter(k => k));
+            // }
             if (additionalOrKeywords) {
-                parts.push(...additionalOrKeywords.split(/\s+/).filter(k => k));
+                const k = quotedSplit(additionalOrKeywords);
+                parts.push(...k.filter(Boolean)); 
             }
-            let orPart = parts.filter(p => p).join(' OR ');
+            // let orPart = parts.filter(p => p).join(' OR ');
+            let orPart = parts.map(p => p.includes(' ') ? `"${p}"` : p).join(' OR ');
             if (parts.length > 1) orPart = `(${orPart})`;
             const refinementPart = document.querySelector('#id_refinement_keywords').value.trim();
             finalQuery = `${orPart} ${refinementPart}`.trim();
@@ -339,19 +372,61 @@ document.addEventListener('DOMContentLoaded', function() {
             params.append('after_days', document.querySelector('#id_after_days').value);
             params.append('country', document.querySelector('#id_country').value);
 
-        } else if (selectedSource === 'cinii') {
+        } else if (selectedSource === 'cinii' || selectedSource === 'arxiv') {
             const parts = [];
-            document.querySelectorAll('#cinii_keywords_container input:checked').forEach(cb => {
-                 parts.push(`${cb.labels[0].textContent.trim()}`);
+            const containerId = (selectedSource === 'cinii') ? '#cinii_keywords_container' : '#arxiv_keywords_container';
+            
+            document.querySelectorAll(`${containerId} input:checked`).forEach(cb => {
+                const keyword = cb.labels[0].textContent.trim();
+                parts.push(keyword);
             });
+
             const additionalOrKeywords = document.querySelector('#id_additional_or_keywords').value.trim();
+            // if (additionalOrKeywords) {
+            //  parts.push(...additionalOrKeywords.split(/\s+/).filter(k => k));
+            // }
             if (additionalOrKeywords) {
-                parts.push(...additionalOrKeywords.split(/\s+/).filter(k => k).map(k => `"${k}"`));
+                const k = quotedSplit(additionalOrKeywords);
+                parts.push(...k.filter(Boolean)); 
             }
-            let orPart = parts.join(' OR ');
-            if (parts.length > 1) orPart = `(${orPart})`;
-            const refinementPart = document.querySelector('#id_refinement_keywords').value.trim();
-            finalQuery = `${orPart} ${refinementPart}`.trim();
+            // Build query string
+            if (selectedSource === 'arxiv') {
+                const orPart = parts.map(p => `all:${p.includes(' ') ? `"${p}"` : p}`).join(' OR ');
+                const refinementPart = document.querySelector('#id_refinement_keywords').value.trim();
+                
+                // const refinementParts = refinementPart.split(/\s+/).filter(Boolean).map(term => {
+                //     if (term.startsWith('-')) {
+                //         let body = term.substring(1);
+                //         return `ANDNOT all:${body.includes(' ') ? `"${body}"` : body}`;
+                //     }
+                //     return `AND all:${term.includes(' ') ? `"${term}"` : term}`;
+                // });
+                const refinementParts = quotedSplit(refinementPart)
+                      .filter(Boolean)
+                      .map(term => {
+                          // term には、既にクォートが外された状態の単語やフレーズが入っている
+                          // 例: 'A', 'B C', '-D E'
+                          if (term.startsWith('-')) {
+                              let body = term.substring(1); // '-' を取り除く
+                              return `ANDNOT all:${body.includes(' ') ? `"${body}"` : body}`;
+                          }
+                          return `AND all:${term.includes(' ') ? `"${term}"` : term}`;
+                      });
+                if (orPart && refinementParts.length > 0) {
+                    finalQuery = `(${orPart}) ${refinementParts.join(' ')}`;
+                } else if (orPart) {
+                    finalQuery = orPart;
+                } else if (refinementParts.length > 0) {
+                    finalQuery = refinementParts.join(' ').replace(/^AND /, ''); // Remove leading AND
+                }
+
+            } else { // cinii
+                let orPart = parts.map(p => p.includes(' ') ? `"${p}"` : p).join(' OR ');
+                if (parts.length > 1) orPart = `(${orPart})`;
+                const refinementPart = document.querySelector('#id_refinement_keywords').value.trim();
+                finalQuery = `${orPart} ${refinementPart}`.trim();
+            }
+
             params.append('q', finalQuery);
             params.append('after_days', document.querySelector('#id_after_days').value);
         }
@@ -396,7 +471,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Event Listeners & Initial Calls ---
 
     const isAnyRadioEnabled = document.querySelectorAll('input[name="source"]:not([disabled])').length > 0;
-    // console.log('isEnable', isAnyRadioEnabled);
     if (isAnyRadioEnabled) {
        sourceRadios.forEach(radio => radio.addEventListener('change', toggleSourceFields));
     }

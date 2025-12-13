@@ -58,6 +58,51 @@ class SendDailyNewsCommandTest(TestCase):
             url='http://example.com/ai', title='AI Article')
         cls.article3 = Article.objects.create(
             url='http://example.com/sports', title='Sports Article')
+        cls.article4 = Article.objects.create(
+            url='http://arxiv.org/abs/2301.0001', title='ArXiv Article')
+
+    @patch('subscriptions.management.commands.send_articles.send_articles_email')  # noqa: E501
+    @patch('subscriptions.management.commands.send_articles.fetch_articles_for_subscription')  # noqa: E501
+    def test_command_sends_email_for_arxiv_source(
+            self, mock_fetch, mock_send_email):
+        """コマンドが arXiv ソースの QuerySet に対して正しく動作するかテスト"""
+        # arXiv用のQuerySetを作成
+        arxiv_qs = QuerySet.objects.create(
+            user=self.user1, name='ArXiv Daily',
+            query_str='cat:cs.AI', auto_send=True,
+            source=QuerySet.SOURCE_ARXIV)
+
+        def fetch_side_effect(queryset, user, **kwargs):
+            if queryset.id == arxiv_qs.id:
+                return 'query', [self.article4]
+            return 'query', []
+        mock_fetch.side_effect = fetch_side_effect
+
+        call_command('send_articles', source='arxiv')
+
+        # arXiv の QuerySet のみ処理される
+        mock_fetch.assert_called_once_with(
+            queryset=arxiv_qs,
+            user=self.user1,
+            after_days_override=None,
+            dry_run=False
+        )
+
+        # メールが1回送信される
+        self.assertEqual(mock_send_email.call_count, 1)
+
+        # send_articles_email の引数を検証
+        call_args = mock_send_email.call_args[1]
+        self.assertEqual(call_args['user'], self.user1)
+        self.assertEqual(
+            call_args['subject'],
+            '[arXiv] Daily Digest - ArXiv Daily'
+        )
+        self.assertFalse(call_args['enable_translation'])
+        self.assertEqual(
+            call_args['querysets_with_articles'][0]['articles'],
+            [self.article4]
+        )
 
     @patch('subscriptions.management.commands.send_articles.send_articles_email')  # noqa: E501
     @patch('subscriptions.management.commands.send_articles.fetch_articles_for_subscription')  # noqa: E501

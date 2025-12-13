@@ -22,6 +22,10 @@ class SentArticleLog(models.Model):
 
     class Meta:
         unique_together = ('user', 'article')
+        indexes = [
+            # ユーザーで絞り込み、次に記事IDを参照するためのインデックス
+            models.Index(fields=['user', 'article']),
+        ]
 
 
 class ClickLog(models.Model):

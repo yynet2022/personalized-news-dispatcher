@@ -7,6 +7,7 @@ from .models import (
     RelatedKeywords,
     QuerySet,
     CiNiiKeywords,
+    ArXivKeywords,
 )
 
 
@@ -60,7 +61,7 @@ class QuerySetAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',)
     filter_horizontal = (
         'universal_keywords', 'current_keywords', 'related_keywords',
-        'cinii_keywords'
+        'cinii_keywords', 'arxiv_keywords'
     )
 
 
@@ -68,6 +69,15 @@ class QuerySetAdmin(admin.ModelAdmin):
 class CiNiiKeywordsAdmin(admin.ModelAdmin):
     """
     CiNiiキーワードモデルの管理サイト設定
+    """
+    list_display = ('name', 'description')
+    search_fields = ('name',)
+
+
+@admin.register(ArXivKeywords)
+class ArXivKeywordsAdmin(admin.ModelAdmin):
+    """
+    arXivキーワードモデルの管理サイト設定
     """
     list_display = ('name', 'description')
     search_fields = ('name',)

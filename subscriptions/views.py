@@ -11,7 +11,9 @@ from django.db import IntegrityError
 import logging
 
 from .models import (
-    QuerySet, UniversalKeywords, CurrentKeywords, RelatedKeywords)
+    QuerySet, UniversalKeywords, CurrentKeywords, RelatedKeywords,
+    # ArXivKeywords
+)
 from .forms import QuerySetForm
 from .services import (
     fetch_articles_for_subscription, send_articles_email
@@ -158,6 +160,15 @@ class RelatedKeywordsApiView(_KeywordsApiView):
     _KeywordsModel = RelatedKeywords
 
 
+'''
+class ArXivKeywordsApiView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        keywords = ArXivKeywords.objects.order_by('name')
+        data = list(keywords.values('id', 'name', 'description'))
+        return JsonResponse(data, safe=False)
+'''
+
+
 class NewsPreviewApiView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         query = request.GET.get('q')
@@ -181,6 +192,18 @@ class NewsPreviewApiView(LoginRequiredMixin, View):
                     after_days=after_days,
                     max_articles=max_articles,
                     source=QuerySet.SOURCE_CINII
+                )
+
+            elif source == QuerySet.SOURCE_ARXIV:
+                # --- arXiv Preview Logic ---
+                after_days = int(request.GET.get('after_days', 30))
+                logger.debug(f'after_days={after_days}')
+
+                dummy_queryset = QuerySet(
+                    query_str=query,
+                    after_days=after_days,
+                    max_articles=max_articles,
+                    source=QuerySet.SOURCE_ARXIV
                 )
 
             else:

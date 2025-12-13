@@ -8,6 +8,7 @@ from .views import (
     UniversalKeywordsApiView,
     CurrentKeywordsApiView,
     RelatedKeywordsApiView,
+    # ArXivKeywordsApiView,
     NewsPreviewApiView,
     ToggleAutoSendView,
 )
@@ -33,6 +34,8 @@ urlpatterns = [
          name='api_current_keywords'),
     path('api/related-keywords/', RelatedKeywordsApiView.as_view(),
          name='api_related_keywords'),
+    # path('api/arxiv-keywords/', ArXivKeywordsApiView.as_view(),
+    #      name='api_arxiv_keywords'),
     path('api/news-preview/', NewsPreviewApiView.as_view(),
          name='api_news_preview'),
     path('api/queryset/<uuid:pk>/toggle-auto-send/',

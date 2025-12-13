@@ -1,5 +1,6 @@
 import logging
 import asyncio
+from typing import Union, Tuple, List
 
 from django.core.mail import send_mail
 from django.conf import settings
@@ -10,7 +11,8 @@ from django.template.loader import render_to_string
 from users.models import User
 from news.models import Article
 from subscriptions.models import QuerySet
-from core.fetchers import ArticleFetcher, CiNiiFetcher, GoogleNewsFetcher
+from core.fetchers import (ArticleFetcher, CiNiiFetcher, GoogleNewsFetcher,
+                           ArXivFetcher)
 from core.translation import translate_content
 
 logger = logging.getLogger(__name__)
@@ -133,19 +135,21 @@ def send_recommendation_email(user: User, recommendations: list):
 
 def get_fetcher_for_queryset(queryset: QuerySet) -> ArticleFetcher:
     """QuerySetのsourceに応じて適切なArticleFetcherインスタンスを返す。"""
-    if queryset.source == QuerySet.SOURCE_CINII:
-        return CiNiiFetcher()
-    elif queryset.source == QuerySet.SOURCE_GOOGLE_NEWS:
+    if queryset.source == QuerySet.SOURCE_GOOGLE_NEWS:
         return GoogleNewsFetcher()
+    elif queryset.source == QuerySet.SOURCE_CINII:
+        return CiNiiFetcher()
+    elif queryset.source == QuerySet.SOURCE_ARXIV:
+        return ArXivFetcher()
     else:
         raise ValueError(f"Unsupported queryset source: {queryset.source}")
 
 
 def fetch_articles_for_subscription(
     queryset: QuerySet, user: User,
-    after_days_override: int | None = None,
+    after_days_override: Union[int, None] = None,
     dry_run: bool = False
-) -> tuple[str, list[Article]]:
+) -> Tuple[str, List[Article]]:
     """
     QuerySetに対応したFetcherを使い、未読の記事を取得する。
     これは今後、記事取得のメインの入り口となる。
