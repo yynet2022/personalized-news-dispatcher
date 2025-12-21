@@ -36,17 +36,21 @@ except Exception:
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# The default value is for development only.
-SECRET_KEY = secrets.get(
-    'SECRET_KEY',
-    'django-insecure-77s@l!7^nner#5%q^-6k*+n04a!hpa5_+j69pv$16@#e6fb)6b'
-)
+# .secrets.toml もしくは環境変数から取得するようにしてな。
+SECRET_KEY = secrets.get('SECRET_KEY')
+if not SECRET_KEY:
+    # 開発用（DEBUG=True）の暫定キー。本番では絶対使ったらあかんで。
+    SECRET_KEY = 'django-insecure-77s@l!7^nner#5%q^-6k*+n04a!hpa5_+j69pv$16@#e6fb)6b'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# The default value is for development only.
-DEBUG = secrets.get('DEBUG', True)
+# デフォルトは安全のために False にしとくえ。開発時は .secrets.toml で True にしてな。
+DEBUG = secrets.get('DEBUG', False)
 
-ALLOWED_HOSTS = []
+# 本番環境（DEBUG=False）やのに安全やないキーが使われてへんかチェックや
+if not DEBUG and SECRET_KEY.startswith('django-insecure-'):
+    raise ValueError("Security Error: In production (DEBUG=False), you must set a secure SECRET_KEY.")
+
+ALLOWED_HOSTS = secrets.get('ALLOWED_HOSTS', [])
 
 
 # Application definition
@@ -216,6 +220,11 @@ OPENAI_MODEL = secrets.get('OPENAI_MODEL', 'gpt-4o')
 OPENAI_API_BASE_URL = secrets.get('OPENAI_API_BASE_URL')
 OPENAI_SSL_VERIFY = secrets.get('OPENAI_SSL_VERIFY', True)
 
+TRANSLATION_BATCH_SIZE = secrets.get('TRANSLATION_BATCH_SIZE', 20)
+TRANSLATION_AT_PREVIEW = secrets.get('TRANSLATION_AT_PREVIEW', False)
+TRANSLATION_AT_MANUAL_EMAIL = secrets.get('TRANSLATION_AT_MANUAL_EMAIL', False)
+TRANSLATION_AT_AUTO_EMAIL = secrets.get('TRANSLATION_AT_AUTO_EMAIL', True)
+
 # Master configuration for countries
 COUNTRY_CONFIG = {
     'JP': {'lang': 'Japanese', 'name': '日本'},
@@ -223,6 +232,8 @@ COUNTRY_CONFIG = {
     'CN': {'lang': 'Chinese',  'name': '中国'},
     'KR': {'lang': 'Korean',   'name': '韓国'},
 }
+
+DEFAULT_LANGUAGE = COUNTRY_CONFIG['JP']['lang']
 
 try:
     from .local_settings import *  # noqa

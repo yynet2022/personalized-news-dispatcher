@@ -106,6 +106,26 @@
         .toggle-auto-send {
             cursor: pointer;
         }
+
+        /* スピナー */
+        .spinner {
+            border: 2px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 2px solid #6c757d; /* btn-secondary color matches */
+            width: 1em;
+            height: 1em;
+            -webkit-animation: spin 1s linear infinite; /* Safari */
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 0.4em;
+        }
+        .btn-primary .spinner { border-top-color: #fff; border-color: rgba(255,255,255,0.3); }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 
     <div class="card">
@@ -131,10 +151,7 @@
                     <td><input type="checkbox" class="toggle-auto-send" data-url="{% url 'subscriptions:api_queryset_toggle_auto_send' pk=queryset.pk %}" {% if queryset.auto_send %}checked{% endif %}></td>
                     <td>
                         <div class="actions">
-                            <form action="{% url 'subscriptions:queryset_send' pk=queryset.pk %}" method="post" class="action-form">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-secondary btn-sm">メール送信</button>
-                            </form>
+                            <button type="button" class="btn btn-secondary btn-sm send-email-btn" data-url="{% url 'subscriptions:api_queryset_send' pk=queryset.pk %}">メール送信</button>
                             <a href="{% url 'subscriptions:queryset_delete' pk=queryset.pk %}" class="btn btn-danger btn-sm">削除</a>
                         </div>
                     </td>
@@ -156,7 +173,25 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const messagesContainer = document.querySelector('.messages') || createMessagesContainer();
 
+    function createMessagesContainer() {
+        const container = document.createElement('div');
+        container.className = 'messages';
+        const contentBlock = document.querySelector('.card');
+        contentBlock.parentNode.insertBefore(container, contentBlock);
+        return container;
+    }
+
+    function showMessage(message, level) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message message-${level}`;
+        msgDiv.textContent = message;
+        messagesContainer.appendChild(msgDiv);
+        // 数秒後に消すなどの処理はお好みで
+    }
+
+    // Auto Send Toggle
     document.querySelectorAll('.toggle-auto-send').forEach(checkbox => {
         checkbox.addEventListener('change', function(event) {
             const checkbox = event.target;
@@ -185,6 +220,56 @@ document.addEventListener('DOMContentLoaded', function() {
                 checkbox.checked = !checkbox.checked;
                 alert(`エラー: ${error.message}`);
                 console.error('Failed to toggle auto-send:', error);
+            });
+        });
+    });
+
+    // Manual Email Send
+    document.querySelectorAll('.send-email-btn').forEach(button => {
+        button.addEventListener('click', function(event) {
+            const btn = event.target;
+            const url = btn.dataset.url;
+            const originalText = btn.textContent;
+
+            // Loading state
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> 送信中...';
+            
+            // Clear previous messages? Optional.
+            messagesContainer.innerHTML = '';
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json'
+                },
+            })
+            .then(response => {
+                return response.json().then(data => {
+                    if (!response.ok) {
+                        throw new Error(data.message || '送信処理に失敗しました。');
+                    }
+                    return data;
+                });
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    showMessage(data.message, 'success');
+                } else if (data.status === 'info') {
+                    showMessage(data.message, 'info');
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Failed to send email:', error);
+                showMessage(`エラー: ${error.message}`, 'error');
+            })
+            .finally(() => {
+                // Restore button state
+                btn.disabled = false;
+                btn.textContent = originalText;
             });
         });
     });

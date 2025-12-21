@@ -1,6 +1,8 @@
 import logging
+import asyncio
+import math
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Dict
 import feedparser
 import httpx
 from urllib.parse import quote_plus
@@ -13,6 +15,7 @@ from news.models import Article, SentArticleLog
 from subscriptions.models import QuerySet
 from core.cinii_api import search_cinii_research
 from core.arxiv_api import search_arxiv
+from core.translation import translate_titles_batch
 
 
 logger = logging.getLogger(__name__)
@@ -27,22 +30,158 @@ class ArticleFetcher(ABC):
     """
     ニュースソースから記事を取得するためのインターフェースを定義する抽象基底クラス。
     """
+    def __init__(self, queryset: QuerySet, user: User):
+        self.queryset = queryset
+        self.user = user
+        self.sent_article_urls = set(SentArticleLog.objects.filter(
+            user=user).values_list('article__url', flat=True))
+        logger.debug(f"{self.__class__.__name__}: {queryset.name}")
+        logger.info(f"{len(self.sent_article_urls)} sent articles exist.")
+
+    def is_sent_article(self, url: str) -> bool:
+        """指定されたURLの記事が既に送信済みか判定する"""
+        return url in self.sent_article_urls
+
+    def save_articles(self, articles_data: List[Dict],
+                      dry_run: bool = False,
+                      batch_size: int = settings.TRANSLATION_BATCH_SIZE,
+                      target_language: str = None) -> List[Article]:
+        """
+        辞書リストから記事オブジェクトを作成または取得する共通メソッド。
+        target_languageが指定されている場合のみ、タイトルの一括翻訳を行う。
+        asyncioを用いて並列処理を行う。
+
+        Args:
+            articles_data (List[Dict]): 記事データのリスト。
+                各要素は {'title': str, 'url': str, 'published_date': datetime}
+            dry_run (bool): Trueの場合、DBへの保存は行わない。
+            batch_size (int): 翻訳時のバッチサイズ。
+            target_language (str): 翻訳先の言語。Noneの場合は翻訳しない。
+
+        Returns:
+            List[Article]: Articleオブジェクトのリスト。
+        """
+        valid_articles_data = []
+
+        # 1. 保存対象の抽出
+        for data in articles_data:
+            url = data.get('url')
+            title = data.get('title')
+
+            if not url or not title:
+                continue
+
+            if self.is_sent_article(url):
+                continue
+
+            valid_articles_data.append(data)
+
+        if not valid_articles_data:
+            return []
+
+        # 2. タイトルの翻訳 (必要な場合のみ)
+        if target_language:
+            titles = [d['title'] for d in valid_articles_data]
+            translated_titles = []
+
+            async def process_translation_tasks():
+                num_titles = len(titles)
+                if num_titles == 0:
+                    return []
+
+                num_batches = math.ceil(num_titles / batch_size)
+                base_size = num_titles // num_batches
+                remainder = num_titles % num_batches
+
+                tasks = []
+                start_index = 0
+
+                for i in range(num_batches):
+                    # 余りを前のバッチから順に分配してサイズを決定
+                    current_batch_size = (
+                        base_size + 1 if i < remainder else base_size
+                    )
+                    end_index = start_index + current_batch_size
+
+                    batch = titles[start_index:end_index]
+                    logger.info(
+                        f"Queuing translation batch {i + 1}/{num_batches} "
+                        f"(size: {len(batch)})"
+                    )
+
+                    tasks.append(asyncio.to_thread(
+                        translate_titles_batch, batch, target_language
+                    ))
+                    start_index = end_index
+
+                # 全タスクを並列実行
+                results = await asyncio.gather(*tasks)
+
+                flat_results = []
+                for batch_result in results:
+                    flat_results.extend(batch_result)
+                return flat_results
+
+            if titles:
+                try:
+                    translated_titles = asyncio.run(
+                        process_translation_tasks()
+                    )
+                except RuntimeError:
+                    loop = asyncio.get_event_loop()
+                    translated_titles = loop.run_until_complete(
+                        process_translation_tasks()
+                    )
+
+            # 翻訳結果の反映
+            if len(translated_titles) == len(valid_articles_data):
+                for i, data in enumerate(valid_articles_data):
+                    data['title'] = translated_titles[i]
+            else:
+                logger.warning(
+                    "Translated titles count mismatch. Using original titles."
+                )
+
+        # 3. 保存処理
+        saved_articles = []
+        for data in valid_articles_data:
+            url = data['url']
+            title = data['title']
+            published_date = data.get('published_date')
+
+            if dry_run:
+                article = Article(
+                    url=url,
+                    title=title,
+                    published_date=published_date
+                )
+            else:
+                article, _ = Article.objects.get_or_create(
+                    url=url,
+                    defaults={
+                        'title': title,
+                        'published_date': published_date
+                    }
+                )
+
+            saved_articles.append(article)
+
+        return saved_articles
+
     @abstractmethod
     def fetch_articles(
         self,
-        queryset: QuerySet,
-        user: User,
         dry_run: bool = False,
-        after_days_override: Union[int, None] = None
+        after_days_override: Union[int, None] = None,
+        enable_translation: bool = True
     ) -> Tuple[str, List[Article]]:
         """
-        指定されたQuerySetに基づいて、ユーザーが未読の記事を取得する。
+        記事を取得し、Articleオブジェクトのリストを返す。
 
         Args:
-            queryset (QuerySet): 記事取得の条件を定義したQuerySetオブジェクト。
-            user (User): 記事が既に送信されたかを判断するためのUserオブジェクト。
             dry_run (bool): Trueの場合、DBへのArticleの保存は行わない。
             after_days_override (int | None): querysetの設定を上書きする日数。
+            enable_translation (bool): 翻訳機能を有効にするかどうか。
 
         Returns:
             Tuple[str, List[Article]]:
@@ -95,14 +234,29 @@ class GoogleNewsFetcher(ArticleFetcher):
             return f"{query_str} after:{after_date_str}"
         return query_str
 
-    def _process_feed_entries(self, entries,
-                              after_days: int, max_articles: int,
-                              user: User, persist: bool) -> List[Article]:
-        articles = []
-        logger.info(f'{len(entries)} entries found.')
+    def fetch_articles(
+        self,
+        dry_run: bool = False,
+        after_days_override: Union[int, None] = None,
+        enable_translation: bool = True
+    ) -> Tuple[str, List[Article]]:
+        after_days = after_days_override \
+            if after_days_override is not None else self.queryset.after_days
+        query_with_date = self._build_query_with_date(
+            self.queryset.query_str, after_days)
+        logger.debug(f'after_days: {after_days}')
+
+        feed = self._fetch_rss_feed(
+            query_with_date, country_code=self.queryset.country)
+
+        logger.info(f'{len(feed.entries)} entries found.')
+
+        articles_data = []
         threshold_date = django_timezone.now() - timedelta(days=after_days)
-        for entry in entries:
-            if len(articles) >= max_articles:
+        max_articles = self.queryset.max_articles
+
+        for entry in feed.entries:
+            if len(articles_data) >= max_articles:
                 break
 
             published_date = self._get_published_date_from_entry(entry)
@@ -112,54 +266,28 @@ class GoogleNewsFetcher(ArticleFetcher):
                     logger.debug(f'Older: {published_date}: skip.')
                     continue
 
-            if persist:
-                article_instance, _ = Article.objects.get_or_create(
-                    url=entry.link,
-                    defaults={
-                        'title': entry.title,
-                        'published_date': published_date
-                    }
-                )
-                if not SentArticleLog.objects.filter(
-                        user=user, article=article_instance).exists():
-                    articles.append(article_instance)
-            else:
-                article_instance = Article(
-                    url=entry.link,
-                    title=entry.title,
-                    published_date=published_date
-                )
-                if not Article.objects.filter(url=entry.link).exists() or \
-                   not SentArticleLog.objects.filter(
-                       user=user, article__url=entry.link).exists():
-                    articles.append(article_instance)
+            if self.is_sent_article(entry.link):
+                continue
 
-        return articles
+            articles_data.append({
+                'title': entry.title,
+                'url': entry.link,
+                'published_date': published_date
+            })
 
-    def fetch_articles(
-        self,
-        queryset: QuerySet,
-        user: User,
-        dry_run: bool = False,
-        after_days_override: Union[int, None] = None
-    ) -> Tuple[str, List[Article]]:
-        logger.debug(f"Fetching Google News for queryset: {queryset.name}")
+        # 言語判定とターゲット言語の設定
+        target_language = None
+        if enable_translation:
+            user_lang = getattr(
+                self.user, 'preferred_language', settings.DEFAULT_LANGUAGE)
+            country_config = settings.COUNTRY_CONFIG.get(self.queryset.country)
+            article_lang = country_config['lang'] if country_config else None
 
-        after_days = after_days_override \
-            if after_days_override is not None else queryset.after_days
-        query_with_date = self._build_query_with_date(
-            queryset.query_str, after_days)
-        logger.debug(f'after_days: {after_days}')
+            if article_lang and article_lang != user_lang:
+                target_language = user_lang
 
-        feed = self._fetch_rss_feed(
-            query_with_date, country_code=queryset.country)
-
-        articles = self._process_feed_entries(
-            entries=feed.entries,
-            after_days=after_days,
-            max_articles=queryset.max_articles,
-            user=user,
-            persist=(not dry_run)
+        articles = self.save_articles(
+            articles_data, dry_run=dry_run, target_language=target_language
         )
         return query_with_date, articles
 
@@ -190,18 +318,16 @@ class CiNiiFetcher(ArticleFetcher):
 
     def fetch_articles(
         self,
-        queryset: QuerySet,
-        user: User,
         dry_run: bool = False,
-        after_days_override: Union[int, None] = None
+        after_days_override: Union[int, None] = None,
+        enable_translation: bool = True
     ) -> Tuple[str, List[Article]]:
-        logger.debug(f"Fetching CiNii Research for queryset: {queryset.name}")
-        search_keyword = queryset.query_str
+        search_keyword = self.queryset.query_str
         if not search_keyword:
             return "", []
 
         after_days = after_days_override \
-            if after_days_override is not None else queryset.after_days
+            if after_days_override is not None else self.queryset.after_days
 
         earliest_date = django_timezone.now() - timedelta(days=after_days)
 
@@ -212,7 +338,7 @@ class CiNiiFetcher(ArticleFetcher):
         try:
             cinii_results = search_cinii_research(
                 keyword=search_keyword,
-                count=min(queryset.max_articles * 3, 200),
+                count=min(self.queryset.max_articles * 3, 200),
                 start_year=start_year,
                 appid=settings.CINII_APP_ID
             )
@@ -223,21 +349,15 @@ class CiNiiFetcher(ArticleFetcher):
             raise FeedFetchError(f"HTTP error fetching CiNii feed: {e}") from e
 
         items = cinii_results.get('items', [])
-        new_articles = []
+        logger.info(f'{len(items)} entries found.')
 
-        sent_article_urls = set(SentArticleLog.objects
-                                .filter(user=user)
-                                .values_list('article__url', flat=True))
-
+        articles_data = []
         for item in items:
-            if len(new_articles) >= queryset.max_articles:
+            if len(articles_data) >= self.queryset.max_articles:
                 break
 
             url = item.get('link', {}).get('@id')
             title = item.get('title')
-
-            if not url or not title or url in sent_article_urls:
-                continue
 
             published_date = self._parse_date_string(
                 item.get('prism:publicationDate'))
@@ -248,18 +368,28 @@ class CiNiiFetcher(ArticleFetcher):
             if after_days > 0 and published_date < earliest_date:
                 continue
 
-            if not dry_run:
-                article, _ = Article.objects.update_or_create(
-                    url=url,
-                    defaults={'title': title, 'published_date': published_date}
-                )
-            else:
-                article = Article(
-                    url=url, title=title, published_date=published_date)
+            if self.is_sent_article(url):
+                continue
 
-            new_articles.append(article)
+            articles_data.append({
+                'title': title,
+                'url': url,
+                'published_date': published_date
+            })
 
-        return search_keyword, new_articles
+        # 言語判定
+        target_language = None
+        if enable_translation:
+            user_lang = getattr(
+                self.user, 'preferred_language', settings.DEFAULT_LANGUAGE)
+            # CiNiiは日本語とみなす
+            if user_lang != settings.COUNTRY_CONFIG['JP']['lang']:
+                target_language = user_lang
+
+        articles = self.save_articles(
+            articles_data, dry_run=dry_run, target_language=target_language
+        )
+        return search_keyword, articles
 
 
 class ArXivFetcher(ArticleFetcher):
@@ -267,23 +397,21 @@ class ArXivFetcher(ArticleFetcher):
 
     def fetch_articles(
         self,
-        queryset: QuerySet,
-        user: User,
         dry_run: bool = False,
-        after_days_override: Union[int, None] = None
+        after_days_override: Union[int, None] = None,
+        enable_translation: bool = True
     ) -> Tuple[str, List[Article]]:
-        logger.debug(f"Fetching arXiv for queryset: {queryset.name}")
-        search_keyword = queryset.query_str
+        search_keyword = self.queryset.query_str
         if not search_keyword:
             return "", []
 
         after_days = after_days_override \
-            if after_days_override is not None else queryset.after_days
+            if after_days_override is not None else self.queryset.after_days
 
         try:
             arxiv_results = search_arxiv(
                 query=search_keyword,
-                max_articles=min(queryset.max_articles * 3, 100),
+                max_articles=min(self.queryset.max_articles * 3, 100),
                 after_days=after_days
             )
         except httpx.RequestError as e:
@@ -292,36 +420,38 @@ class ArXivFetcher(ArticleFetcher):
         except httpx.HTTPStatusError as e:
             raise FeedFetchError(f"HTTP error fetching arXiv feed: {e}") from e
 
-        new_articles = []
-        sent_article_urls = set(SentArticleLog.objects.filter(
-            user=user).values_list('article__url', flat=True))
+        logger.info(f'{len(arxiv_results)} entries found.')
 
+        articles_data = []
         for item in arxiv_results:
-            if len(new_articles) >= queryset.max_articles:
+            if len(articles_data) >= self.queryset.max_articles:
                 break
 
             url = item.get('link')
             title = item.get('title')
             published_date = item.get('published_date')
 
-            if not url or not title or not published_date or \
-               url in sent_article_urls:
+            if self.is_sent_article(url):
                 continue
 
             # after_days のフィルタリングは search_arxiv 内で既に行われている
 
-            if not dry_run:
-                article, created = Article.objects.get_or_create(
-                    url=url,
-                    defaults={'title': title, 'published_date': published_date}
-                )
-                if created or not SentArticleLog.objects.filter(
-                        user=user, article=article).exists():
-                    new_articles.append(article)
-            else:
-                # dry_run時はDBに存在するかどうかは気にせずインスタンスを作成
-                article = Article(
-                    url=url, title=title, published_date=published_date)
-                new_articles.append(article)
+            articles_data.append({
+                'title': title,
+                'url': url,
+                'published_date': published_date
+            })
 
-        return search_keyword, new_articles
+        # 言語判定
+        target_language = None
+        if enable_translation:
+            user_lang = getattr(
+                self.user, 'preferred_language', settings.DEFAULT_LANGUAGE)
+            # arXivは英語とみなす
+            if user_lang != settings.COUNTRY_CONFIG['US']['lang']:
+                target_language = user_lang
+
+        articles = self.save_articles(
+            articles_data, dry_run=dry_run, target_language=target_language
+        )
+        return search_keyword, articles

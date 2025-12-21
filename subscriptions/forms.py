@@ -203,6 +203,8 @@ class QuerySetForm(forms.ModelForm):
             parts.append(f"all:{p}")
 
         or_part = " OR ".join(parts)
+        if len(parts) > 1:
+            or_part = f"({or_part})"
 
         # 絞り込みキーワード
         refinement = self.cleaned_data.get('refinement_keywords', '')
@@ -231,7 +233,7 @@ class QuerySetForm(forms.ModelForm):
 
         # クエリの組み立て
         if or_part and refinement_part:
-            return f"({or_part}) {refinement_part}"
+            return f"{or_part} {refinement_part}".strip()
         elif or_part:
             return or_part
         elif refinement_part:

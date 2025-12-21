@@ -5,6 +5,10 @@
 {% block content %}
     <h1>ログイン / 新規登録</h1>
     <p>ご登録のメールアドレスを入力してください。<br>ログイン用のリンクをメールでお送りします。</p>
+
+    {% if error_message %}
+        <p style="color: red; font-weight: bold;">{{ error_message }}</p>
+    {% endif %}
     
     <form method="post">
         {% csrf_token %}

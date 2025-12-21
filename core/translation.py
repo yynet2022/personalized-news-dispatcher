@@ -1,5 +1,8 @@
 from django.conf import settings
 import logging
+import json
+import re
+from typing import List
 
 logger = logging.getLogger(__name__)
 
@@ -22,15 +25,31 @@ except ImportError:
 # --- End of optional imports ---
 
 
-def translate_text_with_gemini(text: str,
-                               target_language: str = "Japanese") -> str:
+def _clean_json_response(text: str) -> str:
+    """
+    Cleans the response text to extract valid JSON array.
+    Removes Markdown code blocks and whitespace.
+    """
+    # Remove markdown code blocks if present
+    match = re.search(r'```(?:json)?\s*(\[.*\])\s*```', text, re.DOTALL)
+    if match:
+        return match.group(1)
+    # If no code blocks, look for the first '[' and last ']'
+    match = re.search(r'(\[.*\])', text, re.DOTALL)
+    if match:
+        return match.group(1)
+    return text
+
+
+def translate_text_with_gemini(
+        text: str, target_language: str = settings.DEFAULT_LANGUAGE) -> str:
     """
     Translates text using Google Gemini API.
 
     Args:
         text: The text to translate.
         target_language: The language to translate the text into.
-                         Defaults to "Japanese".
+                         Defaults to system default language ("Japanese").
 
     Returns:
         The translated text, or the original text if translation fails,
@@ -70,15 +89,71 @@ def translate_text_with_gemini(text: str,
         return text
 
 
-def translate_text_with_openai(text: str,
-                               target_language: str = "Japanese") -> str:
+def translate_titles_with_gemini(
+    titles: List[str], target_language: str = settings.DEFAULT_LANGUAGE
+) -> List[str]:
+    """
+    Translates a list of titles using Google Gemini API.
+    """
+    if not GEMINI_IS_AVAILABLE:
+        return titles
+
+    api_key = settings.GEMINI_API_KEY
+    if not api_key:
+        return titles
+
+    if not titles:
+        return []
+
+    try:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel(settings.GEMINI_MODEL)
+
+        titles_json = json.dumps(titles, ensure_ascii=False)
+        prompt = (
+            f"Translate the following list of titles into {target_language}. "
+            "Output ONLY a raw JSON list of strings "
+            "(e.g. [\"translated title 1\", \"translated title 2\"]). "
+            "Do not include any Markdown formatting or explanations. "
+            "Maintain the original order and count.\n\n"
+            f"{titles_json}"
+        )
+
+        logger.debug("Sending batch translation request to Gemini API...")
+        response = model.generate_content(
+            prompt,
+            generation_config={
+                'temperature': 0.0,
+                'response_mime_type': 'application/json'
+            }
+        )
+
+        cleaned_json = _clean_json_response(response.text)
+        translated_titles = json.loads(cleaned_json)
+
+        if (isinstance(translated_titles, list) and
+                len(translated_titles) == len(titles)):
+            return [str(t) for t in translated_titles]
+        else:
+            logger.warning(
+                "Gemini returned invalid JSON structure or count mismatch."
+            )
+            return titles
+
+    except Exception as e:
+        logger.error(f"Gemini batch translation failed: {e}")
+        return titles
+
+
+def translate_text_with_openai(
+        text: str, target_language: str = settings.DEFAULT_LANGUAGE) -> str:
     """
     Translates text using OpenAI API.
 
     Args:
         text: The text to translate.
         target_language: The language to translate the text into.
-                         Defaults to "Japanese".
+                         Defaults to system default language ("Japanese").
 
     Returns:
         The translated text, or the original text if translation fails,
@@ -132,7 +207,72 @@ def translate_text_with_openai(text: str,
         return text
 
 
-def translate_content(text: str, target_language: str = "Japanese") -> str:
+def translate_titles_with_openai(
+    titles: List[str], target_language: str = settings.DEFAULT_LANGUAGE
+) -> List[str]:
+    """
+    Translates a list of titles using OpenAI API.
+    """
+    if not OPENAI_IS_AVAILABLE:
+        return titles
+
+    api_key = settings.OPENAI_API_KEY
+    if not api_key:
+        return titles
+
+    if not titles:
+        return []
+
+    system_content = (
+        f"You are a helpful assistant that translates a list of titles into "
+        f"{target_language}. Output ONLY a raw JSON list of strings "
+        "(e.g. [\"translated 1\", \"translated 2\"]). "
+        "Do not use Markdown code blocks. "
+        "Maintain the original order and count."
+    )
+
+    try:
+        http_client = httpx.Client(verify=settings.OPENAI_SSL_VERIFY)
+        client = openai.OpenAI(
+            api_key=api_key,
+            base_url=settings.OPENAI_API_BASE_URL,
+            http_client=http_client
+        )
+
+        titles_json = json.dumps(titles, ensure_ascii=False)
+
+        logger.debug("Sending batch translation request to OpenAI API...")
+        response = client.chat.completions.create(
+            model=settings.OPENAI_MODEL,
+            messages=[
+                {"role": "system", "content": system_content},
+                {"role": "user", "content": titles_json}
+            ],
+            temperature=0.0,
+            response_format={"type": "json_object"}
+        )
+
+        cleaned_json = _clean_json_response(
+            response.choices[0].message.content
+        )
+        translated_titles = json.loads(cleaned_json)
+
+        if (isinstance(translated_titles, list) and
+                len(translated_titles) == len(titles)):
+            return [str(t) for t in translated_titles]
+        else:
+            logger.warning(
+                "OpenAI returned invalid JSON structure or count mismatch."
+            )
+            return titles
+
+    except Exception as e:
+        logger.error(f"OpenAI batch translation failed: {e}")
+        return titles
+
+
+def translate_content(
+        text: str, target_language: str = settings.DEFAULT_LANGUAGE) -> str:
     """
     Translates content using available AI services (Gemini or OpenAI).
     Prioritizes Gemini if its API key is set and the library is installed,
@@ -141,7 +281,7 @@ def translate_content(text: str, target_language: str = "Japanese") -> str:
     Args:
         text: The text content (can be plain text or HTML) to translate.
         target_language: The language to translate the text into.
-                         Defaults to "Japanese".
+                         Defaults to system default language ("Japanese").
 
     Returns:
         The translated text, or the original text
@@ -164,3 +304,27 @@ def translate_content(text: str, target_language: str = "Japanese") -> str:
             logger.info("No AI translation API key found."
                         " Skipping translation.")
         return text
+
+
+def translate_titles_batch(
+    titles: List[str], target_language: str = settings.DEFAULT_LANGUAGE
+) -> List[str]:
+    """
+    Translates a list of titles using available AI services (Gemini or OpenAI).
+
+    Args:
+        titles: List of titles to translate.
+        target_language: Target language.
+
+    Returns:
+        List of translated titles. Returns original list on failure.
+    """
+    use_gemini = GEMINI_IS_AVAILABLE and settings.GEMINI_API_KEY
+    use_openai = OPENAI_IS_AVAILABLE and settings.OPENAI_API_KEY
+
+    if use_gemini:
+        return translate_titles_with_gemini(titles, target_language)
+    elif use_openai:
+        return translate_titles_with_openai(titles, target_language)
+    else:
+        return titles

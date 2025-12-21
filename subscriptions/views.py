@@ -8,6 +8,8 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db import IntegrityError
+from django.conf import settings
+from datetime import datetime
 import logging
 
 from .models import (
@@ -84,8 +86,11 @@ def send_manual_email(request, pk):
     queryset = get_object_or_404(QuerySet, pk=pk, user=request.user)
 
     try:
-        _, new_articles = fetch_articles_for_subscription(queryset,
-                                                          request.user)
+        _, new_articles = fetch_articles_for_subscription(
+            queryset,
+            request.user,
+            dry_run=False,
+            enable_translation=settings.TRANSLATION_AT_MANUAL_EMAIL)
     except FeedFetchError as e:
         s = f"ニュースの取得に失敗しました: {e}"
         logger.error(s)
@@ -96,6 +101,7 @@ def send_manual_email(request, pk):
         querysets_with_articles = [{
             'queryset': queryset,
             'queryset_name': queryset.name,
+            'query_str': queryset.query_str,
             'articles': new_articles,
         }]
 
@@ -223,7 +229,8 @@ class NewsPreviewApiView(LoginRequiredMixin, View):
             query_with_date, articles = fetch_articles_for_subscription(
                 queryset=dummy_queryset,
                 user=request.user,
-                dry_run=True
+                dry_run=True,
+                enable_translation=settings.TRANSLATION_AT_PREVIEW
             )
             articles_data = [
                 {'title': x.title, 'link': x.url, 'published': (
@@ -240,6 +247,71 @@ class NewsPreviewApiView(LoginRequiredMixin, View):
         except (FeedFetchError, Exception) as e:
             return JsonResponse(
                 {'error': f'Failed to fetch news feed: {e}'}, status=502)
+
+
+class SendManualEmailApiView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        pk = self.kwargs.get('pk')
+        queryset = get_object_or_404(QuerySet, pk=pk, user=request.user)
+
+        try:
+            _, new_articles = fetch_articles_for_subscription(
+                queryset,
+                request.user,
+                dry_run=False,
+                enable_translation=settings.TRANSLATION_AT_MANUAL_EMAIL)
+        except FeedFetchError as e:
+            tstr = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            s = f"{tstr}: ニュースの取得に失敗しました: {e}"
+            logger.error(s)
+            return JsonResponse({'status': 'error', 'message': s}, status=500)
+
+        if new_articles:
+            querysets_with_articles = [{
+                'queryset': queryset,
+                'queryset_name': queryset.name,
+                'query_str': queryset.query_str,
+                'articles': new_articles,
+            }]
+
+            try:
+                if queryset.source == QuerySet.SOURCE_GOOGLE_NEWS:
+                    subject = (
+                        f'[News Dispatcher] Manual Send - {queryset.name}')
+                elif queryset.source == QuerySet.SOURCE_CINII:
+                    subject = f'[CiNii Research] Manual Send - {queryset.name}'
+                elif queryset.source == QuerySet.SOURCE_ARXIV:
+                    subject = f'[arXiv] Manual Send - {queryset.name}'
+                else:
+                    raise ValueError(f"Unknown source: {queryset.source}")
+
+                template_name = 'news/email/news_digest_email'
+                send_articles_email(
+                    user=request.user,
+                    querysets_with_articles=querysets_with_articles,
+                    subject=subject,
+                    template_name=template_name,
+                    enable_translation=False  # 手動送信では翻訳しない
+                )
+                log_sent_articles(request.user, new_articles)
+
+                tstr = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                msg = (f'{tstr}: '
+                       f'「{queryset.name}」の記事（{len(new_articles)}件）を '
+                       f'{request.user.email} に送信しました。')
+                return JsonResponse({'status': 'success', 'message': msg})
+
+            except Exception as e:
+                tstr = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                s = f'{tstr}: メールの送信中にエラーが発生しました: {e}'
+                logger.error(s)
+                return JsonResponse({'status': 'error', 'message': s},
+                                    status=500)
+        else:
+            tstr = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            msg = (f'{tstr}: 「{queryset.name}」に関する'
+                   '新しい記事は見つかりませんでした。')
+            return JsonResponse({'status': 'info', 'message': msg})
 
 
 class ToggleAutoSendView(LoginRequiredMixin, View):

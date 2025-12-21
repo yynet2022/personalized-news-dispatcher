@@ -63,7 +63,8 @@ def send_articles_email(
             final_should_translate = False  # Google News 以外は翻訳しない
 
     if final_should_translate:
-        target_language = getattr(user, 'preferred_language', 'Japanese')
+        target_language = getattr(
+            user, 'preferred_language', settings.DEFAULT_LANGUAGE)
 
         async def translate_bodies():
             """非同期で本文とHTMLを翻訳する。"""
@@ -133,14 +134,14 @@ def send_recommendation_email(user: User, recommendations: list):
     )
 
 
-def get_fetcher_for_queryset(queryset: QuerySet) -> ArticleFetcher:
+def get_fetcher_for_queryset(queryset: QuerySet, user: User) -> ArticleFetcher:
     """QuerySetのsourceに応じて適切なArticleFetcherインスタンスを返す。"""
     if queryset.source == QuerySet.SOURCE_GOOGLE_NEWS:
-        return GoogleNewsFetcher()
+        return GoogleNewsFetcher(queryset, user)
     elif queryset.source == QuerySet.SOURCE_CINII:
-        return CiNiiFetcher()
+        return CiNiiFetcher(queryset, user)
     elif queryset.source == QuerySet.SOURCE_ARXIV:
-        return ArXivFetcher()
+        return ArXivFetcher(queryset, user)
     else:
         raise ValueError(f"Unsupported queryset source: {queryset.source}")
 
@@ -148,12 +149,14 @@ def get_fetcher_for_queryset(queryset: QuerySet) -> ArticleFetcher:
 def fetch_articles_for_subscription(
     queryset: QuerySet, user: User,
     after_days_override: Union[int, None] = None,
-    dry_run: bool = False
+    dry_run: bool = False,
+    enable_translation: bool = True
 ) -> Tuple[str, List[Article]]:
     """
     QuerySetに対応したFetcherを使い、未読の記事を取得する。
     これは今後、記事取得のメインの入り口となる。
     """
-    fetcher = get_fetcher_for_queryset(queryset)
-    return fetcher.fetch_articles(queryset, user, dry_run=dry_run,
-                                  after_days_override=after_days_override)
+    fetcher = get_fetcher_for_queryset(queryset, user)
+    return fetcher.fetch_articles(dry_run=dry_run,
+                                  after_days_override=after_days_override,
+                                  enable_translation=enable_translation)

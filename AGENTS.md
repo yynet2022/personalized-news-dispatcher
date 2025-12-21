@@ -1,53 +1,95 @@
 # Personalized News Dispatcher
 
-これは、ユーザーがパーソナライズしたキーワードセットに基づき、News サイトから関連ニュースを自動収集し、ユーザーに HTML メールでダイジェストを配信するシステムです。
+ユーザーが定義した検索条件（QuerySet）に基づいて、複数の情報ソース（Google News, CiNii, arXiv）から関連ニュースや論文を自動収集し、HTMLメールでダイジェスト配信するシステムです。
 
 ## プロジェクト構成
 
-本プロジェクトは Django を用いて構築されており、主要なアプリケーションは以下の通りです。
+本プロジェクトは Django (5.x) を用いて構築されています。
 
-*   `core`: プロジェクトの基本的な設定や、全アプリケーションで共通して利用されるテンプレート (`base.html`) を提供します。
-*   `users`: ユーザー管理を担います。メールアドレスを用いたパスワードレス認証機能を有します。
-*   `subscriptions`: ユーザーが購読するニュースのキーワードセット (QuerySet) の管理を行います。ビジネスロジックの多くは `services.py` に実装されています。
-*   `news`: 収集したニュース記事、配信ログ、クリックログの管理を行います。
+### アプリケーション構成
+
+*   `core`: 全体共通のテンプレート、外部API連携モジュール (`arxiv_api.py`, `cinii_api.py`)、翻訳機能などを提供します。
+*   `users`: ユーザー管理機能。メールアドレスとマジックリンクを用いたパスワードレス認証を提供します。
+*   `subscriptions`: 検索条件 (QuerySet) の管理と、ニュース収集のビジネスロジック (`fetchers.py` 等を利用) を担います。
+*   `news`: 収集した記事データ、配信ログ、クリックログを管理します。
 
 ### ディレクトリ構成
 
 ```
 .
-├── config/          # Django プロジェクト設定
-├── core/            # 基本的なテンプレート等
-├── data/            # 初期データ (カテゴリ情報)
-├── log/             # ログファイル
-├── news/            # ニュース記事関連
-├── subscriptions/   # 購読設定関連 (ビジネスロジックは services.py)
-├── users/           # ユーザー認証関連
+├── config/          # Django プロジェクト設定 (.secrets.toml で機密情報を管理)
+├── core/            # 共通機能 (APIクライアント, 翻訳, 基底テンプレート)
+├── data/            # マスタデータの初期値 (JSON形式)
+├── log/             # アプリケーションログ
+├── news/            # 記事データ・ログ管理
+├── subscriptions/   # 購読設定・記事収集・配信ロジック
+├── users/           # ユーザー認証・設定
 ├── manage.py        # Django 管理コマンド
-├── requirements.txt # Python 依存パッケージ
-├── Makefile         # 各種コマンドのエイリアス
-└── uwsgi.ini        # uWSGI 設定ファイル
+└── uwsgi.ini        # 本番運用用 uWSGI 設定
 ```
 
 ## 主要機能
 
-*   **ユーザー認証**: メールアドレスとワンタイムトークンを用いたパスワードレス認証を提供します。
-*   **QuerySet**: ユーザーはニュース収集の条件を「QuerySet」として複数登録できます。QuerySet は以下の要素から構成されます。
-    *   大分類 (例: 経済, IT)
-    *   普遍キーワード (例: 金融政策, ソフトウェア)
-    *   時事キーワード (例: 日銀会合, WWDC)
-    *   関連キーワード
-    *   追加のOR検索キーワード (`additional_or_keywords`)
-    *   絞り込みキーワード (`refinement_keywords`)
-*   **ニュース収集**: 定期実行される `send_daily_news.py` 管理コマンドが、各ユーザーの QuerySet を `subscriptions/services.py` のビジネスロジックに渡します。ロジック内では、QuerySet の各キーワードを組み合わせて検索クエリ (`query_str`) を生成し、Google News の RSS フィードからニュースを収集します。記事の URL をキーに `get_or_create` を用いることで、データベースへの重複登録を防ぎます。
-*   **メール配信**: 収集したニュースの中から、`SentArticleLog` を参照して未送信の記事のみを抽出し、HTML 形式のダイジェストメールをユーザーに配信します。
-*   **クリック追跡**: メール内のニュースリンクには追跡用の URL が付与され、ユーザーのクリックを記録します。
+### 1. ユーザー認証とセキュリティ
+*   **パスワードレス認証**: メールアドレスを入力し、届いた一時的なリンクをクリックするだけでログインできます。
+*   **セキュリティ対策**:
+    *   **レート制限**: ログイン試行回数を制限し、ブルートフォース攻撃やメール爆撃を防止（IPベース）。
+    *   **オープンリダイレクト対策**: ログイン後のリダイレクト先を厳密に検証。
+    *   **セキュアな設定**: 本番環境 (`DEBUG=False`) では `SECRET_KEY` の安全性を強制チェック。
 
-## データベースモデル
+### 2. 検索条件 (QuerySet) の管理
+ユーザーは「QuerySet」として複数の収集条件を保存できます。
 
-*   `users.User`: ユーザー情報を格納します。
-*   `users.LoginToken`: パスワードレス認証用のワンタイムトークンを格納します。
-*   `subscriptions.LargeCategory`, `UniversalKeywords`, `CurrentKeywords`, `RelatedKeywords`: ニュースの分類カテゴリを定義します。
-*   `subscriptions.QuerySet`: ユーザーが作成したニュース収集条件のセットです。ユーザーが任意に設定するキーワードは、このモデルの `additional_or_keywords` や `refinement_keywords` フィールドに直接格納されます。
-*   `news.Article`: 収集したニュース記事の情報を格納します。URL には unique 制約があり、重複を防ぎます。
-*   `news.SentArticleLog`: どの記事をどのユーザーに配信したかを記録します。
-*   `news.ClickLog`: ユーザーの記事クリックを記録します。
+*   **対応ソース**:
+    *   **Google News**: 一般的なニュース記事。国別（JP, US, etc.）の設定が可能。
+    *   **CiNii Research**: 日本の学術論文。
+    *   **arXiv**: プレプリント（物理学、数学、CS等）。
+*   **検索パラメータ**:
+    *   ソースごとの専用キーワード（大分類、普遍キーワードなど）
+    *   `additional_or_keywords`: 自由入力のOR条件キーワード。
+    *   `refinement_keywords`: 絞り込み条件（AND / NOT検索）。
+    *   取得期間（過去何日分か）や最大取得件数の設定。
+
+### 3. 記事収集と配信 (バッチ処理)
+以下の管理コマンドを cron 等で定期実行することで機能します。
+
+*   `python manage.py send_articles`:
+    *   全ユーザーの QuerySet を元に、各ソースから最新記事を収集。
+    *   `SentArticleLog` を確認し、**未配信の記事のみ**を抽出してメール配信。
+    *   重複配信の防止と、APIリクエストの最適化が行われています。
+
+### 4. レコメンデーション
+*   `python manage.py send_recommendations`:
+    *   ユーザーの過去のクリック履歴 (`ClickLog`) などを分析し、おすすめの記事を配信する機能（開発中/試験運用中）。
+
+### 5. クリック追跡
+*   配信メール内のリンクは追跡用URLに変換されており、ユーザーがどの記事に興味を持ったか（クリックしたか）を記録します。
+
+## データベースモデル概要
+
+*   **Users**: `User`, `LoginToken` (認証用)
+*   **Subscriptions**:
+    *   `QuerySet`: ユーザーごとの検索設定。ソース種別 (`source`) により、参照するキーワードテーブルが変わります。
+    *   `LargeCategory`, `UniversalKeywords`, `CurrentKeywords`, `CiNiiKeywords`, `ArXivKeywords`: 各種マスタデータ。
+*   **News**:
+    *   `Article`: 記事本体。URLを一意のキーとして管理。
+    *   `SentArticleLog`: 配信履歴。
+    *   `ClickLog`: ユーザーの行動履歴。
+
+## 開発・運用ガイド
+
+### 依存パッケージ
+`requirements.txt` を参照。主要なものは以下の通り。
+*   `Django`: Webフレームワーク
+*   `httpx`: 高速なHTTPクライアント (非同期対応)
+*   `feedparser`: RSS/Atomフィードの解析
+*   `tomli`: 設定ファイル (.secrets.toml) の読み込み
+
+### 初期セットアップ
+1.  依存ライブラリのインストール: `pip install -r requirements.txt`
+2.  データベース構築: `python manage.py migrate`
+3.  マスタデータの投入:
+    *   `python manage.py update_categories` (Google News用)
+    *   `python manage.py update_cinii_keywords`
+    *   `python manage.py update_arxiv_keywords`
+4.  設定ファイル: `config/.secrets.toml` を作成し、APIキー等を設定（`settings.py` 参照）。

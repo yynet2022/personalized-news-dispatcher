@@ -51,7 +51,7 @@ class User(AbstractUser):
         '優先言語',
         max_length=50,
         choices=LANGUAGE_CHOICES,
-        default='Japanese',
+        default=settings.DEFAULT_LANGUAGE,
         help_text='AI翻訳で利用する優先言語'
     )
 

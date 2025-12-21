@@ -11,6 +11,7 @@ from .views import (
     # ArXivKeywordsApiView,
     NewsPreviewApiView,
     ToggleAutoSendView,
+    SendManualEmailApiView,
 )
 
 app_name = 'subscriptions'
@@ -41,4 +42,7 @@ urlpatterns = [
     path('api/queryset/<uuid:pk>/toggle-auto-send/',
          ToggleAutoSendView.as_view(),
          name='api_queryset_toggle_auto_send'),
+    path('api/queryset/<uuid:pk>/send/',
+         SendManualEmailApiView.as_view(),
+         name='api_queryset_send'),
 ]

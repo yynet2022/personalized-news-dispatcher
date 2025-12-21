@@ -1,5 +1,6 @@
 import time
 from django.core.management.base import BaseCommand
+from django.conf import settings
 
 from users.models import User
 from subscriptions.models import QuerySet
@@ -25,7 +26,7 @@ class Command(BaseCommand):
             '--source',
             type=str,
             default='all',
-            choices=['all', 'google_news', 'cinii', 'arxiv'],
+            choices=['all', 'google_news', 'cinii', 'arxiv', 'scholar'],
             help='Specify the news source to fetch from.'
         )
         parser.add_argument(
@@ -74,9 +75,17 @@ class Command(BaseCommand):
             qs for qs in user.queryset_set.all() if qs.auto_send
         ]
         if source_filter != 'all':
-            all_querysets = [
-                qs for qs in all_querysets if qs.source == source_filter
-            ]
+            if source_filter == 'scholar':
+                # 'scholar' は CiNii Research と arXiv の両方を意味する
+                all_querysets = [
+                    qs for qs in all_querysets
+                    if qs.source in [QuerySet.SOURCE_CINII,
+                                     QuerySet.SOURCE_ARXIV]
+                ]
+            else:
+                all_querysets = [
+                    qs for qs in all_querysets if qs.source == source_filter
+                ]
 
         if not all_querysets:
             self.stdout.write(f"  No active querysets for {user.email} "
@@ -95,7 +104,8 @@ class Command(BaseCommand):
                     queryset=queryset,
                     user=user,
                     after_days_override=after_days_override,
-                    dry_run=dry_run
+                    dry_run=dry_run,
+                    enable_translation=settings.TRANSLATION_AT_AUTO_EMAIL
                 )
 
                 if new_articles:
@@ -117,7 +127,7 @@ class Command(BaseCommand):
                         if queryset.source == QuerySet.SOURCE_GOOGLE_NEWS:
                             subject = ('[News Dispatcher] Daily News Digest'
                                        f' - {queryset.name}')
-                            enable_translation = True
+                            enable_translation = False
                         elif queryset.source == QuerySet.SOURCE_CINII:
                             subject = ('[CiNii Research] Daily Digest'
                                        f' - {queryset.name}')

@@ -232,6 +232,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const previewArea = document.querySelector('#preview-area');
     const previewResults = document.querySelector('#preview-results');
 
+    // 全角英数字・記号・空白を半角に変換する
+    const toHalfWidth = (str) => {
+        return str
+            .replace(/[\uFF01-\uFF5E]/g, (s) => {
+                // 全角「！」(0xFF01) 〜 「～」(0xFF5E) の範囲を変換
+                return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+            })
+            .replace(/[\u30FC\u2010-\u2015\u2212\uFF0D]/g, "-")
+            .replace(/[\u201C-\u201D]/g, '"')
+            .replace(/\u3000/g, " "); // 全角スペース(0x3000)を半角へ
+    };
+    // console.log(toHalfWidth("ＪａｖａＳｃｒｉｐｔ　２０２５！")); 
+    // 結果: "JavaScript 2025!"
+
     // --- Helper function to create a checkbox element ---
     function createCheckbox(name, item, selectedValues = []) {
         const checkbox = document.createElement('input');
@@ -314,7 +328,7 @@ document.addEventListener('DOMContentLoaded', function() {
         arxivFields.style.display = (selectedSource === 'arxiv') ? '' : 'none';
 
         if (resetValue) {
-            console.log("reset")
+            // console.log("reset")
             document.querySelector('#id_additional_or_keywords').value = "";
             document.querySelector('#id_refinement_keywords').value = "";
             let afterDays = 2;
@@ -330,9 +344,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const regex = /"([^"]*)"|\S+/g;
         const matches = [...str.matchAll(regex)];
         // マッチ結果から、クォート内部 (グループ1) または全体 (グループ0) を抽出
-        return matches.map(match => {
-            return match[1] !== undefined ? match[1] : match[0];
+        const trimmedResults = matches.map(match => {
+            const element = match[1] !== undefined ? match[1] : match[0];
+            return element.trim();
         });
+        return trimmedResults.filter(element => element.length > 0);
     }
 
     // --- Handle Preview Button Click ---
@@ -343,6 +359,11 @@ document.addEventListener('DOMContentLoaded', function() {
             source: selectedSource,
             max_articles: document.querySelector('#id_max_articles').value,
         });
+
+        const a_str = toHalfWidth(document.querySelector('#id_additional_or_keywords').value.trim());
+        document.querySelector('#id_additional_or_keywords').value = a_str;
+        const r_str = toHalfWidth(document.querySelector('#id_refinement_keywords').value.trim());
+        document.querySelector('#id_refinement_keywords').value = r_str;
 
         if (selectedSource === 'google_news') {
             if (!largeCategorySelect.value) {
@@ -355,14 +376,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 parts.push(cb.labels[0].textContent.trim());
             });
             const additionalOrKeywords = document.querySelector('#id_additional_or_keywords').value.trim();
-            // if (additionalOrKeywords) {
-            //  parts.push(...additionalOrKeywords.split(/\s+/).filter(k => k));
-            // }
             if (additionalOrKeywords) {
                 const k = quotedSplit(additionalOrKeywords);
                 parts.push(...k.filter(Boolean)); 
             }
-            // let orPart = parts.filter(p => p).join(' OR ');
             let orPart = parts.map(p => p.includes(' ') ? `"${p}"` : p).join(' OR ');
             if (parts.length > 1) orPart = `(${orPart})`;
             const refinementPart = document.querySelector('#id_refinement_keywords').value.trim();
@@ -382,25 +399,16 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             const additionalOrKeywords = document.querySelector('#id_additional_or_keywords').value.trim();
-            // if (additionalOrKeywords) {
-            //  parts.push(...additionalOrKeywords.split(/\s+/).filter(k => k));
-            // }
             if (additionalOrKeywords) {
                 const k = quotedSplit(additionalOrKeywords);
                 parts.push(...k.filter(Boolean)); 
             }
             // Build query string
             if (selectedSource === 'arxiv') {
-                const orPart = parts.map(p => `all:${p.includes(' ') ? `"${p}"` : p}`).join(' OR ');
+                let orPart = parts.map(p => `all:${p.includes(' ') ? `"${p}"` : p}`).join(' OR ');
+                if (parts.length > 1) orPart = `(${orPart})`;
                 const refinementPart = document.querySelector('#id_refinement_keywords').value.trim();
                 
-                // const refinementParts = refinementPart.split(/\s+/).filter(Boolean).map(term => {
-                //     if (term.startsWith('-')) {
-                //         let body = term.substring(1);
-                //         return `ANDNOT all:${body.includes(' ') ? `"${body}"` : body}`;
-                //     }
-                //     return `AND all:${term.includes(' ') ? `"${term}"` : term}`;
-                // });
                 const refinementParts = quotedSplit(refinementPart)
                       .filter(Boolean)
                       .map(term => {
@@ -413,7 +421,7 @@ document.addEventListener('DOMContentLoaded', function() {
                           return `AND all:${term.includes(' ') ? `"${term}"` : term}`;
                       });
                 if (orPart && refinementParts.length > 0) {
-                    finalQuery = `(${orPart}) ${refinementParts.join(' ')}`;
+                    finalQuery = `${orPart} ${refinementParts.join(' ')}`;
                 } else if (orPart) {
                     finalQuery = orPart;
                 } else if (refinementParts.length > 0) {
@@ -479,6 +487,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (previewButton) {
         previewButton.addEventListener('click', handlePreview);
+    }
+
+    // --- Handle Form Submit ---
+    const form = document.getElementById('queryset-form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            const additionalInput = document.querySelector('#id_additional_or_keywords');
+            const refinementInput = document.querySelector('#id_refinement_keywords');
+
+            if (additionalInput) {
+                additionalInput.value = toHalfWidth(additionalInput.value.trim());
+            }
+            if (refinementInput) {
+                refinementInput.value = toHalfWidth(refinementInput.value.trim());
+            }
+        });
     }
 
     // Initial State Setup

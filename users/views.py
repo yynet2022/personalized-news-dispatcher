@@ -3,10 +3,13 @@ import logging
 from django.utils import timezone
 from datetime import timedelta
 from django.shortcuts import render, redirect
+# from django.http import HttpResponse
 from django.views import View
 from django.contrib.auth import login
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.core.mail import send_mail
 from django.urls import reverse, reverse_lazy
+from django.core.cache import cache
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LogoutView as AuthLogoutView
@@ -23,6 +26,20 @@ class LoginView(View):
         return render(request, 'users/login.html', {'form': form})
 
     def post(self, request, *args, **kwargs):
+        # Rate Limiting Logic
+        ip = request.META.get('REMOTE_ADDR')
+        cache_key = f"login_attempt_{ip}"
+        attempts = cache.get(cache_key, 0)
+
+        if attempts >= 5:
+            logger.warning(f"Rate limit exceeded for IP: {ip}")
+            return render(request, 'users/login.html', {
+                'form': EmailLoginForm(),
+                'error_message': 'ログイン試行回数が多すぎます。しばらく待ってから再試行してください。'
+            })
+
+        cache.set(cache_key, attempts + 1, 60)  # Expires in 60 seconds
+
         next_url = request.GET.get('next')
         if next_url:
             request.session['next'] = next_url
@@ -91,7 +108,11 @@ class AuthenticateView(View):
         login_token.delete()
 
         next_url = request.session.pop('next', None)
-        if next_url:
+        if next_url and url_has_allowed_host_and_scheme(
+            url=next_url,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure()
+        ):
             return redirect(next_url)
         else:
             return redirect('subscriptions:queryset_list')
