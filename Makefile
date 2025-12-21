@@ -10,6 +10,8 @@ all:
 init: all
 	@echo
 	@echo "ex# python manage.py update_categories data/categories.json"
+	@echo "ex# python manage.py update_cinii_keywords data/cinii_keywords.json"
+	@echo "ex# python manage.py update_arxiv_keywords data/arxiv_keywords.json"
 	@echo "ex# python manage.py update_site --name ${SITE_NAME} --domain ${SITE_DOMAIN}"
 	@echo "ex# python manage.py createsuperuser --no-input --email ${EMAIL}"
 
