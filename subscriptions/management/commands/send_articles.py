@@ -56,7 +56,12 @@ class Command(BaseCommand):
         ).prefetch_related('queryset_set').distinct()
 
         for user in active_users:
-            self.process_user(user, options)
+            try:
+                self.process_user(user, options)
+            except Exception as e:
+                self.stderr.write(self.style.ERROR(
+                    f"An unexpected error occurred for '{user.email}':"
+                    f" {e}"))
 
         self.stdout.write("Article dispatch process finished.")
 
