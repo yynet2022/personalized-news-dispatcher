@@ -133,6 +133,7 @@ def translate_titles_with_gemini(
 
         if (isinstance(translated_titles, list) and
                 len(translated_titles) == len(titles)):
+            logger.debug(f'Success(Gemini): ["{translated_titles[0]}", ...]')
             return [str(t) for t in translated_titles]
         else:
             logger.warning(
@@ -259,6 +260,7 @@ def translate_titles_with_openai(
 
         if (isinstance(translated_titles, list) and
                 len(translated_titles) == len(titles)):
+            logger.debug(f'Success(OpenAI): ["{translated_titles[0]}", ...]')
             return [str(t) for t in translated_titles]
         else:
             logger.warning(

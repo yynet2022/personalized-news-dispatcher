@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 from subscriptions.models import QuerySet, LargeCategory
 from subscriptions.management.commands.send_articles import Command
 from news.models import Article
-from core.fetchers import FeedFetchError
+from subscriptions.fetchers import FeedFetchError
 
 User = get_user_model()
 

@@ -20,7 +20,7 @@ from .forms import QuerySetForm
 from .services import (
     fetch_articles_for_subscription, send_articles_email
 )
-from core.fetchers import FeedFetchError
+from subscriptions.fetchers import FeedFetchError
 from core.services import log_sent_articles
 
 logger = logging.getLogger(__name__)

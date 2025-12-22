@@ -9,7 +9,7 @@ from subscriptions.services import (
     send_articles_email,
 )
 from core.services import log_sent_articles
-from core.fetchers import FeedFetchError
+from subscriptions.fetchers import FeedFetchError
 
 
 class Command(BaseCommand):

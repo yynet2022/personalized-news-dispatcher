@@ -3,9 +3,6 @@ import asyncio
 import math
 from abc import ABC, abstractmethod
 from typing import List, Tuple, Union, Dict
-import feedparser
-import httpx
-from urllib.parse import quote_plus
 from datetime import datetime, timezone, timedelta
 
 from django.conf import settings
@@ -15,6 +12,7 @@ from news.models import Article, SentArticleLog
 from subscriptions.models import QuerySet
 from core.cinii_api import search_cinii_research
 from core.arxiv_api import search_arxiv
+from core.google_news_api import search_google_news, FetchError as GoogleFetchError
 from core.translation import translate_titles_batch
 
 
@@ -106,8 +104,7 @@ class ArticleFetcher(ABC):
                     batch = titles[start_index:end_index]
                     logger.info(
                         f"Queuing translation batch {i + 1}/{num_batches} "
-                        f"(size: {len(batch)})"
-                    )
+                        f"(size: {len(batch)})")
 
                     tasks.append(asyncio.to_thread(
                         translate_titles_batch, batch, target_language
@@ -194,46 +191,6 @@ class ArticleFetcher(ABC):
 class GoogleNewsFetcher(ArticleFetcher):
     """Google Newsから記事を取得するためのFetcher。"""
 
-    def _get_published_date_from_entry(self, entry):
-        if hasattr(entry, 'published_parsed') and entry.published_parsed:
-            dt_naive = datetime(*entry.published_parsed[:6])
-            return dt_naive.replace(tzinfo=timezone.utc)
-        return None
-
-    def _fetch_rss_feed(self, query: str, country_code: str,
-                        timeout: int = 10):
-        google_news_params = {
-            'JP': {'hl': 'ja', 'gl': 'JP', 'ceid': 'JP:ja'},
-            'US': {'hl': 'en', 'gl': 'US', 'ceid': 'US:en'},
-            'CN': {'hl': 'zh-CN', 'gl': 'CN', 'ceid': 'CN:zh-Hans'},
-            'KR': {'hl': 'ko', 'gl': 'KR', 'ceid': 'KR:ko'},
-        }
-        params = google_news_params.get(country_code, google_news_params['JP'])
-
-        logger.debug(f'query: {query}')
-        encoded_query = quote_plus(query)
-        base_url = (f"https://news.google.com/rss/search?"
-                    f"q={encoded_query}&hl={params['hl']}&"
-                    f"gl={params['gl']}&ceid={params['ceid']}")
-
-        try:
-            response = httpx.get(
-                base_url, timeout=timeout, follow_redirects=True)
-            response.raise_for_status()
-            return feedparser.parse(response.content)
-        except httpx.RequestError as e:
-            error_message = (f"Failed to fetch RSS feed for query '{query}' "
-                             f"from country '{country_code}': {e}")
-            logger.error(error_message)
-            raise FeedFetchError(error_message) from e
-
-    def _build_query_with_date(self, query_str: str, after_days: int) -> str:
-        if after_days > 0:
-            limit_date = django_timezone.now() - timedelta(days=after_days)
-            after_date_str = limit_date.strftime('%Y-%m-%d')
-            return f"{query_str} after:{after_date_str}"
-        return query_str
-
     def fetch_articles(
         self,
         dry_run: bool = False,
@@ -242,36 +199,42 @@ class GoogleNewsFetcher(ArticleFetcher):
     ) -> Tuple[str, List[Article]]:
         after_days = after_days_override \
             if after_days_override is not None else self.queryset.after_days
-        query_with_date = self._build_query_with_date(
-            self.queryset.query_str, after_days)
+        
+        # 実際に使用したクエリ文字列を構築して返すため (API内部でも構築されるが、呼び出し元への返却用)
+        query_str = self.queryset.query_str
+        query_with_date = query_str
+        if after_days > 0:
+            limit_date = django_timezone.now() - timedelta(days=after_days)
+            after_date_str = limit_date.strftime('%Y-%m-%d')
+            query_with_date = f"{query_str} after:{after_date_str}"
+
         logger.debug(f'after_days: {after_days}')
 
-        feed = self._fetch_rss_feed(
-            query_with_date, country_code=self.queryset.country)
+        try:
+            results = search_google_news(
+                query=self.queryset.query_str,
+                country=self.queryset.country,
+                after_days=after_days,
+                max_articles=self.queryset.max_articles
+            )
+        except GoogleFetchError as e:
+             # FeedFetchErrorでラップして再送出
+             raise FeedFetchError(str(e)) from e
 
-        logger.info(f'{len(feed.entries)} entries found.')
+        logger.info(f'{len(results)} entries found.')
 
         articles_data = []
-        threshold_date = django_timezone.now() - timedelta(days=after_days)
-        max_articles = self.queryset.max_articles
+        for item in results:
+            url = item.get('link')
+            title = item.get('title')
+            published_date = item.get('published_date')
 
-        for entry in feed.entries:
-            if len(articles_data) >= max_articles:
-                break
-
-            published_date = self._get_published_date_from_entry(entry)
-
-            if after_days > 0 and published_date:
-                if published_date < threshold_date:
-                    logger.debug(f'Older: {published_date}: skip.')
-                    continue
-
-            if self.is_sent_article(entry.link):
+            if self.is_sent_article(url):
                 continue
 
             articles_data.append({
-                'title': entry.title,
-                'url': entry.link,
+                'title': title,
+                'url': url,
                 'published_date': published_date
             })
 
@@ -336,17 +299,24 @@ class CiNiiFetcher(ArticleFetcher):
             start_year = earliest_date.year
 
         try:
+            # import httpx はこのファイルのトップレベルからは削除されているため
+            # 必要なら再インポートするか、cinii_apiのエラーハンドリングに依存する。
+            # ここでは cinii_api が httpx の例外をそのまま出す可能性があるため
+            # FeedFetchError で包む必要があるが、httpx を import せずに捕捉するのは難しい。
+            # cinii_api 側で捕捉していない場合はここでもエラーになる。
+            # とりあえず既存の実装に合わせるため、httpx エラーの捕捉が必要なら import httpx が必要。
+            # しかし今回のリファクタリングで api 側に寄せたい。
+            # search_cinii_research は httpx エラーを投げる可能性があるので、
+            # ここで try-except Exception で受けて FeedFetchError にする。
             cinii_results = search_cinii_research(
                 keyword=search_keyword,
                 count=min(self.queryset.max_articles * 3, 200),
                 start_year=start_year,
                 appid=settings.CINII_APP_ID
             )
-        except httpx.RequestError as e:
-            raise FeedFetchError(
-                f"Network error fetching CiNii feed: {e}") from e
-        except httpx.HTTPStatusError as e:
-            raise FeedFetchError(f"HTTP error fetching CiNii feed: {e}") from e
+        except Exception as e:
+             # 厳密には httpx.RequestError などだが、依存を減らすため汎用的に受ける
+             raise FeedFetchError(f"Error fetching CiNii feed: {e}") from e
 
         items = cinii_results.get('items', [])
         logger.info(f'{len(items)} entries found.')
@@ -409,16 +379,18 @@ class ArXivFetcher(ArticleFetcher):
             if after_days_override is not None else self.queryset.after_days
 
         try:
+            # search_arxiv は内部で FetchError (custom) を投げる可能性がある
+            # ここで import 済みの FetchError を使うかどうかだが、
+            # arxiv_api.py の FetchError は import されていない。
+            # core.arxiv_api から FetchError も import する手もあるが、
+            # Exception で受けて FeedFetchError に統一するのがシンプル。
             arxiv_results = search_arxiv(
                 query=search_keyword,
                 max_articles=min(self.queryset.max_articles * 3, 100),
                 after_days=after_days
             )
-        except httpx.RequestError as e:
-            raise FeedFetchError(
-                f"Network error fetching arXiv feed: {e}") from e
-        except httpx.HTTPStatusError as e:
-            raise FeedFetchError(f"HTTP error fetching arXiv feed: {e}") from e
+        except Exception as e:
+            raise FeedFetchError(f"Error fetching arXiv feed: {e}") from e
 
         logger.info(f'{len(arxiv_results)} entries found.')
 
