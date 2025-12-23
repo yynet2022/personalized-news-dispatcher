@@ -128,25 +128,11 @@ class Command(BaseCommand):
                             "    [DRY RUN] Would send email and log articles.")
                     else:
                         # ソースに応じて件名とテンプレートを決定
+                        enable_translation = False
                         template_name = 'news/email/news_digest_email'
-                        if queryset.source == QuerySet.SOURCE_GOOGLE_NEWS:
-                            subject = ('[News Dispatcher] Daily News Digest'
-                                       f' - {queryset.name}')
-                            enable_translation = False
-                        elif queryset.source == QuerySet.SOURCE_CINII:
-                            subject = ('[CiNii Research] Daily Digest'
-                                       f' - {queryset.name}')
-                            enable_translation = False
-                        elif queryset.source == QuerySet.SOURCE_ARXIV:
-                            subject = ('[arXiv] Daily Digest'
-                                       f' - {queryset.name}')
-                            enable_translation = False
-                        else:
-                            self.stderr.write(
-                                f"Unknown source '{queryset.source}'."
-                                " Skipping email.")
-                            continue
-
+                        subject = (
+                            f'[{queryset.get_source_display()}] '
+                            f'Daily Digest - {queryset.name}')
                         self.stdout.write(f"    Sending email to {user.email}")
                         send_articles_email(
                             user=user,

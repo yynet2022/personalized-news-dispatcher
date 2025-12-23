@@ -86,7 +86,8 @@ def search_google_news(query: str,
     articles = []
     threshold_date = None
     if after_days is not None and after_days > 0:
-        threshold_date = datetime.now(timezone.utc) - timedelta(days=after_days)
+        threshold_date = (
+            datetime.now(timezone.utc) - timedelta(days=after_days))
 
     for entry in feed.entries:
         if len(articles) >= max_articles:

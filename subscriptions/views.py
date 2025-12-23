@@ -106,13 +106,10 @@ def send_manual_email(request, pk):
         }]
 
         try:
-            if queryset.source == QuerySet.SOURCE_GOOGLE_NEWS:
-                subject = f'[News Dispatcher] Manual Send - {queryset.name}'
-            elif queryset.source == QuerySet.SOURCE_CINII:
-                subject = f'[CiNii Research] Manual Send - {queryset.name}'
-            else:
-                raise ValueError(f"Unknown source: {queryset.source}")
-
+            subject = (
+                f'[{queryset.get_source_display()}] '
+                f'Manual Send - {queryset.name}')
+            logger.debug(f'mail subject: {subject}')
             template_name = 'news/email/news_digest_email'
             send_articles_email(
                 user=request.user,
@@ -275,16 +272,10 @@ class SendManualEmailApiView(LoginRequiredMixin, View):
             }]
 
             try:
-                if queryset.source == QuerySet.SOURCE_GOOGLE_NEWS:
-                    subject = (
-                        f'[News Dispatcher] Manual Send - {queryset.name}')
-                elif queryset.source == QuerySet.SOURCE_CINII:
-                    subject = f'[CiNii Research] Manual Send - {queryset.name}'
-                elif queryset.source == QuerySet.SOURCE_ARXIV:
-                    subject = f'[arXiv] Manual Send - {queryset.name}'
-                else:
-                    raise ValueError(f"Unknown source: {queryset.source}")
-
+                subject = (
+                    f'[{queryset.get_source_display()}] '
+                    f'Manual Send - {queryset.name}')
+                logger.debug(f'mail subject: {subject}')
                 template_name = 'news/email/news_digest_email'
                 send_articles_email(
                     user=request.user,

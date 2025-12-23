@@ -12,7 +12,8 @@ from news.models import Article, SentArticleLog
 from subscriptions.models import QuerySet
 from core.cinii_api import search_cinii_research
 from core.arxiv_api import search_arxiv
-from core.google_news_api import search_google_news, FetchError as GoogleFetchError
+from core.google_news_api import (
+    search_google_news, FetchError as GoogleFetchError)
 from core.translation import translate_titles_batch
 
 
@@ -199,7 +200,7 @@ class GoogleNewsFetcher(ArticleFetcher):
     ) -> Tuple[str, List[Article]]:
         after_days = after_days_override \
             if after_days_override is not None else self.queryset.after_days
-        
+
         # 実際に使用したクエリ文字列を構築して返すため (API内部でも構築されるが、呼び出し元への返却用)
         query_str = self.queryset.query_str
         query_with_date = query_str
@@ -218,8 +219,8 @@ class GoogleNewsFetcher(ArticleFetcher):
                 max_articles=self.queryset.max_articles
             )
         except GoogleFetchError as e:
-             # FeedFetchErrorでラップして再送出
-             raise FeedFetchError(str(e)) from e
+            # FeedFetchErrorでラップして再送出
+            raise FeedFetchError(str(e)) from e
 
         logger.info(f'{len(results)} entries found.')
 
@@ -315,8 +316,8 @@ class CiNiiFetcher(ArticleFetcher):
                 appid=settings.CINII_APP_ID
             )
         except Exception as e:
-             # 厳密には httpx.RequestError などだが、依存を減らすため汎用的に受ける
-             raise FeedFetchError(f"Error fetching CiNii feed: {e}") from e
+            # 厳密には httpx.RequestError などだが、依存を減らすため汎用的に受ける
+            raise FeedFetchError(f"Error fetching CiNii feed: {e}") from e
 
         items = cinii_results.get('items', [])
         logger.info(f'{len(items)} entries found.')

@@ -11,8 +11,8 @@ from django.template.loader import render_to_string
 from users.models import User
 from news.models import Article
 from subscriptions.models import QuerySet
-from subscriptions.fetchers import (ArticleFetcher, CiNiiFetcher, GoogleNewsFetcher,
-                                    ArXivFetcher)
+from subscriptions.fetchers import (
+    ArticleFetcher, CiNiiFetcher, GoogleNewsFetcher, ArXivFetcher)
 from core.translation import translate_content
 
 logger = logging.getLogger(__name__)
