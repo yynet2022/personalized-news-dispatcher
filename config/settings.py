@@ -36,19 +36,15 @@ except Exception:
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# .secrets.toml もしくは環境変数から取得するようにしてな。
+# .secrets.toml から取得するように。
 SECRET_KEY = secrets.get('SECRET_KEY')
 if not SECRET_KEY:
-    # 開発用（DEBUG=True）の暫定キー。本番では絶対使ったらあかんで。
+    # 開発用（DEBUG=True）での暫定キー。本番では絶対使ってはダメ。
     SECRET_KEY = 'django-insecure-77s@l!7^nner#5%q^-6k*+n04a!hpa5_+j69pv$16@#e6fb)6b'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# デフォルトは安全のために False にしとくえ。開発時は .secrets.toml で True にしてな。
+# デフォルトは安全のために False にしとく。開発時は .secrets.toml で True に。
 DEBUG = secrets.get('DEBUG', False)
-
-# 本番環境（DEBUG=False）やのに安全やないキーが使われてへんかチェックや
-if not DEBUG and SECRET_KEY.startswith('django-insecure-'):
-    raise ValueError("Security Error: In production (DEBUG=False), you must set a secure SECRET_KEY.")
 
 ALLOWED_HOSTS = secrets.get('ALLOWED_HOSTS', [])
 
@@ -95,6 +91,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.context_processors.project_context',
             ],
         },
     },
@@ -189,6 +186,12 @@ LOGGING = {
         'handlers': ['console'],
         'level': 'INFO',
     },
+    # 'loggers': {
+    #     'core.translation': {
+    #         'level': 'DEBUG',
+    #         'propagate': True,
+    #     },
+    # },
 }
 
 # Load API keys from the 'secrets' dictionary loaded at the top of the file.
@@ -197,28 +200,22 @@ LOGGING = {
 # --- Example .secrets.toml settings ---
 # --- Required ---
 # Set one or both API keys
-# GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
-# OPENAI_API_KEY = "YOUR_OPENAI_API_KEY"
-# CINII_APP_ID = "YOUR_CINII_APP_ID"
-#
-# --- Optional ---
-# Specify AI model names (defaults are used if not set)
-# GEMINI_MODEL = "gemini-pro-latest"
-# OPENAI_MODEL = "gpt-4o"
-#
-# For OpenAI-compatible APIs
-# OPENAI_API_BASE_URL = "https://your-openai-compatible-api.example.com/v1"
-#
-# To disable SSL verification for on-premise environments
-# OPENAI_SSL_VERIFY = false
-#
 GEMINI_API_KEY = secrets.get('GEMINI_API_KEY')
 OPENAI_API_KEY = secrets.get('OPENAI_API_KEY')
 CINII_APP_ID = secrets.get('CINII_APP_ID')
+#
+# --- Optional ---
+# Specify AI model names (defaults are used if not set)
 GEMINI_MODEL = secrets.get('GEMINI_MODEL', 'gemini-pro-latest')
 OPENAI_MODEL = secrets.get('OPENAI_MODEL', 'gpt-4o')
+#
+# For OpenAI-compatible APIs
+# OPENAI_API_BASE_URL = "https://your-openai-compatible-api.example.com/v1"
 OPENAI_API_BASE_URL = secrets.get('OPENAI_API_BASE_URL')
+#
+# To disable SSL verification for on-premise environments
 OPENAI_SSL_VERIFY = secrets.get('OPENAI_SSL_VERIFY', True)
+#
 
 TRANSLATION_BATCH_SIZE = secrets.get('TRANSLATION_BATCH_SIZE', 20)
 TRANSLATION_AT_PREVIEW = secrets.get('TRANSLATION_AT_PREVIEW', False)
@@ -235,10 +232,17 @@ COUNTRY_CONFIG = {
 
 DEFAULT_LANGUAGE = COUNTRY_CONFIG['JP']['lang']
 
+PROJECT_NAME = "Personalized News Dispatcher"
+
 try:
     from .local_settings import *  # noqa
 except Exception as e:
     import sys
     print(f'Info: {e}: skip.', file=sys.stderr)
+
+#
+# 本番環境（DEBUG=False）で安全ではないキーが使われていないかチェック
+if not DEBUG and SECRET_KEY.startswith('django-insecure-'):
+    raise ValueError("Security Error: In production (DEBUG=False), you must set a secure SECRET_KEY.")
 
 #

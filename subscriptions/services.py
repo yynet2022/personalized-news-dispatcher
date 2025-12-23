@@ -43,6 +43,7 @@ def send_articles_email(
         'user': user,
         'querysets_with_articles': querysets_with_articles,
         'site_url': site_url,
+        'project_name': settings.PROJECT_NAME,
     }
 
     plain_body = render_to_string(f'{template_name}.txt', context)
@@ -116,9 +117,10 @@ def send_recommendation_email(user: User, recommendations: list):
         'user': user,
         'recommendations': recommendations,
         'site_url': site_url,
+        'project_name': settings.PROJECT_NAME,
     }
 
-    subject = '[News Dispatcher] Popular Articles You Might Like'
+    subject = f'[{settings.PROJECT_NAME}] Popular Articles You Might Like'
     plain_body = render_to_string(
         'subscriptions/email/recommendation_email.txt', context)
     html_body = render_to_string(

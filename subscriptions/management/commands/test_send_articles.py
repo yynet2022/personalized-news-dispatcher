@@ -223,6 +223,7 @@ class SendArticlesCommandTest(TestCase):
         self.assertFalse(mock_send_articles_email.called)
         self.assertFalse(mock_log_sent_articles.called)
 
+    @override_settings(TRANSLATION_AT_AUTO_EMAIL=True)
     @patch('subscriptions.management.commands.send_articles.send_articles_email')  # noqa: E501
     @patch('subscriptions.management.commands.send_articles.fetch_articles_for_subscription')  # noqa: E501
     def test_command_sends_email_for_arxiv_source(

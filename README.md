@@ -50,11 +50,11 @@
 
     ```bash
 
-    python manage.py update_categories      # Google News用カテゴリ
+    python manage.py update_categories data/categories.json          # Google News用カテゴリ
 
-    python manage.py update_cinii_keywords  # CiNii用キーワード
+    python manage.py update_cinii_keywords data/cinii_keywords.json  # CiNii用キーワード
 
-    python manage.py update_arxiv_keywords  # arXiv用キーワード
+    python manage.py update_arxiv_keywords data/arxiv_keywords.json  # arXiv用キーワード
 
     ```
 

@@ -18,4 +18,4 @@ Search Query: {{ item.query_str }}
 To change your settings, visit:
 {{ site_url }}{% url 'subscriptions:queryset_list' %}
 
-Personalized News Dispatcher
+{{ project_name }}

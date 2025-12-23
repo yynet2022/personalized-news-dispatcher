@@ -65,7 +65,7 @@ class LoginView(View):
             )
 
             send_mail(
-                subject='[News Dispatcher] ログインURLのお知らせ',
+                subject=f'[{settings.PROJECT_NAME}] ログインURLのお知らせ',
                 message=f'以下のリンクをクリックしてログインしてください。\n\n{login_url}',
                 from_email=settings.EMAIL_HOST_USER,
                 recipient_list=[user.email],
