@@ -8,7 +8,9 @@ logger = logging.getLogger(__name__)
 
 # --- Optional AI library imports ---
 try:
-    import google.generativeai as genai
+    # import google.generativeai as genai
+    # https://ai.google.dev/gemini-api/docs/migrate?hl=ja
+    from google import genai
     GEMINI_IS_AVAILABLE = True
 except ImportError:
     GEMINI_IS_AVAILABLE = False
@@ -70,16 +72,22 @@ def translate_text_with_gemini(
         logger.info("Gemini translation start.")
         logger.debug("Attempting to translate with Gemini model: "
                      f"{settings.GEMINI_MODEL}")
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel(settings.GEMINI_MODEL)
+        # genai.configure(api_key=api_key)
+        client = genai.Client(api_key=api_key)
         prompt = (f"Translate the following text into {target_language}."
                   " If the text is HTML, translate only the visible text "
                   "content while preserving all HTML tags and structure:\n\n"
                   f"{text}")
 
         logger.debug("Sending request to Gemini API...")
-        response = model.generate_content(
-            prompt, generation_config={'temperature': 0.0})
+        # model = genai.GenerativeModel(settings.GEMINI_MODEL)
+        # response = model.generate_content(
+        #     prompt, generation_config={'temperature': 0.0})
+        response = client.models.generate_content(
+            model=settings.GEMINI_MODEL,
+            contents=prompt,
+            config=genai.types.GenerateContentConfig(
+                temperature=0.0))
         logger.debug("Successfully received response from Gemini API.")
 
         logger.info("Gemini translation end.")
@@ -106,8 +114,8 @@ def translate_titles_with_gemini(
         return []
 
     try:
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel(settings.GEMINI_MODEL)
+        # genai.configure(api_key=api_key)
+        client = genai.Client(api_key=api_key)
 
         titles_json = json.dumps(titles, ensure_ascii=False)
         prompt = (
@@ -120,12 +128,21 @@ def translate_titles_with_gemini(
         )
 
         logger.debug("Sending batch translation request to Gemini API...")
-        response = model.generate_content(
-            prompt,
-            generation_config={
-                'temperature': 0.0,
-                'response_mime_type': 'application/json'
-            }
+        # model = genai.GenerativeModel(settings.GEMINI_MODEL)
+        # response = model.generate_content(
+        #     prompt,
+        #     generation_config={
+        #         'temperature': 0.0,
+        #         'response_mime_type': 'application/json'
+        #     }
+        # )
+        response = client.models.generate_content(
+            model=settings.GEMINI_MODEL,
+            contents=prompt,
+            config=genai.types.GenerateContentConfig(
+                temperature=0.0,
+                response_mime_type='application/json',
+            )
         )
 
         cleaned_json = _clean_json_response(response.text)

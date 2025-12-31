@@ -115,6 +115,7 @@ class SendArticlesCommandTest(TestCase):
         # --source scholar を指定してコマンドを実行
         call_command(
             command, stdout=command.stdout, stderr=command.stderr,
+            interval=0,
             source='scholar')
 
         output = command.stdout.getvalue()
@@ -158,6 +159,7 @@ class SendArticlesCommandTest(TestCase):
         # --source all を指定してコマンドを実行
         call_command(
             command, stdout=command.stdout, stderr=command.stderr,
+            interval=0,
             source='all')
 
         output = command.stdout.getvalue()
@@ -198,6 +200,7 @@ class SendArticlesCommandTest(TestCase):
         # --source google_news を指定してコマンドを実行
         call_command(
             command, stdout=command.stdout, stderr=command.stderr,
+            interval=0,
             source='google_news')
 
         output = command.stdout.getvalue()
@@ -241,7 +244,9 @@ class SendArticlesCommandTest(TestCase):
             return 'query', []
         mock_fetch.side_effect = fetch_side_effect
 
-        call_command('send_articles', source='arxiv')
+        call_command('send_articles',
+                     interval=0,
+                     source='arxiv')
 
         # arXiv の QuerySet のみ処理される
         # setUp で作成された qs_arxiv と、ここで作成した arxiv_qs の2つ
@@ -289,7 +294,9 @@ class SendArticlesCommandTest(TestCase):
         mock_fetch.side_effect = fetch_side_effect
 
         stdout = io.StringIO()
-        call_command('send_articles', stdout=stdout)
+        call_command('send_articles',
+                     interval=0,
+                     stdout=stdout)
 
         # user1 に2回、user2 に1回、合計3回メールが送信される
         # 他のユーザー(testuser)のQuerySetは記事が見つからないので送信されない
@@ -312,7 +319,7 @@ class SendArticlesCommandTest(TestCase):
         # このテストは、コマンドがループ内で余計なクエリを発行しないことを
         # 暗に確認します。assertNumQueries は現状の実装と合わないため、
         # コマンドがエラーなく終了することを確認するに留めます。
-        call_command('send_articles')
+        call_command('send_articles', interval=0)
         self.assertTrue(mock_fetch.called)  # 少なくとも1回は呼ばれる
         self.assertTrue(mock_send_email.called)
         self.assertTrue(mock_log.called)
@@ -340,7 +347,9 @@ class SendArticlesCommandTest(TestCase):
         mock_send_email.side_effect = send_email_side_effect
 
         stderr = io.StringIO()
-        call_command('send_articles', stderr=stderr, no_color=True)
+        call_command('send_articles',
+                     interval=0,
+                     stderr=stderr, no_color=True)
 
         # 6つの有効なquerysetすべてが処理される (ソース指定なし=all)
         self.assertEqual(mock_fetch.call_count, 6)
@@ -373,7 +382,7 @@ class SendArticlesCommandTest(TestCase):
         mock_fetch.side_effect = fetch_side_effect
 
         stderr = io.StringIO()
-        call_command('send_articles', stderr=stderr, no_color=True)
+        call_command('send_articles', interval=0, stderr=stderr, no_color=True)
 
         # エラーが発生しても、成功した2つはメールが送信される
         self.assertEqual(mock_send_email.call_count, 2)

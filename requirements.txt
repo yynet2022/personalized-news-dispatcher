@@ -16,5 +16,5 @@ tzdata==2025.2
 urllib3==2.5.0
 wheel==0.45.1
 tomli; python_version < "3.11"
-# google-generativeai==0.8.5
+# google-genai
 # openai==2.7.2
