@@ -10,7 +10,9 @@ from typing import Any, Optional, Union
 from django.conf import settings
 from django.utils import timezone as django_timezone
 
+from core.arxiv_api import FetchError as ArxivFetchError
 from core.arxiv_api import search_arxiv
+from core.cinii_api import FetchError as CiNiiFetchError
 from core.cinii_api import search_cinii_research
 from core.google_news_api import FetchError as GoogleFetchError
 from core.google_news_api import search_google_news
@@ -232,7 +234,7 @@ class GoogleNewsFetcher(ArticleFetcher):
                 after_days=after_days,
                 max_articles=self.queryset.max_articles,
             )
-        except GoogleFetchError as e:
+        except (GoogleFetchError, Exception) as e:
             # FeedFetchErrorでラップして再送出
             raise FeedFetchError(str(e)) from e
 
@@ -329,24 +331,25 @@ class CiNiiFetcher(ArticleFetcher):
             start_year = earliest_date.year
 
         try:
-            # import httpx はこのファイルのトップレベルからは削除されているため
-            # 必要なら再インポートするか、cinii_apiのエラーハンドリングに依存する。
-            # ここでは cinii_api が httpx の例外をそのまま出す可能性があるため
-            # FeedFetchError で包む必要があるが、httpx を import せずに捕捉するのは難しい。
+            # import httpx はこのファイルのトップレベルからは削除され
+            # ているため必要なら再インポートするか、cinii_apiのエラー
+            # ハンドリングに依存する。ここでは cinii_api が httpx の例
+            # 外をそのまま出す可能性があるためFeedFetchError で包む必
+            # 要があるが、httpx を import せずに捕捉するのは難しい。
             # cinii_api 側で捕捉していない場合はここでもエラーになる。
-            # とりあえず既存の実装に合わせるため、httpx エラーの捕捉が必要なら import httpx が必要。
-            # しかし今回のリファクタリングで api 側に寄せたい。
-            # search_cinii_research は httpx エラーを投げる可能性があるので、
-            # ここで try-except Exception で受けて FeedFetchError にする。
+            # とりあえず既存の実装に合わせるため、httpx エラーの捕捉が
+            # 必要なら import httpx が必要。しかし今回のリファクタリン
+            # グで api 側に寄せたい。search_cinii_research は httpx エ
+            # ラーを投げる可能性があるので、ここで try-except
+            # Exception で受けて FeedFetchError にする。
             cinii_results = search_cinii_research(
                 keyword=search_keyword,
                 count=min(self.queryset.max_articles * 3, 200),
                 start_year=start_year,
                 appid=settings.CINII_APP_ID,
             )
-        except Exception as e:
-            # 厳密には httpx.RequestError などだが、依存を減らすため汎用的に受ける
-            raise FeedFetchError(f"Error fetching CiNii feed: {e}") from e
+        except (CiNiiFetchError, Exception) as e:
+            raise FeedFetchError(str(e)) from e
 
         items = cinii_results.get("items", [])
         logger.info(f"{len(items)} entries found.")
@@ -422,8 +425,8 @@ class ArXivFetcher(ArticleFetcher):
                 max_articles=min(self.queryset.max_articles * 3, 100),
                 after_days=after_days,
             )
-        except Exception as e:
-            raise FeedFetchError(f"Error fetching arXiv feed: {e}") from e
+        except (ArxivFetchError, Exception) as e:
+            raise FeedFetchError(str(e)) from e
 
         logger.info(f"{len(arxiv_results)} entries found.")
 

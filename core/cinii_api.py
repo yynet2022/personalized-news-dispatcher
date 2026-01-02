@@ -10,6 +10,10 @@ logger = logging.getLogger(__name__)
 BASE_URL = "https://cir.nii.ac.jp/opensearch/v2/articles"
 
 
+class FetchError(Exception):
+    pass
+
+
 def search_cinii_research(
     keyword, count=20, start=1, start_year=None, max_retries=3, appid=None
 ):
@@ -22,6 +26,7 @@ def search_cinii_research(
     :param start_year: 検索対象の開始年 (例: 2020)
     :param max_retries: 403エラー時の最大再試行回数
     :return: 検索結果のJSONデータ (辞書型)
+    :raises FetchError: APIリクエストに失敗した場合
     """
 
     # クエリパラメータを設定
@@ -40,26 +45,44 @@ def search_cinii_research(
 
     logger.debug(f"Searching: {keyword}")
 
-    for attempt in range(max_retries):
-        response = httpx.get(
-            BASE_URL, params=params, timeout=10.0, follow_redirects=True
-        )
-
-        if response.status_code == 403:
-            logger.warning(
-                f"Got 403 Forbidden. Retrying in 10 seconds... "
-                f"({attempt + 1}/{max_retries})"
+    try:
+        for attempt in range(max_retries):
+            response = httpx.get(
+                BASE_URL, params=params, timeout=10.0, follow_redirects=True
             )
-            time.sleep(10)
-            continue
 
-        # 403以外のエラーまたは成功した場合はループを抜ける
-        break
+            if response.status_code == 403:
+                logger.warning(
+                    f"Got 403 Forbidden. Retrying in 10 seconds... "
+                    f"({attempt + 1}/{max_retries})"
+                )
+                time.sleep(10)
+                continue
 
-    # HTTPステータスコードをチェック
-    response.raise_for_status()
+            # 403以外のエラーまたは成功した場合はループを抜ける
+            break
 
-    return response.json()
+        # HTTPステータスコードをチェック
+        response.raise_for_status()
+
+        return response.json()
+
+    except httpx.RequestError as e:
+        error_message = (
+            f"Failed to fetch CiNii data for keyword '{keyword}': {e}"
+        )
+        logger.error(error_message)
+        raise FetchError(error_message) from e
+    except httpx.HTTPStatusError as e:
+        error_message = (
+            f"HTTP Error: {e}. Status Code: {e.response.status_code}"
+        )
+        logger.error(error_message)
+        raise FetchError(error_message) from e
+    except Exception as e:
+        error_message = f"An unexpected error occurred: {e}"
+        logger.error(error_message)
+        raise FetchError(error_message) from e
 
 
 def process_results(data):
