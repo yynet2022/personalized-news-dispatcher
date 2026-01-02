@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import unicodedata
 import uuid
 
@@ -232,16 +234,16 @@ class QuerySet(models.Model):
     )
 
     # --- CiNii Research 専用フィールド ---
-    cinii_keywords = models.ManyToManyField(
-        "CiNiiKeywords",
+    cinii_keywords: models.ManyToManyField = models.ManyToManyField(
+        CiNiiKeywords,
         blank=True,
         verbose_name="CiNiiキーワード",
         help_text="ニュースソースが「CiNii Research」の場合に選択します。",
     )
 
     # --- arXiv 専用フィールド ---
-    arxiv_keywords = models.ManyToManyField(
-        "ArXivKeywords",
+    arxiv_keywords: models.ManyToManyField = models.ManyToManyField(
+        ArXivKeywords,
         blank=True,
         verbose_name="arXivキーワード",
         help_text="ニュースソースが「arXiv」の場合に選択します。",

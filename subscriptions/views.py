@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import logging
 from datetime import datetime
+from typing import Any
 
 from django.conf import settings
 from django.contrib import messages
@@ -151,7 +154,7 @@ def send_manual_email(request, pk):
 
 
 class _KeywordsApiView(LoginRequiredMixin, View):
-    _KeywordsModel = None
+    _KeywordsModel: Any = None
 
     def get(self, request, *args, **kwargs):
         large_category_id = request.GET.get("large_category_id")

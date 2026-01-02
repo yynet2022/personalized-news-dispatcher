@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Optional
+from typing import Optional
 from urllib.parse import quote_plus
 
 import feedparser
@@ -60,7 +62,7 @@ def search_google_news(
     country: str = "JP",
     after_days: Optional[int] = None,
     max_articles: int = 100,
-) -> List[Dict]:
+) -> list[dict]:
     """
     Google Newsを検索し、記事リストを返す。
 
@@ -71,7 +73,7 @@ def search_google_news(
         max_articles (int): 最大取得件数
 
     Returns:
-        List[Dict]: 記事情報のリスト。
+        list[dict]: 記事情報のリスト。
                     keys: 'title', 'link', 'published_date'
     """
     # 日付フィルタリング用のクエリ加工
@@ -89,7 +91,7 @@ def search_google_news(
 
     logger.info(f"{len(feed.entries)} entries found.")
 
-    articles = []
+    articles: list[dict] = []
     threshold_date = None
     if after_days is not None and after_days > 0:
         threshold_date = datetime.now(timezone.utc) - timedelta(

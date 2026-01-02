@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import logging
 import urllib.parse
 
 # from pprint import pprint
 from datetime import datetime, timedelta, timezone
+from typing import Any
 
 import feedparser
 import httpx
@@ -46,7 +49,7 @@ def _fetch_atom_feed(query: str, count: int = 3, timeout: int = 10):
 def _process_feed_entries(entries, max_articles: int, after_days: int):
     threshold_date = datetime.now(timezone.utc) - timedelta(days=after_days)
     logger.debug(f" threshold_date: {threshold_date}")
-    articles = []
+    articles: list[dict[str, Any]] = []
     for entry in entries:
         if len(articles) >= max_articles:
             break

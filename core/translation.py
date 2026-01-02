@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import json
 import logging
 import re
-from typing import List
 
 from django.conf import settings
 
@@ -15,8 +16,8 @@ try:
 
     GEMINI_IS_AVAILABLE = True
 except ImportError:
+    genai = None  # type: ignore[assignment]
     GEMINI_IS_AVAILABLE = False
-    genai = None
 
 try:
     import httpx
@@ -24,9 +25,9 @@ try:
 
     OPENAI_IS_AVAILABLE = True
 except ImportError:
+    httpx = None  # type: ignore[assignment]
+    openai = None  # type: ignore[assignment]
     OPENAI_IS_AVAILABLE = False
-    openai = None
-    httpx = None
 # --- End of optional imports ---
 
 
@@ -102,15 +103,15 @@ def translate_text_with_gemini(
         logger.debug("Successfully received response from Gemini API.")
 
         logger.info("Gemini translation end.")
-        return response.text
+        return response.text or text
     except Exception as e:
         logger.error(f"Gemini translation failed: {e}")
         return text
 
 
 def translate_titles_with_gemini(
-    titles: List[str], target_language: str = settings.DEFAULT_LANGUAGE
-) -> List[str]:
+    titles: list[str], target_language: str = settings.DEFAULT_LANGUAGE
+) -> list[str]:
     """
     Translates a list of titles using Google Gemini API.
     """
@@ -156,7 +157,12 @@ def translate_titles_with_gemini(
             ),
         )
 
-        cleaned_json = _clean_json_response(response.text)
+        res_text = response.text
+        if not res_text:
+            logger.warning("Gemini returned empty response.")
+            return titles
+
+        cleaned_json = _clean_json_response(res_text)
         translated_titles = json.loads(cleaned_json)
 
         if isinstance(translated_titles, list) and len(
@@ -236,15 +242,15 @@ def translate_text_with_openai(
         logger.debug("Successfully received response from OpenAI API.")
 
         logger.info("OpenAI translation end.")
-        return response.choices[0].message.content
+        return response.choices[0].message.content or text
     except Exception as e:
         logger.error(f"OpenAI translation failed: {e}")
         return text
 
 
 def translate_titles_with_openai(
-    titles: List[str], target_language: str = settings.DEFAULT_LANGUAGE
-) -> List[str]:
+    titles: list[str], target_language: str = settings.DEFAULT_LANGUAGE
+) -> list[str]:
     """
     Translates a list of titles using OpenAI API.
     """
@@ -287,9 +293,12 @@ def translate_titles_with_openai(
             response_format={"type": "json_object"},
         )
 
-        cleaned_json = _clean_json_response(
-            response.choices[0].message.content
-        )
+        res_content = response.choices[0].message.content
+        if not res_content:
+            logger.warning("OpenAI returned empty response.")
+            return titles
+
+        cleaned_json = _clean_json_response(res_content)
         translated_titles = json.loads(cleaned_json)
 
         if isinstance(translated_titles, list) and len(
@@ -348,8 +357,8 @@ def translate_content(
 
 
 def translate_titles_batch(
-    titles: List[str], target_language: str = settings.DEFAULT_LANGUAGE
-) -> List[str]:
+    titles: list[str], target_language: str = settings.DEFAULT_LANGUAGE
+) -> list[str]:
     """
     Translates a list of titles using available AI services (Gemini or OpenAI).
 

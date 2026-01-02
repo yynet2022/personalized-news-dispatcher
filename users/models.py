@@ -1,20 +1,31 @@
 # users/models.py
+from __future__ import annotations
+
 import uuid
+from typing import Any, Optional
 
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    BaseUserManager,
+    PermissionsMixin,
+)
 from django.db import models
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 
 # ----------------------------------------------------------------------
 # 1. 専用のUserManagerを作成
 # ----------------------------------------------------------------------
-class CustomUserManager(BaseUserManager):
+class CustomUserManager(BaseUserManager["User"]):
     """
     'username'フィールドの代わりに'email'を使用するためのカスタムユーザーマネージャー
     """
 
-    def create_user(self, email, password=None, **extra_fields):
+    def create_user(
+        self, email: str, password: Optional[str] = None, **extra_fields: Any
+    ) -> User:
         if not email:
             raise ValueError("Email field must be set")
         email = self.normalize_email(email)
@@ -23,7 +34,9 @@ class CustomUserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, email, password=None, **extra_fields):
+    def create_superuser(
+        self, email: str, password: Optional[str] = None, **extra_fields: Any
+    ) -> User:
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
@@ -45,10 +58,35 @@ LANGUAGE_CHOICES = sorted([(lang, lang) for lang in LANGUAGES])
 # ----------------------------------------------------------------------
 # 2. 作成したUserManagerをUserモデルに適用
 # ----------------------------------------------------------------------
-class User(AbstractUser):
-    username = None  # usernameは使わない
+class User(AbstractBaseUser, PermissionsMixin):
+    """
+    AbstractUserを使用せず、AbstractBaseUserとPermissionsMixinを継承して再定義。
+    これにより username フィールドを排除し、objects マネージャーの型競合を解決する。
+    """
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField("メールアドレス", unique=True)
+
+    # AbstractUser から必要なフィールドを再定義
+    first_name = models.CharField(_("first name"), max_length=150, blank=True)
+    last_name = models.CharField(_("last name"), max_length=150, blank=True)
+    is_staff = models.BooleanField(
+        _("staff status"),
+        default=False,
+        help_text=_(
+            "Designates whether the user can log into this admin site."
+        ),
+    )
+    is_active = models.BooleanField(
+        _("active"),
+        default=True,
+        help_text=_(
+            "Designates whether this user should be treated as active. "
+            "Unselect this instead of deleting accounts."
+        ),
+    )
+    date_joined = models.DateTimeField(_("date joined"), default=timezone.now)
+
     preferred_language = models.CharField(
         "優先言語",
         max_length=50,
@@ -62,17 +100,27 @@ class User(AbstractUser):
 
     objects = CustomUserManager()
 
-    def get_display_name(self):
+    def get_display_name(self) -> str:
         n = self.get_full_name()
         if n:
             return n
         return self.email
 
-    def __str__(self):
+    def get_full_name(self) -> str:
+        """
+        Return the first_name plus the last_name, with a space in between.
+        """
+        full_name = "%s %s" % (self.first_name, self.last_name)
+        return full_name.strip()
+
+    def get_short_name(self) -> str:
+        """Return the short name for the user."""
+        return self.first_name
+
+    def __str__(self) -> str:
         return self.email
 
 
-# users/models.py
 class LoginToken(models.Model):
     """
     ログイン用のワンタイムトークンを保存するモデル

@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 import math
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Tuple, Union
+from typing import Any, Optional, Union
 
 from django.conf import settings
 from django.utils import timezone as django_timezone
@@ -48,25 +50,25 @@ class ArticleFetcher(ABC):
 
     def save_articles(
         self,
-        articles_data: List[Dict],
+        articles_data: list[dict],
         dry_run: bool = False,
         batch_size: int = settings.TRANSLATION_BATCH_SIZE,
-        target_language: str = None,
-    ) -> List[Article]:
+        target_language: Optional[str] = None,
+    ) -> list[Article]:
         """
         辞書リストから記事オブジェクトを作成または取得する共通メソッド。
         target_languageが指定されている場合のみ、タイトルの一括翻訳を行う。
         asyncioを用いて並列処理を行う。
 
         Args:
-            articles_data (List[Dict]): 記事データのリスト。
+            articles_data (list[dict]): 記事データのリスト。
                 各要素は {'title': str, 'url': str, 'published_date': datetime}
             dry_run (bool): Trueの場合、DBへの保存は行わない。
             batch_size (int): 翻訳時のバッチサイズ。
             target_language (str): 翻訳先の言語。Noneの場合は翻訳しない。
 
         Returns:
-            List[Article]: Articleオブジェクトのリスト。
+            list[Article]: Articleオブジェクトのリスト。
         """
         valid_articles_data = []
 
@@ -181,7 +183,7 @@ class ArticleFetcher(ABC):
         dry_run: bool = False,
         after_days_override: Union[int, None] = None,
         enable_translation: bool = True,
-    ) -> Tuple[str, List[Article]]:
+    ) -> tuple[str, list[Article]]:
         """
         記事を取得し、Articleオブジェクトのリストを返す。
 
@@ -191,7 +193,7 @@ class ArticleFetcher(ABC):
             enable_translation (bool): 翻訳機能を有効にするかどうか。
 
         Returns:
-            Tuple[str, List[Article]]:
+            tuple[str, list[Article]]:
                 - 実際に使用したクエリ文字列。
                 - 見つかったArticleオブジェクトのリスト。
         """
@@ -206,7 +208,7 @@ class GoogleNewsFetcher(ArticleFetcher):
         dry_run: bool = False,
         after_days_override: Union[int, None] = None,
         enable_translation: bool = True,
-    ) -> Tuple[str, List[Article]]:
+    ) -> tuple[str, list[Article]]:
         after_days = (
             after_days_override
             if after_days_override is not None
@@ -236,11 +238,14 @@ class GoogleNewsFetcher(ArticleFetcher):
 
         logger.info(f"{len(results)} entries found.")
 
-        articles_data = []
+        articles_data: list[dict[str, Any]] = []
         for item in results:
             url = item.get("link")
             title = item.get("title")
             published_date = item.get("published_date")
+
+            if not url or not title:
+                continue
 
             if self.is_sent_article(url):
                 continue
@@ -250,7 +255,7 @@ class GoogleNewsFetcher(ArticleFetcher):
             )
 
         # 言語判定とターゲット言語の設定
-        target_language = None
+        target_language: Optional[str] = None
         if enable_translation:
             user_lang = getattr(
                 self.user, "preferred_language", settings.DEFAULT_LANGUAGE
@@ -299,13 +304,14 @@ class CiNiiFetcher(ArticleFetcher):
         except (ValueError, TypeError) as e:
             logger.warning(f"Could not parse date string '{date_str}': {e}")
             return None
+        return None
 
     def fetch_articles(
         self,
         dry_run: bool = False,
         after_days_override: Union[int, None] = None,
         enable_translation: bool = True,
-    ) -> Tuple[str, List[Article]]:
+    ) -> tuple[str, list[Article]]:
         search_keyword = self.queryset.query_str
         if not search_keyword:
             return "", []
@@ -345,7 +351,7 @@ class CiNiiFetcher(ArticleFetcher):
         items = cinii_results.get("items", [])
         logger.info(f"{len(items)} entries found.")
 
-        articles_data = []
+        articles_data: list[dict[str, Any]] = []
         for item in items:
             if len(articles_data) >= self.queryset.max_articles:
                 break
@@ -357,7 +363,7 @@ class CiNiiFetcher(ArticleFetcher):
                 item.get("prism:publicationDate")
             )
 
-            if not published_date:
+            if not url or not title or not published_date:
                 continue
 
             if after_days > 0 and published_date < earliest_date:
@@ -371,7 +377,7 @@ class CiNiiFetcher(ArticleFetcher):
             )
 
         # 言語判定
-        target_language = None
+        target_language: Optional[str] = None
         if enable_translation:
             user_lang = getattr(
                 self.user, "preferred_language", settings.DEFAULT_LANGUAGE
@@ -394,7 +400,7 @@ class ArXivFetcher(ArticleFetcher):
         dry_run: bool = False,
         after_days_override: Union[int, None] = None,
         enable_translation: bool = True,
-    ) -> Tuple[str, List[Article]]:
+    ) -> tuple[str, list[Article]]:
         search_keyword = self.queryset.query_str
         if not search_keyword:
             return "", []
@@ -421,7 +427,7 @@ class ArXivFetcher(ArticleFetcher):
 
         logger.info(f"{len(arxiv_results)} entries found.")
 
-        articles_data = []
+        articles_data: list[dict[str, Any]] = []
         for item in arxiv_results:
             if len(articles_data) >= self.queryset.max_articles:
                 break
@@ -429,6 +435,9 @@ class ArXivFetcher(ArticleFetcher):
             url = item.get("link")
             title = item.get("title")
             published_date = item.get("published_date")
+
+            if not url or not title:
+                continue
 
             if self.is_sent_article(url):
                 continue
@@ -440,7 +449,7 @@ class ArXivFetcher(ArticleFetcher):
             )
 
         # 言語判定
-        target_language = None
+        target_language: Optional[str] = None
         if enable_translation:
             user_lang = getattr(
                 self.user, "preferred_language", settings.DEFAULT_LANGUAGE

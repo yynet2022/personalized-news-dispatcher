@@ -19,6 +19,7 @@ code_check:
 	-isort --check .
 	-black --check . | cat
 	-flake8 --exclude config,migrations .
+	-mypy .
 
 compile_check:
 	python manage.py check
