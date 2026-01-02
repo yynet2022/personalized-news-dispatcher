@@ -103,7 +103,7 @@ def send_manual_email(request, pk):
             dry_run=False,
             enable_translation=settings.TRANSLATION_AT_MANUAL_EMAIL,
         )
-    except FeedFetchError as e:
+    except (FeedFetchError, Exception) as e:
         s = f"ニュースの取得に失敗しました: {e}"
         logger.error(s)
         messages.error(request, s)
@@ -288,7 +288,7 @@ class SendManualEmailApiView(LoginRequiredMixin, View):
                 dry_run=False,
                 enable_translation=settings.TRANSLATION_AT_MANUAL_EMAIL,
             )
-        except FeedFetchError as e:
+        except (FeedFetchError, Exception) as e:
             tstr = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             s = f"{tstr}: ニュースの取得に失敗しました: {e}"
             logger.error(s)
