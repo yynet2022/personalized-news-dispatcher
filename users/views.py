@@ -3,6 +3,7 @@ import secrets
 from datetime import timedelta
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LogoutView as AuthLogoutView
@@ -71,14 +72,23 @@ class LoginView(View):
                 reverse("users:authenticate", kwargs={"token": token})
             )
 
-            send_mail(
-                subject=f"[{settings.PROJECT_NAME}] ログインURLのお知らせ",
-                message=f"以下のリンクをクリックしてログインしてください。\n\n{login_url}",
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[user.email],
-            )
-
-            return render(request, "users/login_link_sent.html")
+            try:
+                send_mail(
+                    subject=f"[{settings.PROJECT_NAME}] ログインURLのお知らせ",
+                    message=f"以下のリンクをクリックしてログインしてください。\n\n{login_url}",
+                    from_email=settings.EMAIL_HOST_USER,
+                    recipient_list=[user.email],
+                )
+                return render(request, "users/login_link_sent.html")
+            except Exception as e:
+                logger.error(
+                    f"Failed to send login email to {user.email}: {e}",
+                )
+                logger.debug(
+                    f"Failed to send login email to {user.email}: {e}",
+                    exc_info=True,
+                )
+                messages.error(request, f"メール送信に失敗しました: {e}")
 
         return render(request, "users/login.html", {"form": form})
 

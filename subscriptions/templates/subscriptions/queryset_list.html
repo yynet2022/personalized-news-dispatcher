@@ -3,31 +3,8 @@
 {% block title %}ダッシュボード - {{ block.super }}{% endblock %}
 
 {% block content %}
-    {# メッセージ表示エリア #}
-    {% if messages %}
-        <div class="messages">
-            {% for message in messages %}
-                <div class="message message-{{ message.tags }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
 
     <style>
-        /* メッセージ */
-        .messages { margin-bottom: 1.5rem; }
-        .message {
-            padding: 0.75rem 1.25rem;
-            border: 1px solid transparent;
-            border-radius: 4px;
-            margin-bottom: 0.5rem;
-        }
-        .message-success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
-        .message-info { color: #0c5460; background-color: #d1ecf1; border-color: #bee5eb; }
-        .message-warning { color: #856404; background-color: #fff3cd; border-color: #ffeeba; }
-        .message-error { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
-
         /* カードスタイル */
         .card {
             background-color: #fff;
@@ -173,23 +150,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    const messagesContainer = document.querySelector('.messages') || createMessagesContainer();
-
-    function createMessagesContainer() {
-        const container = document.createElement('div');
-        container.className = 'messages';
-        const contentBlock = document.querySelector('.card');
-        contentBlock.parentNode.insertBefore(container, contentBlock);
-        return container;
-    }
-
-    function showMessage(message, level) {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = `message message-${level}`;
-        msgDiv.textContent = message;
-        messagesContainer.appendChild(msgDiv);
-        // 数秒後に消すなどの処理はお好みで
-    }
+    const messagesContainer = document.getElementById('messages-container');
 
     // Auto Send Toggle
     document.querySelectorAll('.toggle-auto-send').forEach(checkbox => {

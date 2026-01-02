@@ -27,6 +27,9 @@ compile_check:
 
 check: compile_check code_check
 
+test:
+	python manage.py test
+
 dumpdata:
 	python manage.py dumpdata --exclude auth.permission --exclude contenttypes >dumpdata.json
 

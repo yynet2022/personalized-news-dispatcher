@@ -16,6 +16,18 @@
         ul { list-style: none; padding: 0; }
         li { background: #fff; border: 1px solid #ddd; padding: 0.75em 1.25em; margin-bottom: 0.5em; display: flex; justify-content: space-between; align-items: center; border-radius: 4px;}
         .actions a { margin-left: 1em; }
+        /* メッセージ */
+        .messages { margin-bottom: 1.5rem; }
+        .message {
+            padding: 0.75rem 1.25rem;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+        .message-success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
+        .message-info { color: #0c5460; background-color: #d1ecf1; border-color: #bee5eb; }
+        .message-warning { color: #856404; background-color: #fff3cd; border-color: #ffeeba; }
+        .message-error { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
     </style>
 </head>
 <body>
@@ -38,14 +50,39 @@
     </header>
 
     <main>
-        {% block content %}
-        {% endblock %}
+      {# メッセージ表示エリア #}
+      <div id="messages-container" class="messages">
+        {% if messages %}
+          {% for message in messages %}
+          <div class="message message-{{ message.tags }}">
+            {{ message }}
+          </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+      {% block content %}
+      {% endblock %}
     </main>
 
     <footer>
         <p>&copy; 2025 YYNET </p>
     </footer>
 
+    <script>
+        /**
+         * 画面にメッセージを動的に追加表示する共通関数
+         * @param {string} message - 表示するメッセージ
+         * @param {string} level - メッセージレベル (success, info, warning, error)
+         */
+        function showMessage(message, level) {
+            const container = document.getElementById('messages-container');
+            if (!container) return;
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message message-${level}`;
+            msgDiv.textContent = message;
+            container.appendChild(msgDiv);
+        }
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
