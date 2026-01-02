@@ -1,11 +1,12 @@
+from collections import defaultdict
+from datetime import timedelta
+
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from datetime import timedelta
-from collections import defaultdict
 
-from users.models import User
-from news.models import ClickLog, Article
+from news.models import Article, ClickLog
 from subscriptions.services import send_recommendation_email
+from users.models import User
 
 
 class Command(BaseCommand):
@@ -13,50 +14,55 @@ class Command(BaseCommand):
     最近クリックされた記事を集計し、各ユーザーがまだ読んでいない記事の中で、
     他のユーザーが多く読んでいる記事を推薦するメールを送信する。
     """
-    help = ('Sends article recommendations to users based on '
-            'what other users have recently read.')
+
+    help = (
+        "Sends article recommendations to users based on "
+        "what other users have recently read."
+    )
 
     def add_arguments(self, parser):
         """コマンドライン引数を追加する"""
         parser.add_argument(
-            '--dry-run',
-            action='store_true',
-            help=('Simulate the process without sending emails.'),
+            "--dry-run",
+            action="store_true",
+            help=("Simulate the process without sending emails."),
         )
         parser.add_argument(
-            '--hours',
+            "--hours",
             type=int,
             default=24,
-            help='How many hours ago to look for clicks.',
+            help="How many hours ago to look for clicks.",
         )
         parser.add_argument(
-            '--max-articles',
+            "--max-articles",
             type=int,
             default=20,
-            help='The maximum number of articles to recommend.',
+            help="The maximum number of articles to recommend.",
         )
 
     def handle(self, *args, **options):
         """コマンドのメインロジック"""
-        dry_run = options['dry_run']
+        dry_run = options["dry_run"]
         if dry_run:
             self.stdout.write(
-                self.style.WARNING("[DRY RUN] Running in dry-run mode."))
+                self.style.WARNING("[DRY RUN] Running in dry-run mode.")
+            )
 
         self.stdout.write("Starting the recommendation batch process...")
 
-        hours = options['hours']
-        max_articles = options['max_articles']
+        hours = options["hours"]
+        max_articles = options["max_articles"]
         since_time = timezone.now() - timedelta(hours=hours)
 
         # 期間内のクリックログを取得
         recent_clicks = ClickLog.objects.filter(
             clicked_at__gte=since_time
-        ).select_related('user', 'article')
+        ).select_related("user", "article")
 
         if not recent_clicks.exists():
-            self.stdout.write(self.style.SUCCESS(
-                "No recent clicks found. Exiting."))
+            self.stdout.write(
+                self.style.SUCCESS("No recent clicks found. Exiting.")
+            )
             return
 
         # 記事ごとにクリックしたユニークユーザーを収集
@@ -82,11 +88,13 @@ class Command(BaseCommand):
 
         self.stdout.write(
             f"Found {len(popular_articles)} articles read by "
-            f"{len(user_read_articles)} users in the last {hours} hours.")
+            f"{len(user_read_articles)} users in the last {hours} hours."
+        )
 
         # 記事IDを一括で取得するための準備
         all_article_ids = [
-            article_id for article_id, count in popular_articles]
+            article_id for article_id, count in popular_articles
+        ]
         articles_in_bulk = Article.objects.in_bulk(all_article_ids)
 
         # これからユーザーごとの処理
@@ -96,13 +104,14 @@ class Command(BaseCommand):
             recommendations = []
             for article_id, reader_count in popular_articles:
                 # ユーザーが読んでいない、かつ記事DBに存在する
-                if article_id not in read_articles_set and \
-                   article_id in articles_in_bulk:
+                if (
+                    article_id not in read_articles_set
+                    and article_id in articles_in_bulk
+                ):
                     article = articles_in_bulk[article_id]
-                    recommendations.append({
-                        'article': article,
-                        'count': reader_count
-                    })
+                    recommendations.append(
+                        {"article": article, "count": reader_count}
+                    )
 
                 if len(recommendations) >= max_articles:
                     break
@@ -110,19 +119,24 @@ class Command(BaseCommand):
             if recommendations:
                 self.stdout.write(
                     f"  Found {len(recommendations)} "
-                    f"recommendations for {user.email}")
+                    f"recommendations for {user.email}"
+                )
                 if dry_run:
-                    self.stdout.write("    [DRY RUN] "
-                                      f"Would send email to {user.email}")
+                    self.stdout.write(
+                        "    [DRY RUN] " f"Would send email to {user.email}"
+                    )
                 else:
                     try:
                         self.stdout.write(f"    Sending email to {user.email}")
                         send_recommendation_email(user, recommendations)
                     except Exception as e:
-                        self.stderr.write(self.style.ERROR(
-                            f"    Failed to send email to {user.email}: {e}"))
+                        self.stderr.write(
+                            self.style.ERROR(
+                                f"    Failed to send email to {user.email}:"
+                                f" {e}"
+                            )
+                        )
             else:
-                self.stdout.write(
-                    f"  No new recommendations for {user.email}")
+                self.stdout.write(f"  No new recommendations for {user.email}")
 
         self.stdout.write("Batch process finished.")

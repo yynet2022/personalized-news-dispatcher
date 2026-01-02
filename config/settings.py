@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+
 try:
     import tomllib
 except ImportError:
@@ -22,9 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load secrets from .secrets.toml at the project root.
 # .secrets.toml が存在しない場合や読み込みに失敗した場合は、空の辞書を使用
 try:
-    SECRETS_FILE = BASE_DIR / 'config' / '.secrets.toml'
+    SECRETS_FILE = BASE_DIR / "config" / ".secrets.toml"
     if SECRETS_FILE.exists():
-        with open(SECRETS_FILE, 'rb') as f:
+        with open(SECRETS_FILE, "rb") as f:
             secrets = tomllib.load(f)
     else:
         secrets = {}
@@ -37,76 +38,77 @@ except Exception:
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # .secrets.toml から取得するように。
-SECRET_KEY = secrets.get('SECRET_KEY')
+SECRET_KEY = secrets.get("SECRET_KEY")
 if not SECRET_KEY:
     # 開発用（DEBUG=True）での暫定キー。本番では絶対使ってはダメ。
-    SECRET_KEY = 'django-insecure-77s@l!7^nner#5%q^-6k*+n04a!hpa5_+j69pv$16@#e6fb)6b'
+    SECRET_KEY = (
+        "django-insecure-77s@l!7^nner#5%q^-6k*+n04a!hpa5_+j69pv$16@#e6fb)6b"
+    )
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # デフォルトは安全のために False にしとく。開発時は .secrets.toml で True に。
-DEBUG = secrets.get('DEBUG', False)
+DEBUG = secrets.get("DEBUG", False)
 
-ALLOWED_HOSTS = secrets.get('ALLOWED_HOSTS', [])
+ALLOWED_HOSTS = secrets.get("ALLOWED_HOSTS", [])
 
 
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.sites',
-
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.sites",
     # My applications
-    'users.apps.UsersConfig',
-    'subscriptions.apps.SubscriptionsConfig',
-    'news.apps.NewsConfig',
-    'core.apps.CoreConfig',
+    "users.apps.UsersConfig",
+    "subscriptions.apps.SubscriptionsConfig",
+    "news.apps.NewsConfig",
+    "core.apps.CoreConfig",
 ]
 
-AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = "users.User"
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'config.urls'
+ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-                'core.context_processors.project_context',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "core.context_processors.project_context",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'config.wsgi.application'
+WSGI_APPLICATION = "config.wsgi.application"
 
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
@@ -116,16 +118,16 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -134,10 +136,10 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 # LANGUAGE_CODE = 'en-us'
-LANGUAGE_CODE = 'ja'
+LANGUAGE_CODE = "ja"
 
 # TIME_ZONE = 'UTC'
-TIME_ZONE = 'Asia/Tokyo'
+TIME_ZONE = "Asia/Tokyo"
 
 USE_I18N = True
 
@@ -147,12 +149,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = "static/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 ###
 # --- Email Settings ---
@@ -163,28 +165,28 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # EMAIL_HOST_USER = 'YOUR_EMAIL@gmail.com'
 # EMAIL_HOST_PASSWORD = 'YOUR_APP_PASSWORD'
 
-LOGIN_URL = 'users:login'
+LOGIN_URL = "users:login"
 
 SITE_ID = 1  # どのサイト設定を使うかを指定
 
 # Logging Configuration
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'simple': {
-            'format': '%(asctime)s %(name)s:%(lineno)s %(funcName)s:%(levelname)s: %(message)s'
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "simple": {
+            "format": "%(asctime)s %(name)s:%(lineno)s %(funcName)s:%(levelname)s: %(message)s"
         }
     },
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple',
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
         },
     },
-    'root': {
-        'handlers': ['console'],
-        'level': 'INFO',
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
     },
     # 'loggers': {
     #     'core.translation': {
@@ -200,37 +202,37 @@ LOGGING = {
 # --- Example .secrets.toml settings ---
 # --- Required ---
 # Set one or both API keys
-GEMINI_API_KEY = secrets.get('GEMINI_API_KEY')
-OPENAI_API_KEY = secrets.get('OPENAI_API_KEY')
-CINII_APP_ID = secrets.get('CINII_APP_ID')
+GEMINI_API_KEY = secrets.get("GEMINI_API_KEY")
+OPENAI_API_KEY = secrets.get("OPENAI_API_KEY")
+CINII_APP_ID = secrets.get("CINII_APP_ID")
 #
 # --- Optional ---
 # Specify AI model names (defaults are used if not set)
-GEMINI_MODEL = secrets.get('GEMINI_MODEL', 'gemini-pro-latest')
-OPENAI_MODEL = secrets.get('OPENAI_MODEL', 'gpt-4o')
+GEMINI_MODEL = secrets.get("GEMINI_MODEL", "gemini-pro-latest")
+OPENAI_MODEL = secrets.get("OPENAI_MODEL", "gpt-4o")
 #
 # For OpenAI-compatible APIs
 # OPENAI_API_BASE_URL = "https://your-openai-compatible-api.example.com/v1"
-OPENAI_API_BASE_URL = secrets.get('OPENAI_API_BASE_URL')
+OPENAI_API_BASE_URL = secrets.get("OPENAI_API_BASE_URL")
 #
 # To disable SSL verification for on-premise environments
-OPENAI_SSL_VERIFY = secrets.get('OPENAI_SSL_VERIFY', True)
+OPENAI_SSL_VERIFY = secrets.get("OPENAI_SSL_VERIFY", True)
 #
 
-TRANSLATION_BATCH_SIZE = secrets.get('TRANSLATION_BATCH_SIZE', 20)
-TRANSLATION_AT_PREVIEW = secrets.get('TRANSLATION_AT_PREVIEW', False)
-TRANSLATION_AT_MANUAL_EMAIL = secrets.get('TRANSLATION_AT_MANUAL_EMAIL', False)
-TRANSLATION_AT_AUTO_EMAIL = secrets.get('TRANSLATION_AT_AUTO_EMAIL', True)
+TRANSLATION_BATCH_SIZE = secrets.get("TRANSLATION_BATCH_SIZE", 20)
+TRANSLATION_AT_PREVIEW = secrets.get("TRANSLATION_AT_PREVIEW", False)
+TRANSLATION_AT_MANUAL_EMAIL = secrets.get("TRANSLATION_AT_MANUAL_EMAIL", False)
+TRANSLATION_AT_AUTO_EMAIL = secrets.get("TRANSLATION_AT_AUTO_EMAIL", True)
 
 # Master configuration for countries
 COUNTRY_CONFIG = {
-    'JP': {'lang': 'Japanese', 'name': '日本'},
-    'US': {'lang': 'English',  'name': 'アメリカ'},
-    'CN': {'lang': 'Chinese',  'name': '中国'},
-    'KR': {'lang': 'Korean',   'name': '韓国'},
+    "JP": {"lang": "Japanese", "name": "日本"},
+    "US": {"lang": "English", "name": "アメリカ"},
+    "CN": {"lang": "Chinese", "name": "中国"},
+    "KR": {"lang": "Korean", "name": "韓国"},
 }
 
-DEFAULT_LANGUAGE = COUNTRY_CONFIG['JP']['lang']
+DEFAULT_LANGUAGE = COUNTRY_CONFIG["JP"]["lang"]
 
 PROJECT_NAME = "Personalized News Dispatcher"
 
@@ -238,11 +240,14 @@ try:
     from .local_settings import *  # noqa
 except Exception as e:
     import sys
-    print(f'Info: {e}: skip.', file=sys.stderr)
+
+    print(f"Info: {e}: skip.", file=sys.stderr)
 
 #
 # 本番環境（DEBUG=False）で安全ではないキーが使われていないかチェック
-if not DEBUG and SECRET_KEY.startswith('django-insecure-'):
-    raise ValueError("Security Error: In production (DEBUG=False), you must set a secure SECRET_KEY.")
+if not DEBUG and SECRET_KEY.startswith("django-insecure-"):
+    raise ValueError(
+        "Security Error: In production (DEBUG=False), you must set a secure SECRET_KEY."
+    )
 
 #

@@ -15,11 +15,16 @@ init: all
 	@echo "ex# python manage.py update_site --name ${SITE_NAME} --domain ${SITE_DOMAIN}"
 	@echo "ex# python manage.py createsuperuser --no-input --email ${EMAIL}"
 
-check:
-	flake8 --exclude migrations users/ || true
-	flake8 --exclude migrations subscriptions/ || true
-	flake8 --exclude migrations news/ || true
-	flake8 --exclude migrations core/ || true
+code_check:
+	-isort --check .
+	-black --check . | cat
+	-flake8 --exclude config,migrations .
+
+compile_check:
+	python manage.py check
+	find . -path '*/management/commands/*.py' -not -name __init__.py -not -name 'test*' | xargs python -m py_compile 
+
+check: compile_check code_check
 
 dumpdata:
 	python manage.py dumpdata --exclude auth.permission --exclude contenttypes >dumpdata.json

@@ -1,5 +1,7 @@
 import logging
+
 from django.db import transaction
+
 from news.models import Article, SentArticleLog
 from users.models import User
 
@@ -22,9 +24,8 @@ def log_sent_articles(user: User, articles: list[Article]):
     # すでにログに記録されている記事のIDを取得
     existing_article_ids = set(
         SentArticleLog.objects.filter(
-            user=user,
-            article_id__in=article_ids
-        ).values_list('article_id', flat=True)
+            user=user, article_id__in=article_ids
+        ).values_list("article_id", flat=True)
     )
 
     # まだ記録されていない新しい記事のIDを特定
@@ -39,5 +40,7 @@ def log_sent_articles(user: User, articles: list[Article]):
     # bulk_createで一括登録
     if logs_to_create:
         SentArticleLog.objects.bulk_create(logs_to_create)
-        logger.info(f"Logged {len(logs_to_create)} "
-                    f"new sent articles for {user.email}.")
+        logger.info(
+            f"Logged {len(logs_to_create)} "
+            f"new sent articles for {user.email}."
+        )

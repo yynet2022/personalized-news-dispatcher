@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404, redirect
 from django.views import View
+
 # from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Article, ClickLog
 

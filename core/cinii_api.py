@@ -1,6 +1,7 @@
-import httpx
 import logging
 import time
+
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -10,12 +11,7 @@ BASE_URL = "https://cir.nii.ac.jp/opensearch/v2/articles"
 
 
 def search_cinii_research(
-        keyword,
-        count=20,
-        start=1,
-        start_year=None,
-        max_retries=3,
-        appid=None
+    keyword, count=20, start=1, start_year=None, max_retries=3, appid=None
 ):
     """
     CiNii Researchを検索し、結果をJSONで返す関数。
@@ -30,26 +26,23 @@ def search_cinii_research(
 
     # クエリパラメータを設定
     params = {
-        'q': keyword,              # 検索キーワード
-        'format': 'json',          # レスポンス形式をJSONに指定
-        'count': count,            # 取得件数
-        'sortorder': 0,
-        'start': start,           # ページ番号 (デフォルト1)
+        "q": keyword,  # 検索キーワード
+        "format": "json",  # レスポンス形式をJSONに指定
+        "count": count,  # 取得件数
+        "sortorder": 0,
+        "start": start,  # ページ番号 (デフォルト1)
     }
 
     if appid:
-        params['appid'] = appid
+        params["appid"] = appid
     if start_year:
-        params['from'] = start_year
+        params["from"] = start_year
 
     logger.debug(f"Searching: {keyword}")
 
     for attempt in range(max_retries):
         response = httpx.get(
-            BASE_URL,
-            params=params,
-            timeout=10.0,
-            follow_redirects=True
+            BASE_URL, params=params, timeout=10.0, follow_redirects=True
         )
 
         if response.status_code == 403:
@@ -73,36 +66,36 @@ def process_results(data):
     """
     CiNii ResearchのJSON結果から必要な情報を抽出して表示する関数。
     """
-    if not data or 'items' not in data:
+    if not data or "items" not in data:
         print("検索結果が見つかりませんでした。")
         return
 
     print("\n--- 検索結果 ---")
 
-    title = data.get('title', '')
-    print(f'Title: {title}')
-    total = data.get('opensearch:totalResults', '')
-    print(f'Total: {total}')
-    sindex = data.get('opensearch:startIndex', '')
-    print(f'Start Index: {sindex}')
-    nitems = data.get('opensearch:itemsPerPage', '')
-    print(f'Items/Page: {nitems}')
+    title = data.get("title", "")
+    print(f"Title: {title}")
+    total = data.get("opensearch:totalResults", "")
+    print(f"Total: {total}")
+    sindex = data.get("opensearch:startIndex", "")
+    print(f"Start Index: {sindex}")
+    nitems = data.get("opensearch:itemsPerPage", "")
+    print(f"Items/Page: {nitems}")
 
-    items = data.get('items', [])
+    items = data.get("items", [])
     for i, item in enumerate(items):
         # pprint.pprint(item)
         try:
-            title = item.get('title', '')
-            url = item.get('link', dict()).get('@id', '')
-            date = item.get('prism:publicationDate', '')
+            title = item.get("title", "")
+            url = item.get("link", dict()).get("@id", "")
+            date = item.get("prism:publicationDate", "")
 
-            x = item.get('prism:publicationName', '')
+            x = item.get("prism:publicationName", "")
             if x:
-                title = title + f', {x}'
+                title = title + f", {x}"
 
-            x = item.get('dc:publisher', '')
+            x = item.get("dc:publisher", "")
             if x:
-                title = title + f', {x}'
+                title = title + f", {x}"
 
             print(f"[{i+1}]")
             print(f"  Title: {title}")
@@ -110,7 +103,7 @@ def process_results(data):
             print(f"  Date:  {date}")
 
         except (KeyError, IndexError) as e:
-            logger.error(f'parse error: {e}')
+            logger.error(f"parse error: {e}")
             continue
 
 

@@ -1,8 +1,15 @@
-from django import forms
-from .models import (
-    QuerySet, UniversalKeywords, CurrentKeywords, RelatedKeywords,
-    CiNiiKeywords, ArXivKeywords)
 import shlex
+
+from django import forms
+
+from .models import (
+    ArXivKeywords,
+    CiNiiKeywords,
+    CurrentKeywords,
+    QuerySet,
+    RelatedKeywords,
+    UniversalKeywords,
+)
 
 
 def _split(s: str):
@@ -10,7 +17,7 @@ def _split(s: str):
     for p in shlex.split(s):
         p = p.strip()
         if p:
-            parts.append(f'"{p}"' if ' ' in p else p)
+            parts.append(f'"{p}"' if " " in p else p)
     return parts
 
 
@@ -18,25 +25,32 @@ class QuerySetForm(forms.ModelForm):
     class Meta:
         model = QuerySet
         fields = [
-            'name', 'source', 'auto_send',
+            "name",
+            "source",
+            "auto_send",
             # Google News fields
-            'large_category', 'country',
-            'universal_keywords', 'current_keywords', 'related_keywords',
+            "large_category",
+            "country",
+            "universal_keywords",
+            "current_keywords",
+            "related_keywords",
             # CiNii fields
-            'cinii_keywords',
+            "cinii_keywords",
             # arXiv fields
-            'arxiv_keywords',
+            "arxiv_keywords",
             # Common fields
-            'additional_or_keywords', 'refinement_keywords',
-            'after_days', 'max_articles',
+            "additional_or_keywords",
+            "refinement_keywords",
+            "after_days",
+            "max_articles",
         ]
         widgets = {
-            'source': forms.RadioSelect,
-            'universal_keywords': forms.CheckboxSelectMultiple,
-            'current_keywords': forms.CheckboxSelectMultiple,
-            'related_keywords': forms.CheckboxSelectMultiple,
-            'cinii_keywords': forms.CheckboxSelectMultiple,
-            'arxiv_keywords': forms.CheckboxSelectMultiple,
+            "source": forms.RadioSelect,
+            "universal_keywords": forms.CheckboxSelectMultiple,
+            "current_keywords": forms.CheckboxSelectMultiple,
+            "related_keywords": forms.CheckboxSelectMultiple,
+            "cinii_keywords": forms.CheckboxSelectMultiple,
+            "arxiv_keywords": forms.CheckboxSelectMultiple,
         }
 
     def __init__(self, *args, **kwargs):
@@ -44,66 +58,75 @@ class QuerySetForm(forms.ModelForm):
         f_ = self.fields
 
         # --- Google News field setup ---
-        f_['universal_keywords'].label_from_instance = lambda x: x.name
-        f_['current_keywords'].label_from_instance = lambda x: x.name
-        f_['related_keywords'].label_from_instance = lambda x: x.name
-        f_['universal_keywords'].queryset = UniversalKeywords.objects.none()
-        f_['current_keywords'].queryset = CurrentKeywords.objects.none()
-        f_['related_keywords'].queryset = RelatedKeywords.objects.none()
+        f_["universal_keywords"].label_from_instance = lambda x: x.name
+        f_["current_keywords"].label_from_instance = lambda x: x.name
+        f_["related_keywords"].label_from_instance = lambda x: x.name
+        f_["universal_keywords"].queryset = UniversalKeywords.objects.none()
+        f_["current_keywords"].queryset = CurrentKeywords.objects.none()
+        f_["related_keywords"].queryset = RelatedKeywords.objects.none()
 
-        if 'large_category' in self.data:
-            large_category_id = self.data.get('large_category')
+        if "large_category" in self.data:
+            large_category_id = self.data.get("large_category")
             if large_category_id:
                 try:
-                    f_['universal_keywords'].queryset = \
+                    f_["universal_keywords"].queryset = (
                         UniversalKeywords.objects.filter(
                             large_category_id=large_category_id
-                        ).order_by('name')
-                    f_['current_keywords'].queryset = \
+                        ).order_by("name")
+                    )
+                    f_["current_keywords"].queryset = (
                         CurrentKeywords.objects.filter(
                             large_category_id=large_category_id
-                        ).order_by('name')
-                    f_['related_keywords'].queryset = \
+                        ).order_by("name")
+                    )
+                    f_["related_keywords"].queryset = (
                         RelatedKeywords.objects.filter(
                             large_category_id=large_category_id
-                        ).order_by('name')
+                        ).order_by("name")
+                    )
                 except (ValueError, TypeError):
                     pass
         elif self.instance.pk and self.instance.large_category_id:
-            f_['universal_keywords'].queryset = \
+            f_["universal_keywords"].queryset = (
                 self.instance.large_category.universalkeywords_set.order_by(
-                    'name')
-            f_['current_keywords'].queryset = \
+                    "name"
+                )
+            )
+            f_["current_keywords"].queryset = (
                 self.instance.large_category.currentkeywords_set.order_by(
-                    'name')
-            f_['related_keywords'].queryset = \
+                    "name"
+                )
+            )
+            f_["related_keywords"].queryset = (
                 self.instance.large_category.relatedkeywords_set.order_by(
-                    'name')
+                    "name"
+                )
+            )
 
         # --- CiNii field setup ---
-        f_['cinii_keywords'].queryset = CiNiiKeywords.objects.order_by('name')
-        f_['cinii_keywords'].label_from_instance = lambda obj: obj.name
+        f_["cinii_keywords"].queryset = CiNiiKeywords.objects.order_by("name")
+        f_["cinii_keywords"].label_from_instance = lambda obj: obj.name
 
         # --- arXiv field setup ---
-        f_['arxiv_keywords'].queryset = ArXivKeywords.objects.order_by('name')
-        f_['arxiv_keywords'].label_from_instance = lambda obj: obj.name
+        f_["arxiv_keywords"].queryset = ArXivKeywords.objects.order_by("name")
+        f_["arxiv_keywords"].label_from_instance = lambda obj: obj.name
 
         # --- Common field setup ---
-        f_['after_days'].widget.attrs.update({'min': 0})
-        f_['max_articles'].widget.attrs.update({'min': 1})
+        f_["after_days"].widget.attrs.update({"min": 0})
+        f_["max_articles"].widget.attrs.update({"min": 1})
 
         # --- Disable source on update ---
         if self.instance and not self.instance._state.adding:
-            self.fields['source'].disabled = True
+            self.fields["source"].disabled = True
 
     def clean(self):
         cleaned_data = super().clean()
-        source = cleaned_data.get('source')
+        source = cleaned_data.get("source")
 
         if source == QuerySet.SOURCE_GOOGLE_NEWS:
             # CiNii関連のフィールドをクリア
-            if 'cinii_keywords' in cleaned_data:
-                cleaned_data['cinii_keywords'] = CiNiiKeywords.objects.none()
+            if "cinii_keywords" in cleaned_data:
+                cleaned_data["cinii_keywords"] = CiNiiKeywords.objects.none()
 
         elif source == QuerySet.SOURCE_CINII:
             # Google News関連のフィールドをクリア
@@ -112,29 +135,28 @@ class QuerySetForm(forms.ModelForm):
         elif source == QuerySet.SOURCE_ARXIV:
             # Google News と CiNii 関連のフィールドをクリア
             self._clear_google_news_fields(cleaned_data)
-            if 'cinii_keywords' in cleaned_data:
-                cleaned_data['cinii_keywords'] = CiNiiKeywords.objects.none()
+            if "cinii_keywords" in cleaned_data:
+                cleaned_data["cinii_keywords"] = CiNiiKeywords.objects.none()
 
         return cleaned_data
 
     def _clear_google_news_fields(self, cleaned_data):
         """Google News関連のフィールドをクリアするヘルパーメソッド"""
-        cleaned_data['large_category'] = None
-        cleaned_data['country'] = ''
-        if 'universal_keywords' in cleaned_data:
-            cleaned_data['universal_keywords'] = \
+        cleaned_data["large_category"] = None
+        cleaned_data["country"] = ""
+        if "universal_keywords" in cleaned_data:
+            cleaned_data["universal_keywords"] = (
                 UniversalKeywords.objects.none()
-        if 'current_keywords' in cleaned_data:
-            cleaned_data['current_keywords'] = \
-                CurrentKeywords.objects.none()
-        if 'related_keywords' in cleaned_data:
-            cleaned_data['related_keywords'] = \
-                RelatedKeywords.objects.none()
+            )
+        if "current_keywords" in cleaned_data:
+            cleaned_data["current_keywords"] = CurrentKeywords.objects.none()
+        if "related_keywords" in cleaned_data:
+            cleaned_data["related_keywords"] = RelatedKeywords.objects.none()
 
     def save(self, commit=True):
         instance = super().save(commit=False)
 
-        source = self.cleaned_data.get('source')
+        source = self.cleaned_data.get("source")
         if source == QuerySet.SOURCE_GOOGLE_NEWS:
             instance.query_str = self._build_google_news_query()
         elif source == QuerySet.SOURCE_CINII:
@@ -150,39 +172,42 @@ class QuerySetForm(forms.ModelForm):
 
     def _build_google_news_query(self):
         parts = []
-        if self.cleaned_data.get('large_category'):
-            parts.append(self.cleaned_data.get('large_category').name)
+        if self.cleaned_data.get("large_category"):
+            parts.append(self.cleaned_data.get("large_category").name)
 
-        for field in ['universal_keywords',
-                      'current_keywords', 'related_keywords']:
+        for field in [
+            "universal_keywords",
+            "current_keywords",
+            "related_keywords",
+        ]:
             for keyword in self.cleaned_data.get(field, []):
                 parts.append(keyword.name)
 
-        additional = self.cleaned_data.get('additional_or_keywords', '')
+        additional = self.cleaned_data.get("additional_or_keywords", "")
         parts.extend(_split(additional))
 
         or_part = " OR ".join(parts)
         if len(parts) > 1:
             or_part = f"({or_part})"
 
-        refinement = self.cleaned_data.get('refinement_keywords', '')
+        refinement = self.cleaned_data.get("refinement_keywords", "")
         return f"{or_part} {refinement}".strip()
 
     def _build_cinii_query(self):
         parts = []
-        for keyword in self.cleaned_data.get('cinii_keywords', []):
+        for keyword in self.cleaned_data.get("cinii_keywords", []):
             # スペースを含むものはダブルクオートで囲む
             name = keyword.name
-            parts.append(f'"{name}"' if ' ' in name else name)
+            parts.append(f'"{name}"' if " " in name else name)
 
-        additional = self.cleaned_data.get('additional_or_keywords', '')
+        additional = self.cleaned_data.get("additional_or_keywords", "")
         parts.extend(_split(additional))
 
         or_part = " OR ".join(parts)
         if len(parts) > 1:
             or_part = f"({or_part})"
 
-        refinement = self.cleaned_data.get('refinement_keywords', '')
+        refinement = self.cleaned_data.get("refinement_keywords", "")
         return f"{or_part} {refinement}".strip()
 
     def _build_arxiv_query(self):
@@ -191,14 +216,14 @@ class QuerySetForm(forms.ModelForm):
         parts = []
 
         # 選択されたキーワード
-        for keyword in self.cleaned_data.get('arxiv_keywords', []):
+        for keyword in self.cleaned_data.get("arxiv_keywords", []):
             name = keyword.name
             # スペースを含む場合はダブルクオートで囲む
-            part = f'"{name}"' if ' ' in name else name
+            part = f'"{name}"' if " " in name else name
             parts.append(f"all:{part}")
 
         # OR追加キーワード
-        additional = self.cleaned_data.get('additional_or_keywords', '')
+        additional = self.cleaned_data.get("additional_or_keywords", "")
         for p in _split(additional):
             parts.append(f"all:{p}")
 
@@ -207,7 +232,7 @@ class QuerySetForm(forms.ModelForm):
             or_part = f"({or_part})"
 
         # 絞り込みキーワード
-        refinement = self.cleaned_data.get('refinement_keywords', '')
+        refinement = self.cleaned_data.get("refinement_keywords", "")
         refinement_parts = []
         if refinement:
             # refinement_keywords をスペースで分割し、AND/ANDNOTを処理
@@ -216,16 +241,16 @@ class QuerySetForm(forms.ModelForm):
                 if not term:
                     continue
                 # マイナスから始まる場合は ANDNOT
-                if term.startswith('-'):
+                if term.startswith("-"):
                     term_body = term[1:]
                     # フレーズ検索のためにダブルクオートで囲む
-                    if ' ' in term_body:
+                    if " " in term_body:
                         term_body = f'"{term_body}"'
                     refinement_parts.append(f"ANDNOT all:{term_body}")
                 # それ以外は AND
                 else:
                     term_body = term
-                    if ' ' in term_body:
+                    if " " in term_body:
                         term_body = f'"{term_body}"'
                     refinement_parts.append(f"AND all:{term_body}")
 

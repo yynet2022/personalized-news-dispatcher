@@ -1,8 +1,9 @@
-from django.conf import settings
-import logging
 import json
+import logging
 import re
 from typing import List
+
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -11,14 +12,16 @@ try:
     # import google.generativeai as genai
     # https://ai.google.dev/gemini-api/docs/migrate?hl=ja
     from google import genai
+
     GEMINI_IS_AVAILABLE = True
 except ImportError:
     GEMINI_IS_AVAILABLE = False
     genai = None
 
 try:
-    import openai
     import httpx
+    import openai
+
     OPENAI_IS_AVAILABLE = True
 except ImportError:
     OPENAI_IS_AVAILABLE = False
@@ -33,18 +36,19 @@ def _clean_json_response(text: str) -> str:
     Removes Markdown code blocks and whitespace.
     """
     # Remove markdown code blocks if present
-    match = re.search(r'```(?:json)?\s*(\[.*\])\s*```', text, re.DOTALL)
+    match = re.search(r"```(?:json)?\s*(\[.*\])\s*```", text, re.DOTALL)
     if match:
         return match.group(1)
     # If no code blocks, look for the first '[' and last ']'
-    match = re.search(r'(\[.*\])', text, re.DOTALL)
+    match = re.search(r"(\[.*\])", text, re.DOTALL)
     if match:
         return match.group(1)
     return text
 
 
 def translate_text_with_gemini(
-        text: str, target_language: str = settings.DEFAULT_LANGUAGE) -> str:
+    text: str, target_language: str = settings.DEFAULT_LANGUAGE
+) -> str:
     """
     Translates text using Google Gemini API.
 
@@ -58,26 +62,33 @@ def translate_text_with_gemini(
         API key is not set, or the library is not installed.
     """
     if not GEMINI_IS_AVAILABLE:
-        logger.warning("google-generativeai is not installed."
-                       " Skipping Gemini translation.")
+        logger.warning(
+            "google-generativeai is not installed."
+            " Skipping Gemini translation."
+        )
         return text
 
     api_key = settings.GEMINI_API_KEY
     if not api_key:
-        logger.warning("GEMINI_API_KEY is not set."
-                       " Skipping Gemini translation.")
+        logger.warning(
+            "GEMINI_API_KEY is not set." " Skipping Gemini translation."
+        )
         return text
 
     try:
         logger.info("Gemini translation start.")
-        logger.debug("Attempting to translate with Gemini model: "
-                     f"{settings.GEMINI_MODEL}")
+        logger.debug(
+            "Attempting to translate with Gemini model: "
+            f"{settings.GEMINI_MODEL}"
+        )
         # genai.configure(api_key=api_key)
         client = genai.Client(api_key=api_key)
-        prompt = (f"Translate the following text into {target_language}."
-                  " If the text is HTML, translate only the visible text "
-                  "content while preserving all HTML tags and structure:\n\n"
-                  f"{text}")
+        prompt = (
+            f"Translate the following text into {target_language}."
+            " If the text is HTML, translate only the visible text "
+            "content while preserving all HTML tags and structure:\n\n"
+            f"{text}"
+        )
 
         logger.debug("Sending request to Gemini API...")
         # model = genai.GenerativeModel(settings.GEMINI_MODEL)
@@ -86,8 +97,8 @@ def translate_text_with_gemini(
         response = client.models.generate_content(
             model=settings.GEMINI_MODEL,
             contents=prompt,
-            config=genai.types.GenerateContentConfig(
-                temperature=0.0))
+            config=genai.types.GenerateContentConfig(temperature=0.0),
+        )
         logger.debug("Successfully received response from Gemini API.")
 
         logger.info("Gemini translation end.")
@@ -121,7 +132,7 @@ def translate_titles_with_gemini(
         prompt = (
             f"Translate the following list of titles into {target_language}. "
             "Output ONLY a raw JSON list of strings "
-            "(e.g. [\"translated title 1\", \"translated title 2\"]). "
+            '(e.g. ["translated title 1", "translated title 2"]). '
             "Do not include any Markdown formatting or explanations. "
             "Maintain the original order and count.\n\n"
             f"{titles_json}"
@@ -141,15 +152,16 @@ def translate_titles_with_gemini(
             contents=prompt,
             config=genai.types.GenerateContentConfig(
                 temperature=0.0,
-                response_mime_type='application/json',
-            )
+                response_mime_type="application/json",
+            ),
         )
 
         cleaned_json = _clean_json_response(response.text)
         translated_titles = json.loads(cleaned_json)
 
-        if (isinstance(translated_titles, list) and
-                len(translated_titles) == len(titles)):
+        if isinstance(translated_titles, list) and len(
+            translated_titles
+        ) == len(titles):
             logger.debug(f'Success(Gemini): ["{translated_titles[0]}", ...]')
             return [str(t) for t in translated_titles]
         else:
@@ -164,7 +176,8 @@ def translate_titles_with_gemini(
 
 
 def translate_text_with_openai(
-        text: str, target_language: str = settings.DEFAULT_LANGUAGE) -> str:
+    text: str, target_language: str = settings.DEFAULT_LANGUAGE
+) -> str:
     """
     Translates text using OpenAI API.
 
@@ -183,19 +196,23 @@ def translate_text_with_openai(
 
     api_key = settings.OPENAI_API_KEY
     if not api_key:
-        logger.warning("OPENAI_API_KEY is not set."
-                       " Skipping OpenAI translation.")
+        logger.warning(
+            "OPENAI_API_KEY is not set." " Skipping OpenAI translation."
+        )
         return text
 
     system_content = (
         "You are a helpful assistant that translates text"
         f" into {target_language}. If the text is HTML, translate only the"
         " visible text content while preserving all HTML tags and structure."
-        " Do not use code blocks in your response.")
+        " Do not use code blocks in your response."
+    )
     try:
         logger.info("OpenAI translation start.")
-        logger.debug("Attempting to translate with OpenAI model: "
-                     f"{settings.OPENAI_MODEL}")
+        logger.debug(
+            "Attempting to translate with OpenAI model: "
+            f"{settings.OPENAI_MODEL}"
+        )
 
         # SSL検証をsettings.pyの値に基づいて設定
         http_client = httpx.Client(verify=settings.OPENAI_SSL_VERIFY)
@@ -204,7 +221,7 @@ def translate_text_with_openai(
         client = openai.OpenAI(
             api_key=api_key,
             base_url=settings.OPENAI_API_BASE_URL,
-            http_client=http_client
+            http_client=http_client,
         )
 
         logger.debug("Sending request to OpenAI API...")
@@ -212,9 +229,9 @@ def translate_text_with_openai(
             model=settings.OPENAI_MODEL,
             messages=[
                 {"role": "system", "content": system_content},
-                {"role": "user", "content": text}
+                {"role": "user", "content": text},
             ],
-            temperature=0.0
+            temperature=0.0,
         )
         logger.debug("Successfully received response from OpenAI API.")
 
@@ -244,7 +261,7 @@ def translate_titles_with_openai(
     system_content = (
         f"You are a helpful assistant that translates a list of titles into "
         f"{target_language}. Output ONLY a raw JSON list of strings "
-        "(e.g. [\"translated 1\", \"translated 2\"]). "
+        '(e.g. ["translated 1", "translated 2"]). '
         "Do not use Markdown code blocks. "
         "Maintain the original order and count."
     )
@@ -254,7 +271,7 @@ def translate_titles_with_openai(
         client = openai.OpenAI(
             api_key=api_key,
             base_url=settings.OPENAI_API_BASE_URL,
-            http_client=http_client
+            http_client=http_client,
         )
 
         titles_json = json.dumps(titles, ensure_ascii=False)
@@ -264,10 +281,10 @@ def translate_titles_with_openai(
             model=settings.OPENAI_MODEL,
             messages=[
                 {"role": "system", "content": system_content},
-                {"role": "user", "content": titles_json}
+                {"role": "user", "content": titles_json},
             ],
             temperature=0.0,
-            response_format={"type": "json_object"}
+            response_format={"type": "json_object"},
         )
 
         cleaned_json = _clean_json_response(
@@ -275,8 +292,9 @@ def translate_titles_with_openai(
         )
         translated_titles = json.loads(cleaned_json)
 
-        if (isinstance(translated_titles, list) and
-                len(translated_titles) == len(titles)):
+        if isinstance(translated_titles, list) and len(
+            translated_titles
+        ) == len(titles):
             logger.debug(f'Success(OpenAI): ["{translated_titles[0]}", ...]')
             return [str(t) for t in translated_titles]
         else:
@@ -291,7 +309,8 @@ def translate_titles_with_openai(
 
 
 def translate_content(
-        text: str, target_language: str = settings.DEFAULT_LANGUAGE) -> str:
+    text: str, target_language: str = settings.DEFAULT_LANGUAGE
+) -> str:
     """
     Translates content using available AI services (Gemini or OpenAI).
     Prioritizes Gemini if its API key is set and the library is installed,
@@ -317,11 +336,14 @@ def translate_content(
         return translate_text_with_openai(text, target_language)
     else:
         if not (GEMINI_IS_AVAILABLE or OPENAI_IS_AVAILABLE):
-            logger.info("No AI translation libraries are installed."
-                        " Skipping translation.")
+            logger.info(
+                "No AI translation libraries are installed."
+                " Skipping translation."
+            )
         else:
-            logger.info("No AI translation API key found."
-                        " Skipping translation.")
+            logger.info(
+                "No AI translation API key found." " Skipping translation."
+            )
         return text
 
 

@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "personalized-news-dispatcher"
+version = "1.1.0"
+description = "ユーザーがパーソナライズしたキーワードセットに基づき、News サイト（Google News, CiNii, arXiv）から関連ニュースや論文を自動収集し、ユーザーに HTML メールでダイジェストを配信するシステム"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    {name = "YYNET"},
+]
+license = {text = "MIT"}
+dependencies = [
+    "Django>=4.2",
+    "tomli; python_version < '3.11'",
+]
+
+[project.optional-dependencies]
+dev = [
+    "flake8",
+    "black",
+    "isort",
+    "mypy",
+    "django-stubs",
+]
+
+[tool.setuptools]
+packages = ["config", "core", "data", "docs", "log", "news", "subscriptions", "users"]
+
+[tool.black]
+line-length = 79
+target-version = ['py39']
+
+[tool.isort]
+profile = "black"
+sections = ["FUTURE", "STDLIB", "DJANGO", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+known_django = "django"
+line_length = 79
+color_output = false
+skip_glob = ["*/migrations/*.py"]
+
+[tool.mypy]
+python_version = "3.9"
+plugins = ["mypy_django_plugin.main"]
+color_output = false
+ignore_missing_imports = true
+
+[tool.django-stubs]
+django_settings_module = "config.settings"
