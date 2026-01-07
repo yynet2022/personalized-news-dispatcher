@@ -1,0 +1,52 @@
+{% extends "core/base.html" %}
+
+{% block title %}リダイレクト中...{% endblock %}
+
+{% block content %}
+<div style="text-align: center; margin-top: 3em; margin-bottom: 3em;">
+    <h2>ログインしていません</h2>
+    <p class="message message-warning" style="display: inline-block; margin: 1em 0;">
+        ログインしていないため、この記事の閲覧履歴は記録されません。
+    </p>
+    
+    <div style="font-size: 1.2em; margin: 1.5em 0;">
+        <span id="countdown" style="font-weight: bold; font-size: 1.5em;">5</span> 秒後に記事へ移動します...
+    </div>
+    
+    <div style="margin: 2em 0;">
+        {# request.path はこのビュー(TrackClickView)自身のパス #}
+        <a href="{% url 'users:login' %}?next={{ request.path }}" class="button-link button-link-primary" style="padding: 0.8em 1.5em; font-weight: bold;">
+            ログインして履歴を残す
+        </a>
+    </div>
+
+    <p style="margin-top: 2em; font-size: 0.9em; color: #666;">
+        <a href="{{ article_url }}" style="color: #666; text-decoration: underline;">
+            すぐに記事を読む（履歴は残りません）
+        </a>
+    </p>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function() {
+        var seconds = 5;
+        var countdownElement = document.getElementById('countdown');
+        // Djangoテンプレートから安全にURLを埋め込む
+        var articleUrl = "{{ article_url|safe }}";
+        
+        var interval = setInterval(function() {
+            seconds--;
+            if (countdownElement) {
+                countdownElement.textContent = seconds;
+            }
+            if (seconds <= 0) {
+                clearInterval(interval);
+                window.location.href = articleUrl;
+            }
+        }, 1000);
+    })();
+</script>
+{% endblock %}
