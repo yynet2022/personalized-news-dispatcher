@@ -32,12 +32,16 @@ except ImportError:
 
 try:
     import instructor
-    from pydantic import BaseModel
+    from pydantic import BaseModel, Field
 
     INSTRUCTOR_IS_AVAILABLE = True
 except ImportError:
     instructor = None  # type: ignore[assignment]
     BaseModel = object  # type: ignore[assignment,misc]
+
+    def Field(*args, **kwargs):  # type: ignore[no-redef]
+        return None
+
     INSTRUCTOR_IS_AVAILABLE = False
 # --- End of optional imports ---
 
@@ -45,7 +49,10 @@ except ImportError:
 if INSTRUCTOR_IS_AVAILABLE:
 
     class TranslatedTitles(BaseModel):
-        titles: list[str]
+        translated_titles: list[str] = Field(
+            ...,
+            description="List of titles translated into the target language.",
+        )
 
 
 def _clean_json_response(text: str) -> str:
@@ -172,9 +179,10 @@ def translate_titles_with_gemini(
             if hasattr(response, "parsed") and response.parsed:
                 parsed_response = cast(TranslatedTitles, response.parsed)
                 logger.debug(
-                    f"Success(Gemini/Struct): {parsed_response.titles[:1]}..."
+                    "Success(Gemini/Struct): "
+                    f"{parsed_response.translated_titles[:1]}..."
                 )
-                return parsed_response.titles
+                return parsed_response.translated_titles
 
             # Fallback to manual parsing of response.text
             res_text = response.text
@@ -182,9 +190,10 @@ def translate_titles_with_gemini(
                 try:
                     obj = TranslatedTitles.model_validate_json(res_text)
                     logger.debug(
-                        f"Success(Gemini/Struct/Text): {obj.titles[:1]}..."
+                        "Success(Gemini/Struct/Text): "
+                        f"{obj.translated_titles[:1]}..."
                     )
-                    return obj.titles
+                    return obj.translated_titles
                 except Exception as parse_e:
                     logger.warning(
                         "Failed to parse Gemini structured response: "
@@ -331,6 +340,7 @@ def translate_titles_with_openai(
         http_client = httpx.Client(verify=settings.OPENAI_SSL_VERIFY)
 
         # Use instructor if available
+        # INSTRUCTOR_IS_AVAILABLE = False
         if INSTRUCTOR_IS_AVAILABLE:
             logger.debug("Using instructor for OpenAI translation.")
             instructor_client = instructor.from_openai(
@@ -341,7 +351,10 @@ def translate_titles_with_openai(
                 )
             )
 
-            prompt = f"Translate the following titles into {target_language}."
+            system_prompt = (
+                "You are a helpful assistant that translates a list of "
+                f"titles into {target_language}."
+            )
 
             logger.debug(
                 "Sending batch translation request to OpenAI API "
@@ -351,18 +364,24 @@ def translate_titles_with_openai(
             resp = instructor_client.chat.completions.create(
                 model=settings.OPENAI_MODEL,
                 messages=[
-                    {"role": "system", "content": prompt},
+                    {"role": "system", "content": system_prompt},
                     {
                         "role": "user",
-                        "content": json.dumps(titles, ensure_ascii=False),
+                        "content": (
+                            "Translate the following list of titles into "
+                            f"{target_language}. "
+                            f"{json.dumps(titles, ensure_ascii=False)}"
+                        ),
                     },
                 ],
                 response_model=TranslatedTitles,
                 temperature=0.0,
             )
 
-            logger.debug(f"Success(OpenAI/Instructor): {resp.titles[:1]}...")
-            return resp.titles
+            logger.debug(
+                f"Success(OpenAI/Instructor): {resp.translated_titles[:1]}..."
+            )
+            return resp.translated_titles
 
         # Legacy method
         client = openai.OpenAI(
