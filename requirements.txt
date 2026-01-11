@@ -16,5 +16,8 @@ tzdata==2025.2
 urllib3==2.5.0
 wheel==0.45.1
 tomli; python_version < "3.11"
+instructor==1.7.2
+pydantic==2.10.4
+eval_type_backport; python_version < "3.10"
 # google-genai
 # openai==2.7.2

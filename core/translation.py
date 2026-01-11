@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+from typing import cast
 
 from django.conf import settings
 
@@ -12,7 +13,7 @@ logger = logging.getLogger(__name__)
 try:
     # import google.generativeai as genai
     # https://ai.google.dev/gemini-api/docs/migrate?hl=ja
-    from google import genai
+    from google import genai  # type: ignore[no-redef]
 
     GEMINI_IS_AVAILABLE = True
 except ImportError:
@@ -28,7 +29,23 @@ except ImportError:
     httpx = None  # type: ignore[assignment]
     openai = None  # type: ignore[assignment]
     OPENAI_IS_AVAILABLE = False
+
+try:
+    import instructor
+    from pydantic import BaseModel
+
+    INSTRUCTOR_IS_AVAILABLE = True
+except ImportError:
+    instructor = None  # type: ignore[assignment]
+    BaseModel = object  # type: ignore[assignment,misc]
+    INSTRUCTOR_IS_AVAILABLE = False
 # --- End of optional imports ---
+
+
+if INSTRUCTOR_IS_AVAILABLE:
+
+    class TranslatedTitles(BaseModel):
+        titles: list[str]
 
 
 def _clean_json_response(text: str) -> str:
@@ -126,11 +143,63 @@ def translate_titles_with_gemini(
         return []
 
     try:
-        # genai.configure(api_key=api_key)
         client = genai.Client(api_key=api_key)
-
         titles_json = json.dumps(titles, ensure_ascii=False)
-        prompt = (
+
+        # Use structured output if pydantic is available
+        if INSTRUCTOR_IS_AVAILABLE:
+            prompt = (
+                f"Translate the following list of titles "
+                f"into {target_language}. {titles_json}"
+            )
+            logger.debug(
+                "Sending batch translation request "
+                "to Gemini API (Structured)..."
+            )
+
+            response = client.models.generate_content(
+                model=settings.GEMINI_MODEL,
+                contents=prompt,
+                config=genai.types.GenerateContentConfig(
+                    temperature=0.0,
+                    response_mime_type="application/json",
+                    response_schema=TranslatedTitles,
+                ),
+            )
+
+            # Try to get parsed object from response.parsed
+            # (if supported by SDK)
+            if hasattr(response, "parsed") and response.parsed:
+                parsed_response = cast(TranslatedTitles, response.parsed)
+                logger.debug(
+                    f"Success(Gemini/Struct): {parsed_response.titles[:1]}..."
+                )
+                return parsed_response.titles
+
+            # Fallback to manual parsing of response.text
+            res_text = response.text
+            if res_text:
+                try:
+                    obj = TranslatedTitles.model_validate_json(res_text)
+                    logger.debug(
+                        f"Success(Gemini/Struct/Text): {obj.titles[:1]}..."
+                    )
+                    return obj.titles
+                except Exception as parse_e:
+                    logger.warning(
+                        "Failed to parse Gemini structured response: "
+                        f"{parse_e}"
+                    )
+                    # If parsing failed, fall through to legacy method?
+                    # Or return original?
+                    # If structured output was requested but failed to parse,
+                    # it's likely the model returned something weird.
+                    # We can try legacy method logic if we assume the
+                    # model ignores schema.
+                    pass
+
+        # Legacy method (Manual Prompting + Regex Cleaning)
+        prompt_legacy = (
             f"Translate the following list of titles into {target_language}. "
             "Output ONLY a raw JSON list of strings "
             '(e.g. ["translated title 1", "translated title 2"]). '
@@ -139,18 +208,12 @@ def translate_titles_with_gemini(
             f"{titles_json}"
         )
 
-        logger.debug("Sending batch translation request to Gemini API...")
-        # model = genai.GenerativeModel(settings.GEMINI_MODEL)
-        # response = model.generate_content(
-        #     prompt,
-        #     generation_config={
-        #         'temperature': 0.0,
-        #         'response_mime_type': 'application/json'
-        #     }
-        # )
+        logger.debug(
+            "Sending batch translation request to Gemini API (Legacy)..."
+        )
         response = client.models.generate_content(
             model=settings.GEMINI_MODEL,
-            contents=prompt,
+            contents=prompt_legacy,
             config=genai.types.GenerateContentConfig(
                 temperature=0.0,
                 response_mime_type="application/json",
@@ -264,25 +327,63 @@ def translate_titles_with_openai(
     if not titles:
         return []
 
-    system_content = (
-        f"You are a helpful assistant that translates a list of titles into "
-        f"{target_language}. Output ONLY a raw JSON list of strings "
-        '(e.g. ["translated 1", "translated 2"]). '
-        "Do not use Markdown code blocks. "
-        "Maintain the original order and count."
-    )
-
     try:
         http_client = httpx.Client(verify=settings.OPENAI_SSL_VERIFY)
+
+        # Use instructor if available
+        if INSTRUCTOR_IS_AVAILABLE:
+            logger.debug("Using instructor for OpenAI translation.")
+            instructor_client = instructor.from_openai(
+                openai.OpenAI(
+                    api_key=api_key,
+                    base_url=settings.OPENAI_API_BASE_URL,
+                    http_client=http_client,
+                )
+            )
+
+            prompt = f"Translate the following titles into {target_language}."
+
+            logger.debug(
+                "Sending batch translation request to OpenAI API "
+                "(Instructor)..."
+            )
+
+            resp = instructor_client.chat.completions.create(
+                model=settings.OPENAI_MODEL,
+                messages=[
+                    {"role": "system", "content": prompt},
+                    {
+                        "role": "user",
+                        "content": json.dumps(titles, ensure_ascii=False),
+                    },
+                ],
+                response_model=TranslatedTitles,
+                temperature=0.0,
+            )
+
+            logger.debug(f"Success(OpenAI/Instructor): {resp.titles[:1]}...")
+            return resp.titles
+
+        # Legacy method
         client = openai.OpenAI(
             api_key=api_key,
             base_url=settings.OPENAI_API_BASE_URL,
             http_client=http_client,
         )
 
+        system_content = (
+            "You are a helpful assistant that translates a list of titles "
+            f"into {target_language}. Output ONLY a raw JSON list of strings "
+            '(e.g. ["translated 1", "translated 2"]). '
+            "Do not use Markdown code blocks. "
+            "Maintain the original order and count."
+        )
+
         titles_json = json.dumps(titles, ensure_ascii=False)
 
-        logger.debug("Sending batch translation request to OpenAI API...")
+        logger.debug(
+            "Sending batch translation request to OpenAI API (Legacy)..."
+        )
         response = client.chat.completions.create(
             model=settings.OPENAI_MODEL,
             messages=[
